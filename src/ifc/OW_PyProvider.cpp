@@ -53,7 +53,7 @@ namespace
 {
 
 Py::Module g_pywbem;
-Py::Module g_pycimMod;
+Py::Module g_pycim;
 Py::Object g_cimexObj;
 
 //////////////////////////////////////////////////////////////////////////////
@@ -225,15 +225,7 @@ PyProvider::setPyWbemMod(
 {
 	g_pywbem = pywbemMod;
 	g_cimexObj = pywbemMod.getAttr("CIMError");
-}
-
-//////////////////////////////////////////////////////////////////////////////
-// STATIC
-void
-PyProvider::setCIMProvMod(
-	const Py::Module& pycimMod)
-{
-	g_pycimMod = pycimMod;
+	g_pycim = pywbemMod.getAttr("pycim");
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -257,7 +249,7 @@ PyProvider::PyProvider(
 	try
 	{
 		// Get the Python proxy provider
-		Py::Callable ctor = g_pycimMod.getAttr("ProviderProxy");
+		Py::Callable ctor = g_pycim.getAttr("ProviderProxy");
 		Py::Tuple args(2);
 		args[0] = PyProviderEnvironment::newObject(env); 	// Provider Environment
 		args[1] = Py::String(m_path);

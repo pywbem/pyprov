@@ -112,7 +112,6 @@ private:
 
 	PyProviderModule* m_pyprovMod;
 	Py::Module m_pywbemMod;
-	Py::Module m_pycimMod;
 	bool m_disabled;
 	ProviderMap m_loadedProvsByPath;
 	ProvIdMap m_idmap;

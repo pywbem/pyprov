@@ -86,7 +86,6 @@ getProviderReg(
 PyProviderIFC::PyProviderIFC()
 	: ProviderIFCBaseIFC()
 	, m_pywbemMod()
-	, m_pycimMod()
 	, m_disabled(false)
 	, m_loadedProvsByPath()
 	, m_idmap()
@@ -342,8 +341,6 @@ PyProviderIFC::initPython(
 		OW_LOG_DEBUG(logger, "Python provider ifc initializing the "
 			"pycimmb module...");
 		PyProviderModule::doInit(m_pywbemMod);
-		m_pycimMod = Py::Module("pycim", true);
-		PyProvider::setCIMProvMod(m_pycimMod);
 	}
 	catch (Py::Exception& e)
 	{

@@ -223,7 +223,6 @@ public:
 	bool providerChanged() const;
 
 	static void setPyWbemMod(const Py::Module& pywbemMod);
-	static void setCIMProvMod(const Py::Module& pycimMod);
 
 private:
 	PyProvider() {}

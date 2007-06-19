@@ -164,7 +164,6 @@ AC_CONFIG_FILES([
 	src/pycxx/Makefile
 	src/ifc/pyprovider/Makefile
 	src/ifc/Makefile
-	src/pyproxy/Makefile
 	mof/Makefile
 	doc/Makefile
 	doc/tutorial/Makefile
