@@ -5,7 +5,7 @@ Instruments the CIM class PyTut_FooAssociation
 """
 
 import pywbem
-from pycim import CIMProvider
+from pywbem import CIMProvider
 
 class PyTut_FooAssociationProvider(CIMProvider):
     """Instrument the CIM class PyTut_FooAssociation 

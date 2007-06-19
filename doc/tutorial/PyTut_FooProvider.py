@@ -5,7 +5,7 @@ Instruments the CIM class PyTut_Foo
 """
 
 import pywbem
-from pycim import CIMProvider
+from pywbem import CIMProvider
 
 #----------------------------------------
 # Instance Data

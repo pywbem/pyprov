@@ -24,8 +24,8 @@ Contents:
 1.0 Introduction
 
 This document is an attempt to introduce the reader to CIM
-instrumentation using the Python provider interface called pycim.
-pycim supports the following provider types:
+instrumentation using the pywbem Python provider interface. pywbem supports the
+following provider types:
 
     - Instance
     - Method
@@ -38,7 +38,7 @@ pycim supports the following provider types:
 The most common types of providers that are written are the first three:
 Instance, Method and Associator. These will be the provider types covered
 in this document. Documentation for the other provider types can be found
-within the pycim project.
+within the pywbem project.
 
 Before going any further, lets address the process of developing CIM providers.
 Typically before writing any type of CIM instrumentation, one usually endeavors
@@ -128,19 +128,19 @@ root/cimv2 namespace of the CIMOM running on the localhost.
 3.0 Generating The Provider Stub Code
 
 Now that we have imported the MOF and the CIMOM knows something about our
-classes, we can use pycim in combination with pywbem to generated the Python
-code we can use as a starting point for our providers. We will only show this
-process for the PyTut_Foo class. You will use this same process to generate
-provider code for the PyTut_FooComponent and PyTut_FooAssociation classes.
+classes, we can use pywbem to generate the Python code we will use as a
+starting point for our providers. We will only show this process for the
+PyTut_Foo class. You will use this same process to generate provider code for 
+the PyTut_FooComponent and PyTut_FooAssociation classes.
 
 Start the Python interpreter from the command line:
 
 > python
 
-Since we are going to need functionality from pywbem and pycim, import both of
-these modules. Type the following at the Python command line:
+We are going to need functionality contained in the pywbem module, so we need
+to import it. Type the following at the Python command line:
 
->>> import pywbem, pycim
+>>> import pywbem
 
 Assuming you have a CIMOM running on the local machine, establish a connection
 with the CIMOM with the following command:
@@ -155,10 +155,10 @@ PyTut_Foo from the root/cimv2 namespace with the following command:
 >>> cc = con.GetClass('PyTut_Foo', 'root/cimv2') 
 
 We now have all the information we need about the PyTut_Foo class stored in the
-cc variable. We can now as pycim to generated the code for use. Do that with 
-the following command:
+cc variable. We can now use pywbem to generate the code for us. Do that
+with the following command:
 
->>> python_code, registration_mof = pycim.codegen(cc)
+>>> python_code, registration_mof = pywbem.codegen(cc)
 
 That last command did some very interesting stuff for us. Just for fun, type
 the following at the command line:
@@ -190,7 +190,7 @@ At this point you might want to take a look at the PyTut_FooProvider.py file we 
 in the previous section. Since the PuTut_Foo class had a method defined, the
 Python code that was generated is for an Instance and Method provider.
 
-Another interesting thing pycim.codegen has done for us, is provide educational
+Another interesting thing pywbem.codegen has done for us, is provide educational
 Python docs for every stubbed out method. These Python docs describe the
 various parameters that are passed to each method and a list of possible
 errors. These "Possible Errors" are actually exceptions than can be raised from
@@ -198,7 +198,7 @@ the methods and NOT the return values.
 
 One of the first things we see is the class declaration PyTut_FooProvider.
 Notice that PyTut_FooProvider is derived from the CIMProvider class which
-comes from the pycim module. All Instance, Method and Associator providers must
+comes from the pywbem module. All Instance, Method and Associator providers must
 be derived from this base class.
 
 In order to support the required functionality of an Instance provider the
@@ -480,7 +480,7 @@ we'll cover next.
 -------------------------------------------------------------------------------
 4.5 PyTut_Foo Method Provider Implementation
 
-In the pycim world, providers get called "Method providers" when they implement
+In the pywbem world, providers get called "Method providers" when they implement
 what is called an extrinsic method. Extrinsic methods can be thought of as
 a user defined function that is tied to a CIM class or an instance of a CIM
 class. A CIM based remote procedure call if you will. The method is part of the
@@ -524,7 +524,7 @@ So base on this definition FooMethod has the following characteristics:
     - It has a signed int32 INPUT AND OUTPUT parameter called 'i'
     - It has a string array OUTPUT parameter called 'sa'
 
-Provided that we have registered for this method (we'll do that later), pycim
+Provided that we have registered for this method (we'll do that later), pywbem
 will only call our provider if we implement a method on our PyTut_FooProvider
 class that has the name cim_method_<method name>. With the <method_name>
 component of the name being all lower case. In our case the Python method
@@ -609,10 +609,10 @@ PyTut_FooProvider.py for the provider world: the get_providers function.
 -------------------------------------------------------------------------------
 4.6 The get_providers Function
 
-When pycim loads an Instance, Method or Associator provider, it looks for a
+When pywbem loads an Instance, Method or Associator provider, it looks for a
 function in the provider module by the name of get_providers. It expects this
 function to return a Python dictionary. The purpose of this dictionary is
-to map CIM class names to instances of a CIMProvider subclass. pycim.codegen
+to map CIM class names to instances of a CIMProvider subclass. pywbem.codegen
 will actually generate this code for us, but it is important to understand
 how it is used. If you look at the bottom of the PyTut_FooProvider.py file,
 you will see something like the following:
@@ -633,7 +633,7 @@ In our case the class name is 'PyTut_Foo', and the provider is an instance of
 our PyTut_FooProvider python class. The class name key in the dictionary can 
 be lower, upper or mixed case.
 
-This dictionary is used by pycim to retrieve the instance of the provider when
+This dictionary is used by pywbem to retrieve the instance of the provider when
 a request is made for a specific class name. This dictionary also makes it
 easy to combine multiple providers into a single Python module. This is exactly
 what we will do when the provider gets implemented for the PyTut_FooComponent
@@ -647,7 +647,7 @@ def get_providers(env):
              'PyTut_FooComponent': _pytut_foocomp_prov }
 
 All we have done here is just add another entry to the dictionary that ties
-another instance of a subclass of pycim.CIMProvider to the CIM class
+another instance of a subclass of pywbem.CIMProvider to the CIM class
 'PyTut_FooComponent'.
 
 The get_providers function is a small detail of the provider module that must
@@ -690,13 +690,13 @@ actually be any string value. We'll change this property to the following:
 The NamespaceNames property on line 5 specifies the namespaces we will be
 providing the instrumentation in. If we left this property out, the CIMOM would
 assume our Python module provides functionality in all namespaces.
-pycim.codegen has already set this to 'root/cimv2'. Good enough.
+pywbem.codegen has already set this to 'root/cimv2'. Good enough.
 
 The ClassName property on line 6 specifies the class our provider is
-instrumenting. pycim.codegen already set this to 'PyTut_Foo' for us.
+instrumenting. pywbem.codegen already set this to 'PyTut_Foo' for us.
 
 The ProviderTypes property on line 7 contains a list of uint16 values that
-inform the CIMOM what type of provider this is. pycim.codegen has set this
+inform the CIMOM what type of provider this is. pywbem.codegen has set this
 to 1 for Instance Provider and 6 for Method Provider. Good guess. No changes
 here.
 
@@ -789,10 +789,10 @@ PyTut_FooComponent provider and the provider registration. This process is
 covered in section 3.0, so we will just list the relevant command here:
 
 > python
->>> import pywbem, pycim
+>>> import pywbem
 >>> con = pywbem.WBEMConnection('http://localhost', ('username', 'password'))
 >>> cc = con.GetClass('PyTut_FooComponent', 'root/cimv2') 
->>> python_code, registration_mof = pycim.codegen(cc)
+>>> python_code, registration_mof = pywbem.codegen(cc)
 >>> codefile = open('TempProvider.py', 'w')
 >>> codefile.write(python_code)
 >>> codefile.close()
@@ -817,7 +817,7 @@ be set up something like the following:
 
 All we did here, was add another entry to the dictionary returned by 
 get_providers for the PyTut_FooComponent class, and associate an instance of 
-our PyTut_FooComponentProvider to it. Now pycim will know which object 
+our PyTut_FooComponentProvider to it. Now pywbem will know which object 
 handles the implementation for PyTut_FooComponent. Save PyTut_FooProvider.py.
 
 Now for the provider registration. Open the files TempProvider.reg and
@@ -921,7 +921,7 @@ All of the methods take a fair number of parameters that allow for very refined
 searches. If you're curious about them, refer to DSP0200. When writing a Python
 provider, you won't have to worry about these four methods. You only have to
 implement one: references. This will be somewhat similar to the References
-method described above, and will be used by pycim to service all four of the
+method described above, and will be used by pywbem to service all four of the
 methods specified in DSP0200. So you will only have to do one. Thats nice,
 because there would be a lot of duplicate functionality across these four
 methods.
@@ -970,10 +970,10 @@ that you should be familiar with from sections 3.0 and 6.0. We will just list
 the commands issued to the Python shell without description:
 
 > python
->>> import pywbem, pycim
+>>> import pywbem
 >>> con = pywbem.WBEMConnection('http://localhost', ('username', 'password'))
 >>> cc = con.GetClass('PyTut_FooAssociation', 'root/cimv2') 
->>> python_code, registration_mof = pycim.codegen(cc)
+>>> python_code, registration_mof = pywbem.codegen(cc)
 >>> codefile = open('PyTut_FooAssociationProvider.py', 'w')
 >>> codefile.write(python_code)
 >>> codefile.close()
@@ -1373,7 +1373,7 @@ since it is already a filled out instance of PyTut_FooAssociation.
 
 Well there is your education on Instance, Method and Associator Python
 providers. The only objective here was to get the reader oriented in the world
-of provider writing usng pycim, pycimmb and pywbem. Hopefully that was
+of provider writing usng pywbem and pycimmb. Hopefully that was
 accompolished.
 
 The python provider interface actually supports four other types of providers:
