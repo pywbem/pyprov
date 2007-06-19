@@ -1,0 +1,785 @@
+NAME
+    pycimmb - Extension objects
+
+Description
+
+    The Python provider interface is an embedded python environment that loads
+    and runs python modules as CIM providers within the process of the hosting
+    CIMOM. This provider interface implements various Python extension objects
+    that expose functionality available in the CIMOM's environment to python
+    providers. Most of these extension objects play an essential role in 
+    communication between the providers and the provider interface.
+
+    All of the extension objects implemented in the provider interface are
+    available through the pycimmb module. This module is automatically
+    available to any provider that is loaded by the provider interface, so
+    there is no need for it to be directly imported (i.e. target of an import
+    statement). It is actually beneficial if the provider does not import
+    pycimmb directly, because it is only available when the provider is 
+    loaded by the provider interface. This lets provider developers use Python
+    to check for syntactical errors before they deploy their provider.
+
+    It is not possible for python providers to explicitly create objects from
+    the pycimmb module. These objects are always created by the provider
+    interface and passed down to the python provider when it is called to
+    service a request. In most cases the python provider may hold long term
+    references to these objects. Exceptions to this statement will be noted
+    within the documentation.
+
+    The pycimmb module contains the following types of objects:
+
+        - ProviderEnvironment
+        - CIMOMHandle
+        - Logger
+        - InstanceResultHandler
+        - ObjectPathResultHandler
+
+ProviderEnvironment
+
+    On just about every call the provider interface makes to a provider, a
+    ProviderEnvironment object is given. This object provides access to other
+    objects as well as some operation context related methods. The
+    ProviderEnvironment object is the only means a provider has to gain access
+    to CIMOMHandle and Logger objects (discussed later).
+
+Methods
+
+    get_cimom_handle() -> CIMOMHandle
+
+        Return a CIMOM handle that can be used for up calls into the CIMOM. See
+        CIMOMHandle documentation.
+
+    get_logger() -> Logger
+
+        Return a Logger object that can be used to log messages through the
+        CIMOM's logging mechanism. See Logger documentation.
+
+    get_user_name() -> string
+
+        Return the name of the user making the request.
+
+    get_context_value(string key) -> string
+
+        Return a string value that is associated to a given key from the 
+        operation context. If the value for the given key has never been
+        set, an empty string is returned. The value for the key could have
+        been set by another component of the CIMOM (e.g. another provider)
+        for the request that is being serviced.
+
+    set_context_value(string key, string value) -> None
+
+        Set a value for a given key within the operation context.
+
+
+CIMOMHandle
+
+    CIMOMHandle objects are retrieved from the ProviderEnvironment passed to
+    the provider from the CIMOM. CIMOMHandle objects represent an internal
+    connection to the CIMOM that behaves much the same way as a client
+    connection. The CIMOMHandle somewhat mirrors the functionality documented
+    in the Specification for CIM Operations over HTTP (DSP0200) by the DMTF.
+
+    Important Note:
+    Almost all of the methods of CIMOMHandle can raise a pywbem.CIMError
+    exception with error numbers matching what is documented in DSP0200.
+
+Methods
+
+    set_default_namespace(string namespace) -> None
+
+        Set the default namespace that will be used on all subsequent calls to
+        the CIMOM if the namespace parameter is not specified in those calls.
+
+        Parameters:
+            string namespace - The namespace the caller wants to use as the
+                default for subsequent method calls on the CIMOMHandle
+                object.
+        Returns:
+            None
+
+
+    InvokeMethod(string method_name, pywbem.CIMInstanceName object_name,
+        string namespace=None, **kwargs) -> pywbem.CIMType
+
+        Invoke an extrinsic method.
+
+        Parameters:
+            string method_name - The name of the method that will be invoked.
+            pywbem.CIMInstanceName object_name - A reference to a CIM instance
+                or class the method will be invoked on. For some extrinsic
+                method, only a reference to a class is required while others
+                required a reference to an instance.
+            string namespace - The namespace to perform the operation in. The
+                default value for this parameter is None. If None is specified,
+                the default namespace for the CIMOM handle will be used if
+                previously set.
+            kwargs - The remainder of the parameters are keyword arguments that
+                are specific to the extrinsic method. For instance if the
+                method takes a pywbem.Uint16 argument called 'RequestedState',
+                this could be specified as RequestedState=pywbem.Uint16(1).
+        Returns:
+            A pywbem.CIMType that represents the return value of the extrinsic
+            method.
+
+
+    EnumerateClassNames(string namespace=None, **kwargs) -> string[] or None
+
+        Enumerate the names of subclasses of a CIM class in the given namespace.
+
+        Parameters:
+            string namespace - The namespace to perform the operation in. The
+                default value for this parameter is None. If None is specified,
+                the default namespace for the CIMOM handle will be used if
+                previously set.
+            kwargs - Recognized keyword arguments
+                bool DeepInheritance - If True, then the names of all
+                    subclasses of the specified class will be returned. If the
+                    ClassName parameter is not specified and DeepInheritance is
+                    True, then all class names for the given namespace will be
+                    returned. If DeepInheritance is False, only the names of 
+                    the immediate child subclasses will be returned. The
+                    default is False.
+                string ClassName - The name of the class to return all subclass
+                    names for. If not specified the top level class heirarchy
+                    is assumed.
+                function Handler - If this parameter is specified, it must be
+                    a reference to a callable object. This callable object will
+                    be called with each class name that would normally be
+                    returned.
+        Returns:
+            None if the Handler argument was specified (because all the
+            class names are given to the Handler). Otherwise a list of
+            class names as string objects.
+
+    EnumerateClasses(string namespace, **kwargs) -> pywbem.CIMClass[] or None
+
+        Enumerate subclasses of a CIM class in the given namespace.
+
+        Parameters:
+            string namespace - The namespace to perform the operation in. The
+                default value for this parameter is None. If None is specified,
+                the default namespace for the CIMOM handle will be used if
+                previously set.
+            kwargs - Recognized keyword arguments
+                bool DeepInheritance - If True, then the class declaration of
+                    all subclasses of the specified class will be returned. If
+                    the ClassName parameter is not specified and
+                    DeepInheritance is True, then all class declaration for the
+                    given namespace will be returned. If DeepInheritance is
+                    False, only the declaration of the immediate child
+                    subclasses will be returned. Default is False.
+                string ClassName - The name of the class to return all subclass
+                    declaration for. If not specified the top level class
+                    heirarchy is assumed.
+                bool LocalOnly - If True, then only CIM Elements (properties,
+                    methods and qualifiers) defined or overridden within the 
+                    declaration of the Class (as specified in the classname
+                    input parameter) are returned. If false, all elements are
+                    returned. Default is True.
+                bool IncludeQualifiers - If True, then all Qualifiers for each
+                    Class (including Qualifiers on the Class and on any
+                    returned Properties, Methods or Method Parameters) will be
+                    included.  If False no qualifier elements will be present
+                    in the returned Class. Default is True.
+                bool IncludeClassOrigin - If True, then the CLASSORIGIN
+                    attribute will be present on all appropriate elements in
+                    each returned class. If False, no CLASSORIGIN attribute
+                    will be present in the returned classes. Default is False.
+                function Handler - If this parameter is specified, it must be
+                    a reference to a callable object. This callable object will
+                    be called with each class declaration that would normally be
+                    returned.
+        Returns:
+            None if the Handler argument was specified (because all the
+            class declaration are given to the Handler). Otherwise a list
+            of pywbem.CIMClass objects.
+
+    GetClass(string ClassName, string namespace=None, **kwargs) -> pywbem.CIMClass
+
+        Retrieve a single CIM Class declaration from the given namespace.
+
+        Parameters:
+            string ClassName - The name of the class to retieve the declaration
+                for.
+            string namespace - The namespace to perform the operation in. The
+                default value for this parameter is None. If None is specified,
+                the default namespace for the CIMOM handle will be used if
+                previously set.
+            kwargs - Recognized keyword arguments
+                bool LocalOnly - If True, then only CIM Elements (properties,
+                    methods and qualifiers) defined or overridden within the 
+                    declaration of the Class (as specified in the classname
+                    input parameter) are returned. If false, all elements are
+                    returned. Default is True.
+                bool IncludeQualifiers - If True, then all Qualifiers for the
+                    Class (including Qualifiers on the Class and on any
+                    returned Properties, Methods or Method Parameters) will be
+                    included.  If False no qualifier elements will be present
+                    in the returned Class. Default is True.
+                bool IncludeClassOrigin - If True, then the CLASSORIGIN
+                    attribute will be present on all appropriate elements in
+                    the returned class. If False, no CLASSORIGIN attribute
+                    will be present in the returned class. Default is False.
+                string[] PropertyList - If specified, it must be a list of
+                    strings naming the properties that will be returned in the
+                    class declaration. If this is the case, only those specified
+                    properties will be returned. If not specified, all
+                    properties will be returned.
+        Returns:
+            The declaration of the class specified by the ClassName
+            parameter.
+
+    CreateClass(pywbem.CIMClass NewClass, string namespace=None) -> None
+
+        Create a new CIM class in the given namespace.
+
+        Parameters:
+            pywbem.CIMClass NewClass - The class declaration of the new CIM
+                class that will be added to the given namespace.
+            string namespace - The namespace to perform the operation in. The
+                default value for this parameter is None. If None is specified,
+                the default namespace for the CIMOM handle will be used if
+                previously set.
+        Returns:
+            None
+
+    DeleteClass(string ClassName, string namespace=None) -> None
+
+        Delete a CIM class from the given namespace.        
+
+        Parameters:
+            string ClassName - The name of the CIM class that will be deleted
+                from the given namespace.
+            string namespace - The namespace to perform the operation in. The
+                default value for this parameter is None. If None is specified,
+                the default namespace for the CIMOM handle will be used if
+                previously set.
+        Returns:
+            None
+
+    ModifyClass(pywbem.CIMClass ModifiedClass, string namespace=None) -> None
+
+        Modify an existing CIM Class in the given namespace.
+
+        Parameters:
+            pywbem.CIMClass ModifiedClass - The class declaration for the class
+                that will be modified in the given namespace.
+            string namespace - The namespace to perform the operation in. The
+                default value for this parameter is None. If None is specified,
+                the default namespace for the CIMOM handle will be used if
+                previously set.
+        Returns:
+            None
+
+    EnumerateQualifiers(string namespace=None, **kwargs) -> pywbem.CIMQualifier[] or None
+
+        Enumerate qualifier declarations from the given namespace. 
+
+        Parameters:
+            string namespace - The namespace to perform the operation in. The
+                default value for this parameter is None. If None is specified,
+                the default namespace for the CIMOM handle will be used if
+                previously set.
+            kwargs - Recognized keyword arguments
+                function Handler - If this parameter is specified, it must be
+                    a reference to a callable object. This callable object will
+                    be called with each qualifier declaration that would
+                    normally be returned.
+        Returns:
+            None if the Handler argument was specified (because all the
+            qualifier declaration are given to the Handler). Otherwise a list
+            of pywbem.CIMQualifier objects.
+
+    GetQualifier(string QualifierName, string namespace=None) -> pywbem.CIMQualifier
+
+        Retrieve a single qualifier declaration from the given namespace.
+
+        Parameters:
+            string QualifierName - The name of the qualifier to retrieve from
+                the given namespace.
+            string namespace - The namespace to perform the operation in. The
+                default value for this parameter is None. If None is specified,
+                the default namespace for the CIMOM handle will be used if
+                previously set.
+
+        Returns:
+            An instance of the pywbem.CIMQualifier for the qualifier matching
+            the given qualifier name.
+
+    SetQualifier(pywbem.CIMQualifer QualifierDeclaration, string namespace=None) -> None
+
+        Create or update a single qualifier declaration in the given namespace.
+        If the qualifier declaration already exists it is overwritten.
+
+        Parameters:
+            pywbem.CIMQualifier QualifierDeclaration - The qualifier
+                declaration that will be used in the add/modify operation.
+            string namespace - The namespace to perform the operation in. The
+                default value for this parameter is None. If None is specified,
+                the default namespace for the CIMOM handle will be used if
+                previously set.
+        Returns:
+            None
+
+    DeleteQualifier(string QualifierName, string namespace=None) -> None
+
+        Delete a qualifier declaration from a given namespace.
+
+        Parameters:
+            string QualifierName - The name of the qualifier to delete from
+                the given namespace.
+            string namespace - The namespace to perform the operation in. The
+                default value for this parameter is None. If None is specified,
+                the default namespace for the CIMOM handle will be used if
+                previously set.
+        Returns:
+            None
+
+    EnumerateInstanceNames(string ClassName, namespace=None,
+        **kwargs) -> pywbem.CIMInstanceName[] or None
+
+        Enumerate the names (model paths) of the instances of a CIM Class (this
+        includes instances in the class and any subclasses in accordance with
+        the polymorphic nature of CIM objects) in the given namespace.
+
+        Parameters:
+            string ClassName - The name of the upper level class to enumerate
+                instance names for.
+            string namespace - The namespace to perform the operation in. The
+                default value for this parameter is None. If None is specified,
+                the default namespace for the CIMOM handle will be used if
+                previously set.
+            kwargs - Recognized keyword arguments
+                function Handler - If this parameter is specified, it must be
+                    a reference to a callable object. This callable object will
+                    be called with each instance name that would normally be
+                    returned.
+        Returns:
+            None if the Handler argument was specified (because all the
+            instance names are given to the Handler). Otherwise a list
+            of pywbem.CIMInstanceName objects.
+
+
+    EnumerateInstances(string ClassName, namespace=None,
+        **kwargs) -> pywbem.CIMInstance[] or None
+
+        Enumerate instances of a CIM Class (this includes instances in the
+        class and any subclasses in accordance with the polymorphic nature
+        of CIM objects) in the given Namespace.
+
+        Parameters:
+            string ClassName - The name of the upper level class to enumerate
+                instances for.
+            string namespace - The namespace to perform the operation in. The
+                default value for this parameter is None. If None is specified,
+                the default namespace for the CIMOM handle will be used if
+                previously set.
+            kwargs - Recognized keyword arguments
+                bool LocalOnly - If True, then only properties and qualifiers
+                    defined or overridden within the declaration of the Class
+                    (as specified in the ClassName input parameter) are
+                    returned. If False, all elements are returned.
+                    Default is True.
+                bool DeepInheritance - If True, each returned Instance of the
+                    Class, all properties of the Instance will be present
+                    (subject to constraints imposed by the other parameters),
+                    including any which were added by subclassing the specified
+                    Class. If False, each returned Instance will include only
+                    properties defined for the specified Class
+                bool IncludeQualifiers - If True, then all Qualifiers for the
+                    class and properties will be included with each instance.
+                    If False, no qualifiers will be returned. Default is True
+                bool IncludeClassOrigin - If True, then the CLASSORIGIN
+                    attribute will be present on all appropriate elements in
+                    the returned instances. If False, no CLASSORIGIN attribute
+                    will be present in the returned instances.
+                    Default is False.
+                string[] PropertyList - If specified, it must be a list of
+                    strings naming the properties that will be returned in the
+                    instance. If this is the case, only those specified
+                    properties will be returned. If not specified, all
+                    properties will be returned.
+                function Handler - If this parameter is specified, it must be
+                    a reference to a callable object. This callable object will
+                    be called with each instance that would normally be
+                    returned.
+        Returns:
+            None if the Handler argument was specified (because all the
+            instances are given to the Handler). Otherwise a list
+            of pywbem.CIMInstance objects.
+
+
+    GetInstance(pywbem.CIMInstanceName InstanceName, **kwargs) -> pywbem.CIMInstance
+
+        Retrieve a single CIM Instance from the target Namespace.
+
+        Parameters:
+            pywbem.CIMInstanceName InstanceName - The name (model path) of the
+                CIM instance to retrieve. This model path also contains the
+                namespace to retrieve the instance from.
+            kwargs - Recognized keyword arguments
+                bool LocalOnly - If True, then only properties and qualifiers
+                    defined or overridden within the declaration of the Class
+                    (as specified in the ClassName input parameter) are
+                    returned. If False, all elements are returned.
+                    Default is True.
+                bool IncludeQualifiers - If True, then all Qualifiers for the
+                    class and properties will be included with the instance.
+                    If False, no qualifiers will be returned. Default is True
+                bool IncludeClassOrigin - If True, then the CLASSORIGIN
+                    attribute will be present on all appropriate elements in
+                    the returned instance. If False, no CLASSORIGIN attribute
+                    will be present in the returned instance.
+                    Default is False.
+                string[] PropertyList - If specified, it must be a list of
+                    strings naming the properties that will be returned in the
+                    instance. If this is the case, only those specified
+                    properties will be returned. If not specified, all
+                    properties will be returned.
+        Returns:
+            A pywbem.CIMInstance with the given name (model path).
+
+
+    DeleteInstance(pywbem.CIMInstanceName instanceName) -> None
+        
+        Delete a single CIM instance.
+
+        Parameters:
+            pywbem.CIMInstanceName InstanceName - The name (model path) of the
+                CIM instance to delete. This model path also contains the
+                namespace to the instance can be found in.
+        Returns:
+            None
+
+
+    CreateInstance(pywbem.CIMInstance NewInstance) -> pywbem.CIMInstanceName
+
+        Create a single CIM instance.
+
+        Parameters:
+            pywbem.CIMInstance NewInstance - The new CIM instance to create.
+                The path property of this CIMInstance object must be filled
+                out, and contain the namespace.
+        Returns:
+            A pywbem.CIMInstanceName that references the new instance.
+
+
+    ModifyInstance(pywbem.CIMInstance ModifiedInstance, **kwargs) -> None
+
+        Modify a single CIM instance.
+
+        Parameters:
+            pywbem.CIMInstance ModifiedInstance - A modified version of a CIM
+                instance that already exists. The path property of this
+                CIMInstance object must be filled out, and contain the
+                namespace the instance can be found in.
+
+            kwargs - Recognized keyword arguments
+                bool IncludeQualifiers - If True, the qualifiers are modified
+                    as specified in the ModifiedInstance. If False, qualifiers
+                    in the ModifiedInstance are ignored and no qualifiers are
+                    explicitly modified in the specified Instance. The default
+                    is True.
+                string[] PropertyList - If not None (the default), the members
+                    of the array define one or more property names. Only those
+                    properties specified in the PropertyList are modified as
+                    specified in the ModifiedInstance. Properties of the
+                    ModifiedInstance that are missing from the PropertyList are
+                    ignored. If the propertyList input parameter is an empty
+                    array this signifies that no properties are explicitly
+                    modified in the specified instance. If the PropertyList 
+                    input parameter is None, this specifies that all properties
+                    are updated in the specified Instance.
+        Returns:
+            None
+
+    Associators(pywbem.CIMInstanceName ObjectName,
+        **kwargs) -> pywbem.CIMInstance[] or None
+
+        Enumerate CIM Objects that are associated to a particular source
+        CIM instance.
+
+        Parameters:
+            pywbem.CIMInstanceName ObjectName - Refers to the target CIM
+                instance. Objects associated to this object (using criteria
+                given with the other parameters) are returned. The namespace
+                for the operation will be determined by the namespace attribute
+                of this parameter.
+            kwargs - Recognized keyword arguments
+                string AssocClass - If specified, MUST be a valid CIM
+                    Association class name. It acts as a filter on the returned
+                    set of Objects by mandating that each returned Object MUST
+                    be associated to the source Object via an Instance of this
+                    association class or one of its subclasses.
+                string ResultClass - If specified, MUST be a valid CIM class
+                    name. It acts as a filter on the returned set of Objects
+                    by mandating that each returned Object MUST be an instance
+                    of this class (or one of its subclasses).
+                string Role - If specified, MUST be a valid property name. It
+                    acts as a filter on the returned set of objects by
+                    mandating that each returned Object MUST be associated to
+                    the source object via an association in which the source
+                    object plays the specified role (i.e. the name of the 
+                    property in the association class that refers to the source
+                    object MUST match the value of this parameter).
+                string ResultRole - If specified, MUST be a valid property
+                    name. It acts as a filter on the returned set of objects
+                    by mandating that each returned object MUST be associated
+                    to the source object via an association in which the
+                    returned Object plays the specified role (i.e. the name of
+                    the property in the association class that refers to the
+                    returned object MUST match the value of this parameter). 
+                bool IncludeQualifiers - If True, then all qualifiers for each
+                    object (including Qualifiers on the Object and on any
+                    returned Properties) will be included in the response. If
+                    False no qualifiers will be present in the returned
+                    objects. The default is True.
+                bool IncludeClassOrigin - If True, then the CLASSORIGIN
+                    attribute will be present on all appropriate elements in
+                    each returned Object. If False, no CLASSORIGIN attributes
+                    will be present in the returned Objects. The default is
+                    False.
+                string[] PropertyList - If specified, the members of the array
+                    define one or more Property names. Each returned Object
+                    will not include elements for any properties missing from
+                    this list. If the PropertyList input parameter is an empty
+                    array this signifies that no Properties are included in 
+                    each returned Object. If the PropertyList input parameter
+                    is None (the default) this specifies that all Properties
+                    (subject to the conditions expressed by the other 
+                     parameters) are included in each returned Object.
+                function Handler - If this parameter is specified, it must be
+                    a reference to a callable object. This callable object will
+                    be called with each instance that would normally be
+                    returned.
+        Returns:
+            None if the Handler argument was specified (because all the
+            instances are given to the Handler). Otherwise a list
+            of pywbem.CIMInstance objects.
+
+
+    AssociatorNames(pywbem.CIMInstanceName ObjectName,
+        **kwargs) -> pywbem.CIMInstanceName[] or None
+
+        Enumerate the names of CIM Instances that are associated to a
+        particular source CIM Object.
+
+        Parameters:
+            pywbem.CIMInstanceName ObjectName - Refers to the target CIM
+                instance. Names of objects associated to this object (using
+                criteria given with the other parameters) are returned. The
+                namespace for the operation will be determined by the namespace
+                attribute of this parameter.
+            kwargs - Recognized keyword arguments
+                string AssocClass - If specified, MUST be a valid CIM
+                    Association class name. It acts as a filter on the returned
+                    set of object names by mandating that each returned object
+                    name will refer to an object that is associated to the
+                    source Object via an Instance of this association class or
+                    one of its subclasses.
+                string ResultClass - If specified, MUST be a valid CIM class
+                    name. It acts as a filter on the returned set of object
+                    names by mandating that each returned name must refer to
+                    an object of this class (or one of its subclasses).
+                string Role - If specified, MUST be a valid property name. It
+                    acts as a filter on the returned set of object names by
+                    mandating that each returned name must refer to an object
+                    the is associated to the source object via an association
+                    in which the source object plays the specified role (i.e.
+                    the name of the property in the association class that
+                    refers to the source object MUST match the value of this
+                    parameter).
+                string ResultRole - If specified, MUST be a valid property
+                    name. It acts as a filter on the returned set of object
+                    names by mandating that each returned name must refer to
+                    an object associated to the source object via an
+                    association in which the returned object name refers to an
+                    object that plays the specified role (i.e. the name of the
+                    property in the association class that refers to the returned
+                    object name MUST match the value of this parameter). 
+                function Handler - If this parameter is specified, it must be
+                    a reference to a callable object. This callable object will
+                    be called with each instance name that would normally be
+                    returned.
+        Returns:
+            None if the Handler argument was specified (because all the
+            instance names are given to the Handler). Otherwise a list
+            of pywbem.CIMInstanceName objects.
+        
+
+    References(pywbem.CIMInstanceName ObjectName,
+        **kwargs) -> pywbem.CIMInstance[] or None
+
+        Enumerate the association objects that refer to a particular target CIM
+        Object.
+
+        Parameters:
+            pywbem.CIMInstanceName ObjectName - Refers to the target CIM
+                instance. Objects that represent associations to this object
+                (using criteria given with the other parameters) are returned.
+                The namespace for the operation will be determined by the
+                namespace attribute of this parameter.
+            kwargs - Recognized keyword arguments
+                string ResultClass - If not None, MUST be a valid CIM class
+                    name. It acts as a filter on the returned set of objects by
+                    mandating that each returned object MUST be an instance of
+                    this Class (or one of its subclasses).
+                string Role - if not None, MUST be a valid property name. It
+                    acts as a filter on the returned set of objects by
+                    mandating that each returned objects MUST refer to the
+                    target object via a property whose name matches the value
+                    of this parameter.
+                bool IncludeQualifiers - If True, then all qualifiers for each
+                    object (including Qualifiers on the Object and on any
+                    returned Properties) will be included in the response. If
+                    False no qualifiers will be present in the returned
+                    objects. The default is True.
+                bool IncludeClassOrigin - If True, then the CLASSORIGIN
+                    attribute will be present on all appropriate elements in
+                    each returned Object. If False, no CLASSORIGIN attributes
+                    will be present in the returned Objects. The default is
+                    False.
+                string[] PropertyList - If specified, the members of the array
+                    define one or more Property names. Each returned Object
+                    will not include elements for any properties missing from
+                    this list. If the PropertyList input parameter is an empty
+                    array this signifies that no Properties are included in 
+                    each returned Object. If the PropertyList input parameter
+                    is None (the default) this specifies that all Properties
+                    (subject to the conditions expressed by the other 
+                     parameters) are included in each returned Object.
+                function Handler - If this parameter is specified, it must be
+                    a reference to a callable object. This callable object will
+                    be called with each instance that would normally be
+                    returned.
+        Returns:
+            None if the Handler argument was specified (because all the
+            instances are given to the Handler). Otherwise a list
+            of pywbem.CIMInstance objects.
+
+
+    ReferenceNames(pywbem.CIMInstanceName ObjectName,
+        **kwargs) -> pywbem.CIMInstanceName[] or None
+
+        Enumerate the names of association objects that refer to a particular
+        target CIM instance.
+
+        Parameters:
+            pywbem.CIMInstanceName ObjectName - Refers to the target CIM
+                instance. The names of objects that represent associations to
+                this object (using criteria given with the other parameters)
+                are returned. The namespace for the operation will be
+                determined by the namespace attribute of this parameter.
+            kwargs - Recognized keyword arguments
+                string ResultClass - If not None, MUST be a valid CIM class
+                    name. It acts as a filter on the returned set of object
+                    names by mandating that each returned names MUST refer to
+                    an instance of this Class (or one of its subclasses).
+                string Role - if not None, MUST be a valid property name. It
+                    acts as a filter on the returned set of object names by
+                    mandating that each returned object name must refer to
+                    an object that refers to the target object via a property
+                    whose name matches the value of this parameter.
+                function Handler - If this parameter is specified, it must be
+                    a reference to a callable object. This callable object will
+                    be called with each instance name that would normally be
+                    returned.
+        Returns:
+            None if the Handler argument was specified (because all the
+            instance names are given to the Handler). Otherwise a list
+            of pywbem.CIMInstanceName objects.
+
+
+    export_indication(pywbem.CIMInstance indication_instance,
+        namespace=None) -> None
+
+        Request the CIMOM to export a given instance of an indication.
+
+        Parameters:
+            pywbem.CIMInstance indication_instance - The indication instance
+                the caller wants delivered to any possible subscribers.
+            string namespace - The namespace to perform the operation in. The
+                default value for this parameter is None. If None is specified,
+                the default namespace for the CIMOM handle will be used if
+                previously set. This will be considered the namespace the
+                indication came from.
+        Returns:
+            None
+
+Logger
+
+    Logger objects are retrieved from the ProviderEnvironment passed to the
+    provider from the CIMOM. Logger objects allow the provider to log messages
+    at various logging levels through the CIMOM's logging mechanism.
+
+Methods
+
+    log_debug(string msg) -> None
+
+        Log the given message at the debug level to the CIMOM's log.
+
+    log_info(string msg) -> None
+
+        Log the given message at the info level to the CIMOM's log.
+
+    log_error(string msg) -> None
+
+        Log the given message at the error level to the CIMOM's log.
+
+    log_fatal_error(string msg) -> None
+
+        Log the given message at the fatal error level to the CIMOM's log.
+
+
+InstanceResultHandler
+
+    InstanceResultHandler objects are passed to providers on calls that are
+    expected to return a set of instances. They are the only means a provider
+    has to return instances in these types of calls. Each instance that is
+    returned by the provider is given to the InstanceResultHandler. The
+    provider has the option of calling the 'handle' method with the instance
+    to return or just calling the object directly since it is a callable object
+    that expects a pywbem.CIMInstance object. It is very important to note that
+    the provider should NEVER save a reference to an InstanceResultHandler,
+    because it is only valid for a single client request.
+
+Methods
+
+        handle(pywbem.CIMInstance instance_to_return) -> None
+
+            Return an instance to the CIMOM on a call the CIMOM has made to the
+            provider. 
+    
+        Parameters:
+            pywbem.CIMInstance instance_to_return - The instance the provider
+                wants to return to the CIMOM.
+        Returns:
+            None
+
+
+ObjectPathResultHandler
+
+    ObjectPathResultHandler objects are passed to providers on calls that are
+    expected to return a set of instances names. They are the only means a
+    provider has to return instance names in these types of calls. Each
+    instance name that is returned by the provider is given to the
+    ObjectPathResultHandler. The provider has the option of calling the
+    'handle' method with the instance name to return or just calling the object
+    directly since it is a callable object that expects a
+    pywbem.CIMInstanceName object. It is very important to note that
+    the provider should NEVER save a reference to an ObjectPathResultHandler,
+    because it is only valid for a single client request.
+
+Methods
+
+        handle(pywbem.CIMInstanceName instance_name_to_return) -> None
+
+            Return an instance name to the CIMOM on a call the CIMOM has made
+            to the provider. 
+    
+        Parameters:
+            pywbem.CIMInstanceName instance_name_to_return - The instance name
+                the provider wants to return to the CIMOM.
+        Returns:
+            None
+

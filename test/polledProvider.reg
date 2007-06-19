@@ -1,0 +1,12 @@
+
+#pragma namespace("Interop")
+
+instance of OpenWBEM_PyProviderRegistration
+{
+	InstanceID = "MyPolledProviderInstanceID";
+	NamespaceNames = {"root/cimv2"};
+//	ClassName = "N/A";
+	ProviderTypes = {8};	// Polled
+	ModulePath = "/usr/lib/openwbem/pythonproviders/polledProvider.py";
+};
+

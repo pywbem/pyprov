@@ -1,0 +1,82 @@
+
+// Provider registration for Py_LinuxDirectoryContainsFile
+instance of OpenWBEM_PyProviderRegistration
+{
+        InstanceID = "Py:Py_LinuxDirectoryContainsFile:01"; 
+        NamespaceNames = {"root/cimv2"}; 
+        ClassName = "Py_LinuxDirectoryContainsFile"; 
+        ProviderTypes = {1,3};  // Instance, Associator
+        ModulePath = "/usr/lib/pycim/LogicalFile.py";
+}; 
+
+// Provider registration for Py_LinuxFileIdentity
+instance of OpenWBEM_PyProviderRegistration
+{
+        InstanceID = "Py:Py_LinuxFileIdentity:01"; 
+        NamespaceNames = {"root/cimv2"}; 
+        ClassName = "Py_LinuxFileIdentity"; 
+        ProviderTypes = {1,3};  // Instance, Associator
+        ModulePath = "/usr/lib/pycim/LogicalFile.py";
+}; 
+
+// Provider registration for Py_LinuxFile
+instance of OpenWBEM_PyProviderRegistration
+{
+        InstanceID = "Py:Py_LinuxFile:01"; 
+        NamespaceNames = {"root/cimv2"}; 
+        ClassName = "Py_LinuxFile"; 
+        ProviderTypes = {1};  // Instance
+        ModulePath = "/usr/lib/pycim/LogicalFile.py";
+}; 
+
+// Provider registration for Py_LinuxDataFile
+instance of OpenWBEM_PyProviderRegistration
+{
+        InstanceID = "Py:Py_LinuxDataFile:01"; 
+        NamespaceNames = {"root/cimv2"}; 
+        ClassName = "Py_LinuxDataFile"; 
+        ProviderTypes = {1,6};  // Instance, Method
+        ModulePath = "/usr/lib/pycim/LogicalFile.py";
+}; 
+
+// Provider registration for Py_LinuxDeviceFile
+instance of OpenWBEM_PyProviderRegistration
+{
+        InstanceID = "Py:Py_LinuxDeviceFile:01"; 
+        NamespaceNames = {"root/cimv2"}; 
+        ClassName = "Py_LinuxDeviceFile"; 
+        ProviderTypes = {1};  // Instance
+        ModulePath = "/usr/lib/pycim/LogicalFile.py";
+}; 
+
+// Provider registration for Py_LinuxDirectory
+instance of OpenWBEM_PyProviderRegistration
+{
+        InstanceID = "Py:Py_LinuxDirectory:01"; 
+        NamespaceNames = {"root/cimv2"}; 
+        ClassName = "Py_LinuxDirectory"; 
+        ProviderTypes = {1};  // Instance
+        ModulePath = "/usr/lib/pycim/LogicalFile.py";
+}; 
+
+// Provider registration for Py_LinuxFIFOPipeFile
+instance of OpenWBEM_PyProviderRegistration
+{
+        InstanceID = "Py:Py_LinuxFIFOPipeFile:01"; 
+        NamespaceNames = {"root/cimv2"}; 
+        ClassName = "Py_LinuxFIFOPipeFile"; 
+        ProviderTypes = {1};  // Instance
+        ModulePath = "/usr/lib/pycim/LogicalFile.py";
+}; 
+
+// Provider registration for Py_LinuxSymbolicLink
+instance of OpenWBEM_PyProviderRegistration
+{
+        InstanceID = "Py:Py_LinuxSymbolicLink:01"; 
+        NamespaceNames = {"root/cimv2"}; 
+        ClassName = "Py_LinuxSymbolicLink"; 
+        ProviderTypes = {1};  // Instance
+        ModulePath = "/usr/lib/pycim/LogicalFile.py";
+}; 
+
+

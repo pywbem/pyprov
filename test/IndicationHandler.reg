@@ -1,0 +1,12 @@
+#pragma namespace("Interop")
+
+instance of OpenWBEM_PyProviderRegistration
+{
+	InstanceID = "MyIndicationHandlerProviderInstanceID";
+	NamespaceNames = {"root/cimv2"};
+//	ClassName = "PyIndFoo";
+	ProviderTypes = {7};	// Indication Handler
+	IndicationExportHandlerClassNames = {"Py_IndicationHandler"};
+	ModulePath = "/home/jcarey/proj/las/pyprovifc/test/IndicationHandler.py";
+	Description = "This is a test indication handler provider";
+};

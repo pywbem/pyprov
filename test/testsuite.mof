@@ -1,0 +1,113 @@
+
+class Py_LotsOfDataTypes : CIM_EnabledLogicalElement
+{
+  [Key]
+  string Key1; 
+  [Key]
+  string Key2;
+
+  string p_string; 
+  string p_string_a[];
+  sint32 p_sint32; 
+  sint32 p_sint32_a[]; 
+  uint32 p_uint16; 
+  uint32 p_uint16_a[]; 
+  datetime p_datetime; 
+  datetime p_datetime_a[];
+  boolean p_bool; 
+  boolean p_bool_a[]; 
+  real32 p_real32; 
+  real32 p_real32_a[]; 
+  real64 p_real64; 
+  real64 p_real64_a[]; 
+  [EmbeddedInstance("PyFoo")] string embedded; 
+  [EmbeddedInstance("PyFoo")] string embedded_a[]; 
+  string MethodTest(
+                [in, required] string s,
+                [in] uint8 uint8array[],
+                [in(false), out] boolean b,
+                [in(false), out] real64 r64,
+                [in, out] sint16 io16,
+                [in(false), out] string msg,
+                [in, out] CIM_System REF paths[],
+                [in, out, EmbeddedInstance("PyFoo")] string embedded_a[],
+                [in, out, EmbeddedInstance("PyFoo")] string embedded,
+                [in, out] datetime nullParam);
+
+}; 
+
+
+INSTANCE OF Py_LotsOfDataTypes
+{
+  Status="Starting";
+  RequestedState=9;
+  HealthState=5;
+  p_real64_a={-234.567,3.14159};
+  StatusDescriptions={"Been Starting for a while now"};
+  InstallDate="20061017190801.000000-360";
+  EnabledDefault=2;
+  Key2="k2_1";
+  Key1="k1_1";
+  p_datetime="20061017190801.000000-360";
+  TimeOfLastStateChange="20061117190901.000000-360";
+  p_bool=true;
+  p_string_a={"Array of string props","another array element","and another"};
+  p_real64=987897.123;
+  ElementName="ElementName";
+  p_real32_a={1234.5677,910111.12};
+  OtherEnabledState="Some Other State";
+  p_string="Some String Prop";
+  Description="This is some Description";
+  p_bool_a={true};
+  Name="Some Name";
+  p_sint32_a={-234,467};
+  Caption="This is a caption";
+  OperationalStatus={1,3};
+  p_real32=123.456;
+  p_datetime_a={"20061017190801.000000-360","20061117190901.000000-360"};
+  p_sint32=-876;
+  p_uint16=876;
+  p_uint16_a={876, 314159};
+  EnabledState=2;
+};
+
+INSTANCE OF Py_LotsOfDataTypes
+{
+  Status="Stressed";
+  RequestedState=3;
+  p_datetime="20061017190501.000000-360";
+  p_real64_a={-42.47,3.14};
+  p_real64=987897.1234;
+  InstallDate="20061017190901.000000-360";
+  EnabledDefault=3;
+  Key2="k2_2";
+  Key1="k1_2";
+  HealthState=20;
+  TimeOfLastStateChange="20061117190701.000000-360";
+  OtherEnabledState="Some Other State for two";
+  p_uint16_a={876,314159,42};
+  p_string_a={"Array of string properties","another array element","and another","fourth here"};
+  StatusDescriptions={"Been Starting for a while now","another string here"};
+  ElementName="ElementName 2";
+  p_real32_a={1234.5677,910111.12};
+  p_uint16=8763;
+  p_bool=false;
+  p_string="Second String ";
+  Description="This is some Description";
+  p_bool_a={false, true, false};
+  Name="Some Name";
+  p_sint32_a={-24,46};
+  Caption="This is the second caption";
+  OperationalStatus={1,3,4};
+  p_real32=123.456;
+  p_datetime_a={"20061017190501.000000-360","20061117190401.000000-360"};
+  p_sint32=-87;
+  EnabledState=1;
+  embedded="INSTANCE OF PyFoo { FooValue=3; FooKey=\"Key3\"; };"; 
+  embedded_a={"INSTANCE OF PyFoo { FooValue=3; FooKey=\"Key3\"; };", 
+              "INSTANCE OF PyFoo { FooValue=2; FooKey=\"Key2\"; };" }; 
+
+
+};
+
+

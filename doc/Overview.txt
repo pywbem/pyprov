@@ -1,0 +1,213 @@
+OpenWBEM Python Provider Interface
+
+
+1.0 Abstract
+
+The OpenWBEM Python Provider Interface (PyProvIFC) is a provider interface 
+loaded by the OpenWBEM CIMOM that supports CIM providers written in the
+python programming language. PyProvIFC is written in C++ and provides an
+embedded python environment that python CIM providers run within. PyProvIFC
+also provides some python extensions that are available to python providers
+when they are loaded into the environment. These extensions allow the
+provider to interface with the CIMOM's environment in a manner that is
+natural to the python programmer. This provider environment was somewhat
+patterned after the pywbem CIM client API (http://pywbem.sourceforge.net).
+The most of the objects used by a python provider are from the pywbem python
+module.  PyProvIFC supports all provider types available through the OpenWBEM
+CIMOM.
+
+
+2.0 Basic Overview
+
+The OpenWBEM CIMOM has the capability of loading multiple provider interfaces.
+These provider interfaces are shared libraries written in C++ that provide a
+well known interface the CIMOM uses to load providers specific to the
+interface. PyProvIFC is one of these provider interfaces. Without PyProvIFC,
+the OpenWBEM CIMOM knows nothing about python providers, and will not attempt
+to load them.
+When PyProvIFC is loaded by the CIMOM it does the following:
+
+- Initialize Python 
+	This will initialize the python interpreter and set it up for threading.
+
+- Load the pywbem module
+	Since most of the objects passes between PyProvIFC and the python provider
+	of from the pywbem module, this module is loaded right up front and kept
+	loaded.
+
+- Initialize its own python extension module (pyprovider)
+	These are extension objects that are available to the python providers.
+
+- Load the cimprovider module
+	This module is really the only python module PyProvIFC communicates with
+	directly. It is somewhat of a proxy that provides a simpler interface for
+	python providers.
+
+- Process the provider registration information
+	All python provider registration information is stored in the Interop
+	namespace of the CIMOM as OpenWBEM_PyProviderRegistration instances.
+	PyProvIFC will tell the CIMOM about all instance, method, associator
+	and indication providers (described below) it knows about. The CIMOM
+	will then ask for all polled and indication handler providers (described
+	below).
+
+- Wait for provider requests from the CIMOM
+
+Most providers are not loaded until a request is made for their services. When
+this happens, PyProvIFC will read the provider registration information for
+the provider to determine where the python file is located and what type of
+provider it is. PyProvIFC loads the provider module by creating an instance
+of the cimprovider.ProviderProxy class using the python filename from the
+provider registration. All subsequent call to the provider will be routed
+through the instance of cimprovider.ProviderProxy.
+
+
+3.0 Provider Types
+PyProvIFC supports all provider types the OpenWBEM CIMOM recognizes.
+These provider types are:
+
+	- Instance
+	- Associator
+	- Method
+	- Indication
+	- Indication Handler
+	- Polled
+
+The provider types are described the following sections.
+
+
+3.1 Instance Provider
+
+Instance providers provide the implementation for instance related intrinsic
+methods for the CIM class they are registered for. This means that an instance
+provider provides the inherent behavior clients expect from a CIM class and
+its instances. Following is the list of methods an instance provider is
+expected to service:
+
+	- EnumerateInstanceNames: Return references to all instances of the CIM
+		class the provider is instrumenting
+
+	- EnumerateInstances: Return all instances of the CIM class the provider
+		is instrumenting
+
+	- GetInstance: Return the instance corresponding to a given reference
+		of the CIM class the provider is instrumenting
+
+	- CreateInstance: Create an instance of the CIM class the provider is
+		instrumenting. Note: the provider can throw an exception if this is
+		not supported.
+
+	- DeleteInstance: Delete an instance of the CIM class the provider is
+		instrumenting. Note: The provider can throw an exception if this is
+		not supported.
+
+	- ModifyInstance: Modify an instance of the CIM class the provider is
+		instrumenting. Note: The provider can throw an exception if this
+		is not supported.
+
+
+3.2 Associator Provider
+
+Associator providers provide the implementation for association related
+intrinsic methods for the association class they are registered for.
+Basically, associations are instances of a class that represent a
+relationship between 2 instances. The Associator provider is
+responsible for producing objects using a client supplied relationship,
+if there are objects that have the relationship. These types of providers
+can appear confusing at first glance, but the concept is quite simple
+after you write one ;-) Following is the list of methods an associator
+provider is expected to service:
+
+	- Associators: Return all objects related to a given object using
+		given relationship criteria.
+
+	- AssociatorNames: Return references to all objects related to a given
+		object using given relationship criteria.
+
+	- References: Return all instances of a given association class that
+		represent a relationship to a given object.
+
+	- ReferenceNames: Return references to all instances of a given
+		association class that represent a relationship to a given object.
+
+
+3.3 Method Provider
+
+Method providers provide the implementation for extrinsic methods. An extrinsic
+method is a method that has been declared in a CIM class definition. An example
+of this could be the StartService method on a sub-class of CIM_Service.
+
+3.4 Indication Provider
+
+Indication providers generates CIM indications. Indications are essentially
+event notifications (indications that something has happened). In order for
+a client to receive indications, it must first create a subscription (there
+is a little bit more to it than this) for a specific set of indications.
+Clients that do this are typically referred to as CIM Listeners.
+
+The CIMOM will take care of delivering CIM indications to the client.
+Indication providers only need to worry about generating them.
+There are actually 2 different types of indication providers:
+
+	- LifeCycle: The provider generates indications when something happens
+	  to instances of a specific class, such as creation, modication and
+	  deletion.
+
+	- Alert: The provider generates indications when something of possible
+	  interest has taken place. An example of this could be generating an
+	  indication when a specific service has been stopped. Alert indications
+	  are basically notifications of anything that shouldn't be categorized
+	  as a LifCycle indication.
+
+Indication providers are notified when subscriptions are created that match
+the type of indication(s) they are registered to generated. They are also
+notified when the last subscription that matches what they generate is
+deleted. This type of behavior allows the indication provider to go into
+a dormant state if it chooses when there are not subscribers.
+
+
+3.5 Indication Handler Provider
+
+Indication handlers are essentially a provider version of a CIM Listener
+(see Indication provider above). They are subscribed to receive a specific
+set of indications. When an indication gets generated through the CIMOM,
+Indication Handlers will received it, if their subscription includes the
+indication type.
+
+
+3.6 Polled Provider
+
+Polled providers are somewhat of a service that runs within the CIMOM. They are
+not responsible for servicing any type of client request. They are called
+periodically by the CIMOM in order to do provider specific things. Polled
+providers can inform the CIMOM to never call them (with the exception of
+shutdown) and just start up a thread to handle the provider specific
+functionality.
+
+
+4.0.0 Provider Registration
+
+In order for a python provider to be recognized by PyProvIFC, it must be
+registered. This is done by creating an instance of the
+OpenWBEM_PyProviderRegistration class in the namespace the OpenWBEM CIMOM
+considers the Interop namespace (typically 'Interop' on SuSE Linux).
+
+Normally what a provider would do is provide a MOF file that contains its
+provider registration instance. The MOF would be imported into the CIMOM
+when the provider is installed on the machine. Usually when any provider
+is installed, some type of MOF import takes place in order to extend the
+schema of the CIMOM, and the provider registration fits well within this
+process.
+
+The provider registration documentation can be consulted for more detail
+on this subject.
+
+
+5.0.0 Python Extensions
+
+The python extensions available to python providers are all contained in the
+pyprovider module. These extensions are provided by PyProvIFC to allow python
+providers to interface/communicate with PyProvIFC. These extensions are fully
+described in the the pyprovider documentation.
+
+

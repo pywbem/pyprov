@@ -1,0 +1,12 @@
+
+#pragma namespace("Interop")
+
+instance of OpenWBEM_PyProviderRegistration
+{
+	InstanceID = "MyLifeCycleProviderInstanceID";
+	NamespaceNames = {"root/cimv2"};
+	ClassName = "PyIndFoo";
+	ProviderTypes = {1,4,8};	// Instance, LifeCycle Indication, Polled
+	ModulePath = "/home/jcarey/proj/las/pyprovifc/test/LifeCycleIndication.py";
+};
+

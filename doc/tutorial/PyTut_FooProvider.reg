@@ -1,0 +1,29 @@
+// Provider registration for PyTut_Foo
+
+instance of OpenWBEM_PyProviderRegistration
+{
+	InstanceID = "PyTut_Foo_Provider_InstanceID";
+	NamespaceNames = {"root/cimv2"}; 
+	ClassName = "PyTut_Foo"; 
+	ProviderTypes = {1,6};  // Instance, Method
+	ModulePath = "/home/jcarey/proj/las/pyprovifc/test/PyTut_FooProvider.py";
+}; 
+
+instance of OpenWBEM_PyProviderRegistration
+{
+	InstanceID = "PyTut_FooComponent_Provider_InstanceID";
+	NamespaceNames = {"root/cimv2"}; 
+	ClassName = "PyTut_FooComponent"; 
+	ProviderTypes = {1};  // Instance
+	ModulePath = "/home/jcarey/proj/las/pyprovifc/test/PyTut_FooProvider.py";
+}; 
+
+// Provider registration for PyTut_FooAssociation
+instance of OpenWBEM_PyProviderRegistration
+{
+	InstanceID = "PyTut_FooAssociation_Provider_InstanceID";
+	NamespaceNames = {"root/cimv2"}; 
+	ClassName = "PyTut_FooAssociation"; 
+	ProviderTypes = {1,3};  // Instance, Associator
+	ModulePath = "/home/jcarey/proj/las/pyprovifc/test/PyTut_FooProvider.py";
+}; 

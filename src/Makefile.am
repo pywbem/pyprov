@@ -1,0 +1,2 @@
+
+SUBDIRS = pycxx ifc pyproxy

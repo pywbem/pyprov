@@ -1,0 +1,1390 @@
+Contents:
+
+1.0 Introduction
+2.0 The Tutorial Object Model
+3.0 Generating The Provider Stub Code
+    3.1 About the Generated Code
+4.0 PyTut_Foo Provider Implementation
+    4.1 enum_instances Implementation
+    4.2 get_instance Implementation
+    4.3 set_instance Implementation
+    4.4 delete_instance Implementation
+    4.5 PyTut_Foo Method Provider Implementation
+    4.6 The get_providers Function
+5.0 PyTut_Foo Provider Registration 
+6.0 PyTut_FooComponent Implementation
+7.0 PyTut_FooAssociation Implementation
+    7.1 PyTut_FooAssociationProvider Code Generation and Setup
+    7.2 PyTut_FooAssociationProvider references Implementation
+    7.3 PyTut_FooAssociationProvider enum_instances Implementation
+    7.4 PyTut_FooAssociationProvider get_instance Implementation
+8.0 Conclusion
+
+-------------------------------------------------------------------------------
+1.0 Introduction
+
+This document is an attempt to introduce the reader to CIM
+instrumentation using the Python provider interface called pycim.
+pycim supports the following provider types:
+
+    - Instance
+    - Method
+    - Associator
+    - Life Cycle Indication
+    - Alert Indication
+    - Indication Handler
+    - Polled
+
+The most common types of providers that are written are the first three:
+Instance, Method and Associator. These will be the provider types covered
+in this document. Documentation for the other provider types can be found
+within the pycim project.
+
+Before going any further, lets address the process of developing CIM providers.
+Typically before writing any type of CIM instrumentation, one usually endeavors
+in a bit of CIM modeling. This usually involves identifying the various objects
+that make up the systems management domain you are addressing and determining 
+how these objects relate to the Common Information Model(CIM) maintained by the
+the DMTF (http://www.dmtf.org). The CIM modeling discussion can be a lengthy
+one, so we will do our best to avoid it. Just keep in mind that if you are 
+going to do real CIM instrumentation, CIM modeling is very important.
+
+All of the source code for this tutorial can be found in the 
+./doc/tutorial directory of the source distribution.
+
+
+-------------------------------------------------------------------------------
+2.0 The Tutorial Object Model
+
+Even though we are going to ignore CIM, we still need a model so the example
+providers have something to instrument. The model we are going to work with
+will be very simple. There will be 2 classes related to one another through
+one association:
+
+    |-----------|1                              *|--------------------|
+    | PyTut_Foo |----[ PyTut_FooAssocation ]---->| PyTut_FooComponent |
+    |-----------|                                |--------------------|
+
+PyTut_Foo and PyTut_FooComponent will be very simple classes that have
+nothing more that a key property with a value. We'll put a bogus method on
+PyTut_Foo just to give us an excuse to do a method provider.
+PyTut_FooAssociation will represent a relationship (make one up) between one
+PyTut_Foo object and multiple PyTut_FooComponent objects, so it will be an 
+association class. Here is a slightly stripped version of the 
+./doc/tutorial/PyTutorial.mof MOF file from the source distribution:
+
+// PyTutorial.mof
+class PyTut_Foo
+{
+    [Key, Description("The key for PyTut_Foo")]
+    string FooKey;
+
+    [Description("The value for PyTut_Foo")]
+    sint32 FooValue;
+
+    [Description("Our bogus method")]
+    string FooMethod(
+        [IN(true), OUT(false)]
+        string s,
+
+        [IN(true), OUT(true)]
+        sint32 i, 
+        
+        [IN(false), OUT(true)]
+        string sa[]);
+};
+
+class PyTut_FooComponent
+{
+    [Key, Description("The key for PyTut_FooComponent")]
+    string FooCompKey;
+
+    [Description("The value for PyTut_FooComponent")]
+    string FooCompValue;
+};
+
+[Association, Description("Relationship between a PyTut_Foo and a "
+    "PyTut_FooComponent")]
+class PyTut_FooAssociation
+{
+        [Key, Description("The PyTut_Foo")]
+        PyTut_Foo REF TheFoo;
+
+        [Key, Description("The PyTut_FooComponent")]
+        PyTut_FooComponent REF TheFooComp;
+};
+
+Now that we have a MOF file, we need to import this into the CIMOM in order
+for the CIMOM to know about the classes we will be instrumenting. We do that
+with the following command:
+
+    > owmofc -u http://localhost/root/cimv2 PyTutorial.mof
+
+With the -u switch we have informed the MOF compiler to import the MOF into the
+root/cimv2 namespace of the CIMOM running on the localhost.
+
+
+-------------------------------------------------------------------------------
+3.0 Generating The Provider Stub Code
+
+Now that we have imported the MOF and the CIMOM knows something about our
+classes, we can use pycim in combination with pywbem to generated the Python
+code we can use as a starting point for our providers. We will only show this
+process for the PyTut_Foo class. You will use this same process to generate
+provider code for the PyTut_FooComponent and PyTut_FooAssociation classes.
+
+Start the Python interpreter from the command line:
+
+> python
+
+Since we are going to need functionality from pywbem and pycim, import both of
+these modules. Type the following at the Python command line:
+
+>>> import pywbem, pycim
+
+Assuming you have a CIMOM running on the local machine, establish a connection
+with the CIMOM with the following command:
+
+>>> con = pywbem.WBEMConnection('http://localhost', ('username', 'password'))
+
+You will obviously need to provide a real username and password in the command
+given above.
+Now using the connection established above, retrieve the CIM class object for
+PyTut_Foo from the root/cimv2 namespace with the following command:
+
+>>> cc = con.GetClass('PyTut_Foo', 'root/cimv2') 
+
+We now have all the information we need about the PyTut_Foo class stored in the
+cc variable. We can now as pycim to generated the code for use. Do that with 
+the following command:
+
+>>> python_code, registration_mof = pycim.codegen(cc)
+
+That last command did some very interesting stuff for us. Just for fun, type
+the following at the command line:
+
+>>> print python_code
+>>> print registration_mof
+
+If everything has worked up to this point, you should be slightly impressed.
+The python_code variable should contain a stubbed out version of our provider,
+and the registration_mof should contain the MOF for our provider registration.
+These will both need modification. For now, lets get these written to files so
+we can start working with them. You can do that with the following commands:
+
+>>> codefile = open('PyTut_FooProvider.py', 'w')
+>>> codefile.write(python_code)
+>>> codefile.close()
+>>> regfile = open('PyTut_FooProvider.reg', 'w')
+>>> regfile.write(mof)
+>>> regfile.close()
+
+We now have the code we need to get started. You can get out of the interactive
+Python interpreter.
+
+
+-------------------------------------------------------------------------------
+3.1 About the Generated Code
+
+At this point you might want to take a look at the PyTut_FooProvider.py file we saved
+in the previous section. Since the PuTut_Foo class had a method defined, the
+Python code that was generated is for an Instance and Method provider.
+
+Another interesting thing pycim.codegen has done for us, is provide educational
+Python docs for every stubbed out method. These Python docs describe the
+various parameters that are passed to each method and a list of possible
+errors. These "Possible Errors" are actually exceptions than can be raised from
+the methods and NOT the return values.
+
+One of the first things we see is the class declaration PyTut_FooProvider.
+Notice that PyTut_FooProvider is derived from the CIMProvider class which
+comes from the pycim module. All Instance, Method and Associator providers must
+be derived from this base class.
+
+In order to support the required functionality of an Instance provider the
+following methods must be implemented in PyTut_FooProvider:
+
+    - enum_instances
+    - get_instance
+    - set_instance
+    - delete_instance
+
+In order to support the required functionality of a Method provider, a method
+with the name "cim_method_<method name>" must be implemented. Recall that the
+PyTut_Foo class had a method by the name of "FooMethod". This means that
+"cim_method_foomethod" must be implemented in the PyTut_FooProvider Python
+class.
+
+
+-------------------------------------------------------------------------------
+4.0 PyTut_Foo Provider Implementation
+
+Just for the sake of simplicity, our provider will be storing the instance
+related data in two Python dictionaries. Both of the classes PyTut_Foo and 
+PyTut_FooComponent have a key and value property. At the top of the
+PyTut_FooProvider.py file place the following:
+
+    _FooInsts = {
+        'Key1': pywbem.Sint32(1),
+        'Key2': pywbem.Sint32(2),
+        'Key3': pywbem.Sint32(3)
+    }
+    _FooComps = {
+        'TheKey1':'Key1',
+        'TheKey2':'Key2',
+        'TheKey3':'Key3',
+        'TheKey4':'Key1',
+        'TheKey5':'Key1'
+    }
+
+The _FooInsts dictionary will be used to store instance data for the PyTut_Foo
+class and the _FooComps dictionary will be used to store instance data for the
+PyTut_FooComponent class. This will obviously be a completely useless provider,
+but for the purpose of learning, it should be fine.
+
+-------------------------------------------------------------------------------
+4.1 enum_instances Implementation
+
+The job of the enum_instances method is to return all of the instances or
+instance names of a CIM class. As all other methods that return multiple objects
+within the provider, it is a generator method. Following is a description of
+the parameter list for enum_instances (excluding the self parameter):
+
+    env: A pycimmb.ProviderEnvironment object we can use to take advantage of
+        some of the services offered by the CIMOM, such as logging, context
+        information, etc. For documentation on pycimmb.ProviderEnvironment,
+        refer to the pycimmb documentation.
+
+    model: An instance of pywbem.CIMInstance that represents a model of all
+        instances that should be returned. The only properties that should
+        be filled in by the provider are already present in this object.
+        The model is basically a filter that has been set up by the CIMOM,
+        according to the client's request. This also removes the need to
+        create any instance of pywbem.CIMInstance. For documentation on 
+        pywbem.CIMInstance, refer to the pywbem documentation. We just need to
+        fill this object each time we yield. You'll see in just a moment...
+
+    cim_class: An instance of pywbem.CIMClass. This is the Python
+        representation of the class the provider is producing instances for.
+        In our case this should be a pywbem.CIMClass for PyTut_Foo. For
+        documentation on pywbem.CIMClass refer to the pywbem documentation.
+       
+    keys_only: A boolean value indicating whether or not we are just doing key
+        properties. This will be true if the CIMOM is only asking for instance
+        names. You could determine this through the model, but it is a bit
+        easier to just check this parameter. You will find that there are many
+        times in provider development that just retrieving the key information
+        for an instance if far less expensive (i.e. faster).
+
+So now that we know what the parameters are for, lets implement enum_instances:
+
+1.    def enum_instances(self,
+2.                       env,
+3.                       model,
+4.                       cim_class,
+5.                       keys_only):
+6.        logger = env.get_logger();
+7.        logger.log_debug("enum_instances for PyTut_Foo")
+8.        for k,v in _FooInsts.items():
+9.            if keys_only:
+10.                model['FooKey'] = k
+11.            else:
+12.                if 'FooKey' in model:
+13.                    model['FooKey'] = k
+14.                if 'FooValue' in model:
+15.                    model['FooValue'] = v
+16.            yield model
+
+Not much to it is there? On lines 6-7 we get the logger and print a trace
+message. On line 8 we start looping through the keys and values of the
+_FooInsts dictionary we defined earlier. On line 9-10 we check if keys_only is
+true. If it is, we set the value of the 'FooKey' property which is
+the only key for PyTut_Foo. On lines 11-15 we know that we are doing more
+that just the key properties, so we set the value of each property of the
+instance if the property is present within the model object. Since this is
+a generator method, on line 16 we yield the pywbem.CIMInstance (the model
+object). 
+
+
+-------------------------------------------------------------------------------
+4.2 get_instance Implementation
+
+The get_instance method is responsible for returning a single instance using
+the values of the key properties supplied through a model instance of the
+CIM class. With the exception of the keys_only argument of enum_instances, the
+parameter list is identical. If you skipped the enum_instances discussion
+above, you should refer to that, if you have questions on the parameter list.
+Following is our implementation of get_instance for the PyTut_Foo class:
+
+1.    def get_instance (self,
+2.                      env,
+3.                      model,
+4.                      cim_class):
+5.        logger = env.get_logger();
+6.        logger.log_debug("get_instance for PyTut_Foo")
+7.        try:
+8.            if 'FooValue' in model:
+9.                model['FooValue'] = _FooInsts[model['FooKey']]
+10.        except KeyError:
+11.            raise pywbem.CIMError(pywbem.CIM_ERR_NOT_FOUND)
+12.        return model
+
+Since we are storing all of our PyTut_Foo instance data in a Python dictionary,
+get_instance turns out to be quite simple. Other than the key, PyTut_Foo only
+has one property: 'FooValue'. On line 8 we check that the 'FooValue' is in the
+provided model instance. If it is, we set the FooValue property to the value we
+have for the FooKey in our _FooInsts dictionary. If the FooKey from the model
+instance is not in the _FooInsts dictionary, a KeyError exception will be
+raised. If KeyError is raised we will catch that on line 10 and raise a
+pywbem.CIMError(pywbem.CIM_ERR_NOT_FOUND) exception. The CIM_ERR_NOT_FOUND will
+be caught by the CIMOM and given to the client making the request. If the
+KeyError is not raised from line 9, we will set the FooValue property and
+return the instance on line 12.
+
+
+-------------------------------------------------------------------------------
+4.3 set_instance Implementation
+
+The set_instance method is responsible for adding new instances or modifying
+existing instances of a class. Following is a description of the parameter list
+for set_instance (excluding the self parameter):
+
+    env: A pycimmb.ProviderEnvironment object we can use to take advantage of
+        some of the services offered by the CIMOM, such as logging, context
+        information, etc. For documentation on pycimmb.ProviderEnvironment,
+        refer to the pycimmb documentation.
+
+    instance: If this is a modify operation, this will be a pywbem.CIMInstance
+        object that only contains the properties being modified on the
+        instance. If this is an add operation, this will be a
+        pywbem.CIMInstance that should contain all required properties for a
+        new instance. For documentation on pywbem.CIMInstance, refer to the
+        pywbem documentation.
+
+    previous_instance: If this is a modify operation, this will be a
+        pywbem.CIMInstance object that represents the full instance before the
+        modify was called. If this is an add operation, the parameter will be
+        None. For documentation on pywbem.CIMInstance, refer to the pywbem
+        documentation.
+
+    cim_class: An instance of pywbem.CIMClass. This is the Python
+        representation of the class the provider is instrumenting. In our case
+        this should be a pywbem.CIMClass for PyTut_Foo. For documentation on
+        pywbem.CIMClass refer to the pywbem documentation.
+       
+Since set_instance performs two functions, it will be slightly more lengthy
+than the methods we have instrumented so far. Here is our implementation:
+
+1.    def set_instance(self,
+2.                     env,
+3.                     instance,
+4.                     previous_instance,
+5.                     cim_class):
+6.        if not previous_instance:
+7.            if not 'FooKey' in instance \
+8.                    or not instance['FooKey']:
+9.                raise pywbem.CIMError(pywbem.CIM_ERR_INVALID_PARAMETER,
+10.                    "'FooKey' property is required")
+11.            if not 'FooValue' in instance:
+12.                raise pywbem.CIMError(pywbem.CIM_ERR_INVALID_PARAMETER,
+13.                    "'FooValue' property is required")
+14.            if instance['FooKey'] in _FooInsts:
+15.                raise pywbem.CIMError(pywbem.CIM_ERR_ALREADY_EXISTS)
+16.            _FooInsts[instance['FooKey']] = instance['FooValue']
+17.            return instance
+18.        if not 'FooKey' in previous_instance \
+19.                or not previous_instance['FooKey']:
+20.            raise pywbem.CIMError(pywbem.CIM_ERR_INVALID_PARAMETER,
+21.                "Unknown instance for modification")
+22.        if not previous_instance['FooKey'] in _FooInsts:
+23.            raise pywbem.CIMError(pywbem.CIM_ERR_NOT_FOUND)
+24.        if not 'FooValue' in instance:
+25.            return instance
+26.        _FooInsts[previous_instance['FooKey']] = instance['FooValue']
+27.        return instance
+
+The first thing we do in set_instance is check for an add operation. We do this
+on line 6 by checking the existence of the previous_instance parameter. If it
+is None, then this is an add operation. On lines 7-13 we check for the
+existence of the properties we deem required for an add operation. In this
+case, if they haven't given us a FooKey and FooValue we raise a
+pywbem.CIMError(CIM_ERR_INVALID_PARAMETER) exception. This exception will be
+given to the client that made the request. On lines 14-15 we make sure the
+FooKey they specified for this add is not already on file by checking the
+_FooInsts dictionary for the existence of the key. On lines 16-17 we add the
+new key and value to the _FooInsts dictionary and return the instance to
+complete the add operation.
+If execution arrives at line 18 we know this is a modify operation. On lines
+18-21 we make sure the FooKey property is present so we can identify the
+instance that needs to be modified. If it isn't, we raise a
+pywbem.CIMError(CIM_ERR_INVALID_PARAMETER) exception. On lines 22-23 we make
+sure the given 'FooKey' actually exists in the _FooInsts dictionary. If it
+doesn't, we raise a pywbem.CIMError(CIM_ERR_NOT_FOUND) exception so the client
+can know that we don't allow modifications to non-existent instances. On lines
+24-25 we make sure that the FooValue was given for the modification. If it
+wasn't, then there isn't anything set_instance needs to do in this case,
+because FooValue is the only property you can modify on a PyTut_Foo object.
+That is correct. Key properties are not allowed to be modified in CIM. We just
+return the instance without doing anything in this case. Finally on lines 26-27
+we modify the value in the _FooInsts dictionary for the given FooKey and return
+the instance.
+
+
+-------------------------------------------------------------------------------
+4.4 delete_instance Implementation
+
+The responsibility of the delete_instance method is to remove an instance of a
+class given an instance name. Following is a description of the parameter list
+for the delete_instance (excluding the self parameter):
+
+    env: A pycimmb.ProviderEnvironment object we can use to take advantage of
+        some of the services offered by the CIMOM, such as logging, context
+        information, etc. For documentation on pycimmb.ProviderEnvironment,
+        refer to the pycimmb documentation.
+
+    instance_name: A pywbem.CIMInstanceName that contains the key properties
+        that identify the instance to delete. The entire purpose of a
+        pywbem.CIMInstanceName is to uniquely identify an instance. It may
+        contain information about the host we are running on, the namespace
+        the instance resides in, The class name for the instance and the key
+        values. For more information on pywbem.CIMInstanceName refer to the
+        pywbem documentation.
+
+Here is our implementation of delete_instance for the PyTut_Foo class:
+
+1.    def delete_instance(self,
+2.                        env,
+3.                        instance_name):
+4.        try:
+5.            del _FooInsts[instance_name['FooKey']]
+6.        except KeyError:
+7.            raise pywbem.CIMError(pywbem.CIM_ERR_NOT_FOUND)
+
+Simple. Isn't that what we like? On line 5 we attempt to delete the value out
+of the _FooInsts dictionary that corresponds to the FooKey value in the 
+instance_name parameter. If 'FooKey' is not in the instance_name object or if
+the value of 'FooKey' is not in the _FooInsts dictionary, a KeyError exception
+will be raised. If this happens, we'll catch the KeyError exception on line 6
+and raise a pywbem.CIMError(pybem.CIM_ERR_NOT_FOUND) exception on line 7 that
+the client will receive, which will be a good indication that there is no need
+to delete this instance. If there is an entry in the _FooInsts dictionary the
+matches the FooKey value, it will be removed.
+
+Well, that wraps up the implementation of the PyTut_Foo Instance provider
+functionality. We are almost done with the instrumentation of the PyTut_Foo
+class. If you recall, we did define a method for PyTut_Foo, so we have to
+take care of that. That takes us into the realm of Method providers which
+we'll cover next.
+
+
+-------------------------------------------------------------------------------
+4.5 PyTut_Foo Method Provider Implementation
+
+In the pycim world, providers get called "Method providers" when they implement
+what is called an extrinsic method. Extrinsic methods can be thought of as
+a user defined function that is tied to a CIM class or an instance of a CIM
+class. A CIM based remote procedure call if you will. The method is part of the
+class definition (as we have seen), so the CIMOM knows what it looks like, but
+nothing else. If a provider is not registered to handle one of these types of
+methods, a client will get a CIM_ERR_NOT_SUPPORTED exception if it tries to
+invoke it. If a provider is registered for it, then the CIMOM will pass the
+request on to the provider with all the parameters packaged up nice and neat
+so they are easily dealt with. When the provider returns from this extrinsic
+method, the CIMOM will package up the return code and any output parameters,
+and give those back to the client.
+
+Given the fact that the CIMOM know so little about an extrinsic method, and
+they can be tied to a CIM class or an instance of a CIM class, the provider 
+must be the one that enforces this rule. For example, if you have a process
+provider that has a 'kill' method for a process object, the provider must
+ensure that a valid process object gets passed to the method so it has some 
+way of knowing which process to kill. This type of method is tied to the
+instance. Now lets say this same provider has a 'killall' method that will
+kill a set of processes that meet some criteria specified in the parameters.
+Obviously this type of method does not need a single instance, so it is tied to
+the class.
+
+Just to refresh your memory, the method we defined in the PyTut_Foo class is
+called FooMethod and looks like the following:
+
+    string FooMethod(
+        [IN(true), OUT(false)]
+        string s,
+
+        [IN(true), OUT(true)]
+        sint32 i, 
+        
+        [IN(false), OUT(true)]
+        string sa[]);
+
+So base on this definition FooMethod has the following characteristics:
+
+    - It returns a string object
+    - It has a string INPUT parameter called 's'
+    - It has a signed int32 INPUT AND OUTPUT parameter called 'i'
+    - It has a string array OUTPUT parameter called 'sa'
+
+Provided that we have registered for this method (we'll do that later), pycim
+will only call our provider if we implement a method on our PyTut_FooProvider
+class that has the name cim_method_<method name>. With the <method_name>
+component of the name being all lower case. In our case the Python method
+signature for FooMethod will look like the following:
+
+    def cim_method_foomethod(self,
+                             env,
+                             object_name,
+                             method,
+                             param_i,
+                             param_s):
+
+Some of these parameters are constant across all extrinsic methods, and the
+others are the actual parameters defined for the FooMethod in the MOF file.
+Following is a description of the parameters we will get in
+our cim_method_foomethod method:
+
+    env: A pycimmb.ProviderEnvironment object we can use to take advantage of
+        some of the services offered by the CIMOM, such as logging, context
+        information, etc. For documentation on pycimmb.ProviderEnvironment,
+        refer to the pycimmb documentation.
+
+    object_name: A pywbem.CIMInstanceName or a pywbem.CIMClassName that
+        identifies the instance or the class for this method. For more
+        information on pywbem.CIMInstanceName and pywbem.CIMClassName refer to
+        the pywbem documentation.
+
+    method: A pywbem.CIMMethod object that contains all the information about
+        the method, the CIMOM knows about. Such as the method name, parameter
+        names and types, return value and so on. Generally, method providers
+        are only concerned with the method name, since they know everything
+        about one of their methods given the name. For more information on
+        pywbem.CIMMethod refer to the pywbem documentation.
+
+    param_i: This represents the input parameter 'i' from our FooMethod
+        definition in our MOF file. It was defined as a signed int32 (sint32)
+        in the MOF file, so this parameter will be a pywbem.Sint32 object.
+
+    param_s: This represents the input parameter 's' from our FooMethod
+        definition in our MOF file. It was defined as a string object in the
+        MOF file, so this parameter will be a Python string.
+
+If you are still consciously reading this, you probably have noticed that the
+'sa' parameter is missing. The reason for this is that 'sa' was declared as an
+output only parameter. All output parameters must be returned with the return
+value in a Python tuple: (return_value, {dictionary of output parameters}). It
+is interesting to note that the 'i' parameter was declared as an input and
+output parameter. That means that the 'i' parameter will be returned in the
+dictionary part of this tuple as well. So are return value will look something
+like: ('some string', {'i':pywbem.Sint32(some value), 'sa':['string','list']})
+
+Trust me. It is much easier to implement an extrinsic method than it is to
+explain one. So lets implement this beast:
+
+1.    def cim_method_foomethod(self,
+2.                             env,
+3.                             object_name,
+4.                             method,
+5.                             param_i,
+6.                             param_s):
+7.         out_params = {}
+8.         out_params['i'] = pywbem.Sint32(param_i and -param_i or 0)
+10.        out_params['sa'] = param_s and param_s.split() or ['Nothing']
+11.        rval = 'executed on %s. s: %s' %(`object_name`, param_s)
+12.        return (rval, out_params)
+
+From a masochistic standpoint, this might be a bit disappointing. The first
+thing we do on line 7, is create the dictionary we'll use for the output
+parameters. On line 8, we create the 'i' output parameter as a pywbem.Sint32
+using the negative of param_i as the value if it was given. Otherwise we use 0
+as the value. On line 10 we create the 'sa' output parameter as a list of
+Python strings using the split version of param_s if it was given. Otherwise we
+use a single element list with the word 'Nothing' in it. On line 11 we create a
+string that we will use as our return value. Finally on line 12 we return a 
+tuple that contains the return value and the output parameter dictionary.
+
+As far as the PyTut_Foo class is concerned, the method provider implementation
+is done. There is one final thing that needs to be done to ready
+PyTut_FooProvider.py for the provider world: the get_providers function.
+
+
+-------------------------------------------------------------------------------
+4.6 The get_providers Function
+
+When pycim loads an Instance, Method or Associator provider, it looks for a
+function in the provider module by the name of get_providers. It expects this
+function to return a Python dictionary. The purpose of this dictionary is
+to map CIM class names to instances of a CIMProvider subclass. pycim.codegen
+will actually generate this code for us, but it is important to understand
+how it is used. If you look at the bottom of the PyTut_FooProvider.py file,
+you will see something like the following:
+
+1. def get_providers(env):
+2.     _pytut_foo_prov = PyTut_FooProvider()          # initialize provider
+3.     return {'PyTut_Foo': _pytut_foo_prov}   # register provider
+
+Line 1: The function is defined. It takes a pycimmb.ProviderEnvironement as its
+single parameter.
+
+Line 2: An instance of the PyTut_FooProvider is created
+
+Line 3: Return a dictionary with the class name as the key, and the provider
+that instruments the class names as the values.
+
+In our case the class name is 'PyTut_Foo', and the provider is an instance of
+our PyTut_FooProvider python class. The class name key in the dictionary can 
+be lower, upper or mixed case.
+
+This dictionary is used by pycim to retrieve the instance of the provider when
+a request is made for a specific class name. This dictionary also makes it
+easy to combine multiple providers into a single Python module. This is exactly
+what we will do when the provider gets implemented for the PyTut_FooComponent
+class. At that point we will have a get_providers function that looks something
+like the following:
+
+def get_providers(env):
+    _pytut_foo_prov = PyTut_FooProvider()
+    _pytut_foocomp_prov = PyTut_FooComponentProvider()
+    return { 'PyTut_Foo': _pytut_foo_prov,
+             'PyTut_FooComponent': _pytut_foocomp_prov }
+
+All we have done here is just add another entry to the dictionary that ties
+another instance of a subclass of pycim.CIMProvider to the CIM class
+'PyTut_FooComponent'.
+
+The get_providers function is a small detail of the provider module that must
+not be forgotten.
+
+Well, it looks like we have finished up the implementation of the PyTut_Foo
+class. Now all we need to do is deploy this thing so we can have our
+functionality show up within the CIMOM. We'll cover that in the provider
+registration section which is next.
+
+
+-------------------------------------------------------------------------------
+5.0 PyTut_Foo Provider Registration 
+
+Now that we have written the code to instrument the PyTut_Foo class, we need to
+let the CIMOM known about it. To do this, we need to create an instance of the
+OpenWBEM_PyProviderRegistration class that has information about our provider
+in the Interop namespace. When we generated our provider stub code in section
+3.0, we also generated the MOF for our provider registration. We saved the MOF
+to a file called PyTut_FooProvider.reg. Following is what PyTut_FooProvider.reg
+currently looks like:
+
+1.    // Provider registration for PyTut_Foo
+2.    instance of OpenWBEM_PyProviderRegistration
+3.    {
+4.            InstanceID = "<org:product:unique_id>"; // TODO
+5.            NamespaceNames = {"root/cimv2"}; 
+6.            ClassName = "PyTut_Foo"; 
+7.            ProviderTypes = {1,6};  // Instance, Method
+8.            ModulePath = "/some/path/PyTut_FooProvider.py";  // TODO
+9.    }; 
+
+This is a MOF representation of an instance of OpenWBEM_PyProviderRegistration
+class. The 'InstanceID' property on line 4 needs to be changed to have a string
+value that will uniquely identify this provider registration instance. This can 
+actually be any string value. We'll change this property to the following:
+
+    InstanceID = "PyTut_Foo_Provider_InstanceID";
+
+The NamespaceNames property on line 5 specifies the namespaces we will be
+providing the instrumentation in. If we left this property out, the CIMOM would
+assume our Python module provides functionality in all namespaces.
+pycim.codegen has already set this to 'root/cimv2'. Good enough.
+
+The ClassName property on line 6 specifies the class our provider is
+instrumenting. pycim.codegen already set this to 'PyTut_Foo' for us.
+
+The ProviderTypes property on line 7 contains a list of uint16 values that
+inform the CIMOM what type of provider this is. pycim.codegen has set this
+to 1 for Instance Provider and 6 for Method Provider. Good guess. No changes
+here.
+
+The ModulePath property on line 8 contains the fully qualified path to the
+Python file that contains the provider code. This definitely needs to be
+changed to the location of PyTut_FooProvider.py on your system. For my system,
+the final version of PyTut_FooProvider.reg looks like the following:
+
+instance of OpenWBEM_PyProviderRegistration
+{
+    InstanceID = "PyTut_Foo_Provider_InstanceID";
+    NamespaceNames = {"root/cimv2"}; 
+    ClassName = "PyTut_Foo"; 
+    ProviderTypes = {1,6};  // Instance, Method
+    ModulePath = "/home/jcarey/proj/las/pyprovifc/doc/tutorial/PyTut_FooProvider.py";
+}; 
+
+Now that we have made the necessary adjustments to the provider registration
+MOF file, we need to import it into the CIMOM. Assuming the CIMOM is running
+on the local machine, allowing HTTP connections and PyTut_FooProvider.reg is
+in the current directory, we can issue the following command:
+
+    > owmofc -n Interop PyTut_FooProvider.reg
+
+After this has been done, we need to restart the CIMOM. It might be helpful at
+this time to start the CIMOM in debug mode, just in case there are obvious
+problems with our provider. Assuming that owcimomd is in our path, we can do
+this with the following command:
+
+    > owcimomd -d
+
+Now the CIMOM should be running in with all of its output messages showing up
+on your terminal. You'll want to keep an eye on these messages if you are
+having problems with the provider.
+
+Now you can use any capable CIM browser to cause the PyTut_FooProvider to be
+loaded and called. Within the CIM browser, look at, create, modify and delete
+instances of the PyTut_Foo class.
+
+
+-------------------------------------------------------------------------------
+6.0 PyTut_FooComponent Implementation
+
+Section 6.0 is quick and dirty because it is assumed that you have covered all
+the material in the previous sections. If you're starting at this point, the
+potential for frustration is high, because of the lack of detail.
+
+In the model we invented in section 2.0, we had another class called
+PyTut_FooComponent. We threw PyTut_FooComponent into the mix so we could have
+something to associate to PyTutFoo objects, which gives us something to work
+with when we implement the Associator provider.
+
+Just to refresh your memory, the PyTut_FooComponent class looks like the
+following:
+
+    class PyTut_FooComponent
+    {
+        [Key, Description("The key for PyTut_FooComponent")]
+        string FooCompKey;
+
+        [Description("The value for PyTut_FooComponent")]
+        string FooCompValue;
+    };
+
+PyTut_FooComponent has a similar structure to the PyTut_Foo class. It does not
+have a method defined like PyTut_Foo, so the implementation will be easier.
+Just like PyTut_Foo, it stores its instance related data in a Python dictionary
+for simplicity. The dictionary for PyTut_FooCompoent was already defined in
+the PyTut_FooProvider.py file as
+
+    _FooComps = {
+        'TheKey1':'Key1',
+        'TheKey2':'Key2',
+        'TheKey3':'Key3',
+        'TheKey4':'Key1',
+        'TheKey5':'Key1'
+    }
+
+This should be a pretty good indication that we are going to put the
+implementation for PyTut_FooComponent in the PyTut_FooProvider.py file. As a
+matter fact, we may as well add the PyTut_FooComponent provider registration
+to the PyTut_FooProvider.reg file as well.
+
+Everything we have covered up to this point applies to the implementation of
+PyTut_FooComponent, so we will not cover it in the same level of detail we we
+did PyTut_Foo.
+
+The first thing we need to do, is generate the Python code for
+PyTut_FooComponent provider and the provider registration. This process is
+covered in section 3.0, so we will just list the relevant command here:
+
+> python
+>>> import pywbem, pycim
+>>> con = pywbem.WBEMConnection('http://localhost', ('username', 'password'))
+>>> cc = con.GetClass('PyTut_FooComponent', 'root/cimv2') 
+>>> python_code, registration_mof = pycim.codegen(cc)
+>>> codefile = open('TempProvider.py', 'w')
+>>> codefile.write(python_code)
+>>> codefile.close()
+>>> regfile = open('TempProvider.reg', 'w')
+>>> regfile.write(mof)
+>>> regfile.close()
+>>> ^D to exit
+
+At this point, open the files TempProvider.py and PyTut_FooProvider.py in your
+favorite text editor. Cut the entire class definition for
+PyTut_FooComponentProvider from TempProvider.py and paste it into the
+PyTut_FooProvider.py file right after the class definition for
+PyTut_FooProvider. Now goto the end of the PyTut_FooProvider.py file and alter
+the get_providers function (section 4.6). The get_providers function should
+be set up something like the following:
+
+    def get_providers(env):
+        _pytut_foo_prov = PyTut_FooProvider()
+        _pytut_foocomp_prov = PyTut_FooComponentProvider()
+        return  { 'PyTut_Foo': _pytut_foo_prov,
+                  'PyTut_FooComponent': _pytut_foocomp_prov }
+
+All we did here, was add another entry to the dictionary returned by 
+get_providers for the PyTut_FooComponent class, and associate an instance of 
+our PyTut_FooComponentProvider to it. Now pycim will know which object 
+handles the implementation for PyTut_FooComponent. Save PyTut_FooProvider.py.
+
+Now for the provider registration. Open the files TempProvider.reg and
+PyTut_FooProvider.reg in your favorite text editor. Take the contents of the
+TempProvider.reg file and paste it at the bottom of the PyTut_FooProvider.reg
+file. Alter the provider registration for
+to be something like the following:
+
+instance of OpenWBEM_PyProviderRegistration
+{
+    InstanceID = "PyTut_FooComponent_Provider_InstanceID";
+    NamespaceNames = {"root/cimv2"}; 
+    ClassName = "PyTut_FooComponent"; 
+    ProviderTypes = {1};  // Instance
+    ModulePath = "/home/jcarey/proj/las/pyprovifc/test/PyTut_FooProvider.py";
+}; 
+
+Remember from section 5.0, the Module path property needs to contain to the
+absolute path to the PyTut_FooProvider.py file. The ModulePath property should
+be identical on both instances of OpenWBEM_PyProviderRegistration in the
+PyTut_FooProvider.reg file. Save PyTut_FooProvider.reg. Now we need to import
+this MOF into the CIMOM like we did in section 5.0. Do that with the following
+command:
+
+    > owmofc -n Interop PyTut_FooProvider.reg
+
+Now the implementation for PyTut_FooComponentProvider should be almost
+identical to the implementation for PyTut_FooProvider. Obviously the property
+names are different between the two classes, but the logic is pretty much the
+same. PyTut_FooComponentProvider will be storing its instance related data in
+the _FooComps dictionary. If you're not in the mood to go through the exercise
+of implementing the PyTut_FooCompoentProvider then you can refer to the source
+included with the distribution in the ./doc/tutorial/PyTut_FooProvider.py file.
+You might consider going through this simple implementation exercise, because
+the complexity is going to be stepped up a knotch in the next section where we
+cover the Associator provider implementation.
+
+
+-------------------------------------------------------------------------------
+7.0 PyTut_FooAssociation Implementation
+
+In this section we will be covering the implementation of an Associator
+provider. In the CIM world, relationships between objects are represented by
+Association object. In section 2.0 we created the following model:
+
+    |-----------|1                              *|--------------------|
+    | PyTut_Foo |----[ PyTut_FooAssocation ]---->| PyTut_FooComponent |
+    |-----------|                                |--------------------|
+
+This diagram states that PyTut_Foo objects have a PyTut_FooAssociation
+relationship with PyTut_FooComponent objects. A PyTut_FooComponent object can
+only have this relationship with one PyTut_Foo object, and a PyTut_Foo object
+can have this relationship with many PyTut_FooComponent objects.
+
+An association class contains reference properties that contain names of other
+objects. For instance, in the MOF we created in section 2.0 for the
+PyTut_FooAssociation class, we defined the PyTut_FooAssociation as follows:
+
+1.  [Association, Description("Relationship between a PyTut_Foo and a "
+2.      "PyTut_FooComponent")]
+3.  class PyTut_FooAssociation
+4.  {
+5.          [Key, Description("The PyTut_Foo")]
+6.          PyTut_Foo REF TheFoo;
+7.
+8.          [Key, Description("The PyTut_FooComponent")]
+9.          PyTut_FooComponent REF TheFooComp;
+10. };
+
+Line 1 has the qualifier 'Association' specified. This states that this is a
+different type of class that is used to represent a relationship between two
+objects. On lines 5-6 a REF property is defined that can refer to a PyTut_Foo
+object. That means that the 'TheFoo' property will contain the name of a
+PyTut_Foo instance. In pywbem terms, you can think of this property as
+containing a pywbem.CIMInstanceName that refers to a single PyTut_Foo object.
+On lines 8-9 we a REF property is defined that can refer to a
+PyTut_FooComponent object. Both of the REF properties are keys to for the
+class.
+
+Now if you were only allowed to deal with instances of Association classes like
+'normal' instances, such as PyTut_Foo and PyTut_FooComponent, it would be very
+difficult (and inefficient) to deal with relationships between objects. Our
+friends at the DMTF have taken care of us here by specifying some Association
+oriented methods that make using Associations very easy from a client's
+perspective. The full specification for these methods can be found in the
+'Specification for CIM Operations over HTTP'. Also known as DSP0200 at the
+DMTF. Here is the list of these methods with a brief discription:
+
+    Associators: Returns all objects related to a given target object and
+        matching other constraints given as parameters.
+    AssociatorNames: Returns the names of all the objects related to a given
+        target object and matching other constraints given as parameters.
+    References: Returns all of the Association objects
+        (e.g. PyTut_FooAssociation objects) that refer to a given target object
+        and matching other constraints given as parameters.
+    ReferenceNames: Returns the names of all the Association objects
+        (e.g. PyTut_FooAssociation objects) that refer to a given target object
+        and matching other constraints given as parameters.
+
+All of the methods take a fair number of parameters that allow for very refined
+searches. If you're curious about them, refer to DSP0200. When writing a Python
+provider, you won't have to worry about these four methods. You only have to
+implement one: references. This will be somewhat similar to the References
+method described above, and will be used by pycim to service all four of the
+methods specified in DSP0200. So you will only have to do one. Thats nice,
+because there would be a lot of duplicate functionality across these four
+methods.
+
+In this exercise, a PyTut_FooAssociation relationship will exist between a
+PyTut_Foo object and a PyTut_FooComponent object when the FooCompValue property
+of the PyTut_FooComponent object contains a value that matches a FooKey
+property value of a PyTut_Foo object. For instance the following two objects
+would have a PyTut_FooAssociation relationship between them:
+
+    instance of PyTut_Foo
+    {
+        FooKey = "A_Foo_Key_Value";
+        FooValue = 1;
+    }; 
+
+    instance of PyTut_FooComponent
+    {
+        FooCompKey = "A_Foo_Comp_Key_Value";
+        FooCompValue = "A_Foo_Key_Value";
+    };
+
+This scheme will give you the opportunity to do something interesting when you
+are done with the implementation. You should be able to create instances of 
+PyTut_FooComponent with a FooCompValue property that matches the key of a
+PyTut_Foo object, and automatically see PyTut_FooAssociations appear.
+
+One thing that we will do differently here, is implement this Associator
+provider in a separate Python module. This will put our Associator provider in
+the position of not knowing anything about PyTut_Foo and PyTut_FooComponent
+objects except what it can find out through the CIMOM. This will required
+our provider to make "up calls" into the CIMOM to get the objects it is
+providing associations for. This also leaves our existing providers untouched,
+with no knowlege of the PyTut_FooAssociation. This is a relatively common
+scenario in the "real world".
+
+Hopefully you understood all of that, because now we're going to make all
+this happend.
+
+
+-------------------------------------------------------------------------------
+7.1 PyTut_FooAssociationProvider Code Generation and Setup
+
+Before we get started, we are going to go through the code generation process
+that you should be familiar with from sections 3.0 and 6.0. We will just list
+the commands issued to the Python shell without description:
+
+> python
+>>> import pywbem, pycim
+>>> con = pywbem.WBEMConnection('http://localhost', ('username', 'password'))
+>>> cc = con.GetClass('PyTut_FooAssociation', 'root/cimv2') 
+>>> python_code, registration_mof = pycim.codegen(cc)
+>>> codefile = open('PyTut_FooAssociationProvider.py', 'w')
+>>> codefile.write(python_code)
+>>> codefile.close()
+>>> regfile = open('PyTut_FooAssociationProvider.reg', 'w')
+>>> regfile.write(mof)
+>>> regfile.close()
+>>> ^D to exit
+
+Now change the PyTut_FooAssociationProvider.reg file to look something like the
+following:
+
+instance of OpenWBEM_PyProviderRegistration
+{
+    InstanceID = "PyTut_FooAssociation_Provider_InstanceID";
+    NamespaceNames = {"root/cimv2"}; 
+    ClassName = "PyTut_FooAssociation"; 
+    ProviderTypes = {1,3};  // Instance, Associator
+    ModulePath = "/home/jcarey/proj/las/pyprovifc/doc/tutorial/PyTut_FooAssociationProvider.py";
+};
+
+The only properties we changed from what codegen produced was InstanceID and
+ModulePath. Make sure you set the ModulePath to contain a value that has the
+absolute path on your file system to the PyTut_FooAssociationProvider.py file.
+
+Notice that the ProviderTypes property specifies that our provider
+will be an Instance and Associator provider. Yes we will provide limited
+Instance provider functionality for the PyTut_FooAssociation class.
+
+Now we need to import our provider registration into the CIMOM. We can do that
+with the following command:
+
+    > owmofc -n Interop PyTut_FooAssociationProvider.reg
+
+Now we can get started on the implementation of our Associator/Instance
+provider.
+
+-------------------------------------------------------------------------------
+7.2 PyTut_FooAssociationProvider references Implementation
+
+The Python Associator provider interface only requires us to implement the
+'references' method. As stated in section 7.0, all for association related
+methods are handled by the 'references' method. The job of the references
+method is to return all the instances of the association class that meet
+the criteria specified by the parameters. As all other provider methods tha
+return multiple objects, it is a generator method, so must yield the individual
+object and return nothing. Following is a description of the parameter list for
+the references method (excluding the self parameter):
+
+
+    env: A pycimmb.ProviderEnvironment object we can use to take advantage of
+        some of the services offered by the CIMOM, such as logging, context
+        information, etc. For documentation on pycimmb.ProviderEnvironment,
+        refer to the pycimmb documentation.
+
+    object_name: A pywbem.CIMInstanceName that defines the source CIM Object
+        whose associated Objects are to be returned. In our case this will
+        refer to an instance of PyTut_Foo or PyTut_FooComponent.
+
+    model: An instance of pywbem.CIMInstance that represents a model of all
+        instances that should be returned. In our case, this will be an
+        instance of the PyTut_FooAssociation class. The only properties that
+        should be filled in by the provider are already present in this object.
+        The model is basically a filter that has been set up by the CIMOM,
+        according to the client's request. This also removes the need to
+        create any instance of pywbem.CIMInstance. For documentation on 
+        pywbem.CIMInstance, refer to the pywbem documentation. We just need to
+        fill this object each time we yield. You'll see in just a moment...
+
+    assoc_class: An instance of pywbem.CIMClass. This is the Python
+        representation of the association class the provider is producing
+        instances for. In our case this should be a pywbem.CIMClass for
+        PyTut_FooAssociation. For documentation on pywbem.CIMClass refer to the
+        pywbem documentation.
+    
+    result_class_name: Optional string parameter that acts as a filter on the
+        returned set of objects the higher level association call (e.g. One of
+        the four described in section 7.0 that the client called). Its purpose
+        is to mandate that all instances the client gets in the response, be of
+        this class or a sub-class. For our purposes, this must be 'PyTut_Foo'
+        (or a super class of PyTut_Foo. There are none) if the object_name
+        parameter refers to a 'PyTut_FooComponent' object or
+        'PyTut_FooComponent' (or a super class of PyTut_FooComponent. There are
+        none) if the object_name parameter refers to a 'PyTut_Foo' object. If
+        not, we will return without doing anything. As far as we're concerned,
+        we will only take action if this parameter contains 'PyTut_Foo',
+        'PyTut_FooComponent', or nothing.
+
+    role: Optional string parameter that acts as a filter on the returned set
+        of association instances. If this parameter is specified, it must
+        contain the name of the property within the association that refers
+        to the target object specified by the object_name parameter. If not
+        specified, there is no constraint on which property refers to the
+        target object.
+
+    result_role: Optional string parameter that acts as a filter on the
+        returned set of association instances. If this parameter is specified,
+        it must contain the name of the property within the association that
+        refers to the object associated to the target object specified by the
+        object_name parameter. If not specified, there is no constraint on
+        which property refers to the object associated to the target object.
+
+    keys_only: If True, then only the key properties of the association
+        instance should be filled in. The PyTut_FooAssociation class only
+        contains key properties, but many associations contains other
+        properties as well.
+
+Don't let the parameter list intimidate you. Lets get right into the
+implementation now. Here is the Python code for the references method:
+
+1.  def references(self,
+2.                 env,
+3.                 object_name, 
+4.                 model, 
+5.                 assoc_class, 
+6.                 result_class_name, 
+7.                 role, 
+8.                 result_role, 
+9.                 keys_only):
+10.     if object_name.classname.lower() == 'pytut_foo':
+11.         if role and role.lower() != 'thefoo':
+12.             return
+13.         if result_role and result_role.lower() != 'thefoocomp':
+14.             return
+15.         if result_class_name and result_class_name.lower() \
+16.                 != 'pytut_foocomponent':
+17.             return
+18.         fk = 'FooKey' in object_name and \
+19.              object_name['FooKey'] or None
+20.         if not fk:
+21.             return
+22.         ch = env.get_cimom_handle()
+23.         ilist = []
+24.         try:
+25.             ch.EnumerateInstances('PyTut_FooComponent',
+26.                 object_name.namespace, LocalOnly=False, 
+27.                 IncludeQualifiers=False,
+28.                 Handler=lambda inst: inst['FooCompValue'] == \
+29.                     fk and ilist.append(inst))
+30.         except:
+31.             return
+32.         for inst in ilist:
+33.             if 'TheFooComp' in model:
+34.                 model['TheFooComp'] = inst.path
+35.             if 'TheFoo' in model:
+36.                 model['TheFoo'] = object_name
+37.             yield model
+38.
+39.     elif object_name.classname.lower() == 'pytut_foocomponent':
+40.         if role and role.lower() != 'thefoocomp':
+41.             return
+42.         if result_role and result_role.lower() != 'thefoo':
+43.             return
+44.         if result_class_name and result_class_name.lower() != 'pytut_foo':
+45.             return
+46.         ch = env.get_cimom_handle()
+47.         try:
+48.             inst = ch.GetInstance(object_name, LocalOnly=False,
+49.                 IncludeQualifiers=False, IncludeClassOrigin=False)
+50.             fooname = pywbem.CIMInstanceName('PyFoo',
+51.                 {'FooKey':inst['FooCompValue']},
+52.                 namespace=object_name.namespace)
+53.             fooinst = ch.GetInstance(fooname, LocalOnly=False,
+54.                 IncludeQualifiers=False, IncludeClassOrigin=False)
+55.             if 'TheFooComp' in model:
+56.                 model['TheFooComp'] = object_name
+57.             if 'TheFoo' in model:
+58.                 model['TheFoo'] = fooinst.path
+59.             yield model
+60.         except:
+61.             pass
+
+The length of this method might make it awkward to follow along in the
+following code walk through. You might consider pasting it into a 
+separate instance of your editor so you can read both at the same time.
+
+Line 10: The first thing we do coming into references, is determine what type
+of target object was given by the user. If this is a PyTut_Foo object, we will
+execute everything within the following 'if' block, lines 11-37.
+
+Lines 11-12: Check the role parameter. If it was specified, then it must
+contain 'TheFoo', because this is the only property within a
+PyTut_FooAssociation that can refer to a PyTut_Foo object and that is what
+object_name refers to.
+
+Lines 13-14: Check the result_role parameter. If is was specified, then it must
+contain 'TheFooComp', because the target object is a PyTut_Foo, and the only
+type of object they are going to get that is associated to a PyTut_Foo through
+the PyTut_FooAssociation will be referenced through the 'TheFooComp' property
+of the PyTut_FooAssociation class.
+
+Lines 15-17: Check the result_class_name parameter. If this was specified, then
+it must contain 'PyTut_FooComponent', because when calling associators with
+a PyTut_Foo object as the target class, the PyTut_FooAssociation can only
+produce PyTut_FooComponent objects.
+
+Line 18-21: Here we are retrieving the 'FooKey' property from the target object
+name. If it is not present, we just return, because there are no associations
+to produce.
+
+Line 22: Get the CIMOM handle from the given pycimmb.ProviderEnvironment. We
+will use this to make "up calls" into the CIMOM.
+
+Line 23: Declare a list that will contain the instances of PyTut_FooComponent
+that have a FooCompValue property that matches the key of the given PyTut_Foo
+object.
+
+Lines 24-31: Here we ask the CIMOM to enumerate all instances of the
+PyTut_FooCompoent class. Notice the 'Handler' parameter. This specifies a
+python callable object that will be called for each instance the CIMOM
+retrieves. We have specified a lambda function here that will take any instance
+that has a FooCompValue property that matches the given FooKey of the target
+object and place it in the ilist declared on line 23. If for any reason this
+call fails, we just return, because we can product any associations under
+the current circumstances.
+
+Lines 32-37: At this point ilist declared on line 32 should have all the
+PyTut_FooComponent instances that have a FooCompValue property that matches the
+FooKey property of the given PyTut_Foo object. Here we just enumerate through
+this list filling the properties of the model object (which happens to be an
+instance of PyTut_FooAssociation) and yielding each instance since this is a
+generator method. We have now produced all PyTut_FooAssociation objects for
+the given PyTut_Foo object.
+
+Line 39: Here we check if the given target object is an instance of the
+PyTut_FooComponent class. If it is, we will be executing lines 40-61.
+
+Lines 40-41: Check the role parameter. If it was specified, then it must
+contain 'TheFooComp', because this is the only property within a
+PyTut_FooAssociation that can refer to a PyTut_FooComponent object and that is
+what object_name refers to.
+
+Lines 42-43: Check the result_role parameter. If is was specified, then it must
+contain 'TheFoo', because the target object is a PyTut_FooComponent, and the
+only type of object they are going to get that is associated to a
+PyTut_FooComponent through the PyTut_FooAssociation will be referenced through
+the 'TheFoo' property of the PyTut_FooAssociation class.
+
+Lines 44-45: Check the result_class_name parameter. If this was specified, then
+it must contain 'PyTut_Foo', because when calling associators with
+a PyTut_FooComponent object as the target class, the PyTut_FooAssociation can
+only produce PyTut_Foo objects.
+
+Line 46: Get the CIMOM handle from the given pycimmb.ProviderEnvironment. We
+will use this to make "up calls" into the CIMOM.
+
+Line 48: Attempt to get the PyTut_FooComponent instance that has the name of
+given object_name parameter. This needs to be done so we can get the value of
+the FooCompValue property. We use this to see if there is a PyTut_Foo object
+that has a matching key. If this GetInstance call fails, execution will jump
+to the except clause on line 60 where we will return without doing anything.
+
+Line 49: Construct an pywbem.CIMInstanceName for a PyTut_Foo object using the
+FooCompValue property from the instance we got on line 48. We will try to get
+the PyTut_Foo object for this name if it exists.
+
+Line 53: Attempt to get a PyTut_Foo object that has a key (FooKey) that matches
+the FooCompValue property of the target object (object_name). If this succeeds,
+then there is a PyTut_FooAssociation relationship between the given 
+PyTut_FooComponent object and a PyTut_Foo object. If this call fails, it means
+the PyTut_FooComponent object does not have a PyTut_FooAssociation relationship
+with a PyTut_Foo object and an exception will be raised causing execution to
+jump to line 60 where we return without doing anything.
+
+Line 55-59: Here we fill out the PyTut_FooAssociation object given as the model
+parameter. We only set the properties that already exist in the model instance.
+We yield the single association object on line 59 because this is a generator
+method.
+
+Line 60-61: Here we catch any exception raised in lines 48-59 and just return.
+It would have been better to check for pywbem.CIMError specifically, but a
+general except was used for brevity.
+
+Well thats the implementation of references. Thats about as tough as it gets
+for Associator providers. Since an Associator provider is also considered to be
+an Instance provider for the assocation class, we need to round this out by
+implementing the enum_instances and get_instance methods. On the other Instance
+provider related methods we will just raise a CIM_ERR_NOT_SUPPORTED exception,
+since we don't allow direct creation, modification or deletion of 
+PyTut_FooAssociation objects.
+
+
+-------------------------------------------------------------------------------
+7.3 PyTut_FooAssociationProvider enum_instances Implementation
+
+In section 4.1 there is a full description of enum_instances and all of its
+parameters, so we won't cover that again. We will just list the enum_instances
+method for PyTut_FooAssocation and do a code walk through:
+
+1.  def enum_instances(self, env, model, cim_class, keys_only):
+2.      ch = env.get_cimom_handle()
+3.      fooNames = {}
+4.      try:
+5.          ch.EnumerateInstanceNames('PyTut_Foo', model.path.namespace,
+6.              Handler=lambda iname: fooNames.setdefault(iname['FooKey'],
+7.              iname))
+8.      except:
+9.          return
+10.     ilist = []
+11.     try:
+12.         ch.EnumerateInstances('PyTut_FooComponent', model.path.namespace,
+13.             LocalOnly=False, IncludeQualifiers=False, 
+14.             Handler=lambda inst: inst['FooCompValue'] in fooNames and \
+15.             ilist.append(inst))
+16.     except:
+17.         return
+18.     for inst in ilist:
+20.         if 'TheFooComp' in model:
+21.             model['TheFooComp'] = inst.path
+22.         if 'TheFoo' in model:
+23.             model['TheFoo'] = fooNames[inst['FooCompValue']]
+24.         yield model
+
+Line 2: We get the CIMOM handle from the pycimmb.ProviderEnvironment, because
+we will need this to make up calls into the CIMOM.
+
+Line 3: Declare a dictionary that will contain all the instance names for the
+PyTut_Foo instances. This is obviously not a scalable approach, but is fine for
+our educational purposes.
+
+Line 5-7: Enumerate all instance names of the PyTut_Foo class. Here we provide
+a lambda funtion for the 'Handler' parameter that will populate the fooNames
+dictionary declared on line 3 as it receives instance names from the CIMOM. The
+dictionary will be keyed off of the value of the FooKey property and will
+contain the pywbem.CIMInstance name that corresponds to it.
+
+Line 8-9: If an exception is raised on the CIMOM up call made on line 5, we
+catch it here and just return without doing anything.
+
+Line 10: Declare a list that will contain all instances of PyTut_FooComponent
+that have a FooCompValue that matches a key to a PyTut_Foo object.
+
+Lines 12-15: Enumerated all instances of the PyTut_FooComponent class. Here we
+provide a lambda function for the 'Handler' parameter. Every time this lambda
+function gets called with an instance it will ensure that the FooCompValue
+matches a key in the fooNames dictionary. After this call is made, the only
+PyTut_FooComponent objects that will be in ilist will be those that have an
+association with a PyTut_Foo object.
+
+Lines 16-17: If an exception is raised while enumerating instances of
+PyTut_FooComponent, we will catch it here and just return without doing
+anything.
+
+Line 18-24: Enumerate all elements of the list of PyTut_FooComponent objects.
+For each instance in the list, we fill the properties of the model instance
+with the PyTut_FooComponent instance name (contained in the list) and the
+instance name for the PyTut_Foo object from the fooNames dictionary. Since this
+is a generator method, we yield each instance.
+
+That concludes enum_instances for the PyTut_FooAssociation class. Now lets
+take care of the last method of the PyTut_FooAssociationProvider: get_instance.
+
+
+-------------------------------------------------------------------------------
+7.4 PyTut_FooAssociationProvider get_instance Implementation
+
+In section 4.2 there is a full description of get_instance and all of its
+parameters, so we won't cover that again. We will just list the get_instance
+method for PyTut_FooAssocation and do a code walk through:
+
+1.  def get_instance (self, env, model, cim_class):
+2.      ch = env.get_cimom_handle()
+3.      foocompinst = ch.GetInstance(model['TheFooComp'], LocalOnly=False,
+4.          IncludeQualifiers=False, IncludeClassOrigin=False)
+5.      fooinst = ch.GetInstance(model['TheFoo'], LocalOnly=False,
+6.          IncludeQualifiers=False, IncludeClassOrigin=False)
+7.      if foocompinst['FooCompValue'] != fooinst['FooKey']:
+8.          raise pywbem.CIMError(pywbem.CIM_ERR_NOT_FOUND)
+9.      return model
+
+Before we mention anything about the above code, you should note that we do not
+attempt to catch any exception in get_instance. If an exception is raised, we
+let that propagate out to the caller. The client will receive any exception
+information if it occurrs.
+
+Line 2: Get the CIMOM handle so we can use it to make up calls to the CIMOM.
+
+Lines 3-4: Attempt to get the instance of the PyTut_FooComponent using the
+value of the 'TheFooComp' property from the model instance parameter. This
+property should be present since this is a key property and this is a 
+get_instance call.
+
+Line 5-6: Attempt to get the instance of the PyTut_Foo using the value of the
+'TheFoo' property from the model instance parameter. This property should be
+present since this is a key property and this is a get_instance call.
+
+Line 7-8: Make sure the 'FooCompValue' property from the PyTut_FooComponent
+instance has the same value as the 'FooKey' property from the PyTut_Foo
+instance. If these don't match, then there is not an association between these
+two objects, so we raise a CIM_ERR_NOT_FOUND exception on line 8.
+
+Line 9: Return the model. There is not need for us to do anything with it,
+since it is already a filled out instance of PyTut_FooAssociation.
+
+
+-------------------------------------------------------------------------------
+8.0 Conclusion
+
+Well there is your education on Instance, Method and Associator Python
+providers. The only objective here was to get the reader oriented in the world
+of provider writing usng pycim, pycimmb and pywbem. Hopefully that was
+accompolished.
+
+The python provider interface actually supports four other types of providers:
+
+    - Life Cycle Indication.
+    - Alert Indication
+    - Polled
+    - Indication Handler.
+
+For information on what these types of providers do and how to write them,
+refer to the other documentation included with the project.
+
+Have Fun :-)
+
