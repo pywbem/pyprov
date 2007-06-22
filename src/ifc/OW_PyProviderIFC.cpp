@@ -120,7 +120,11 @@ PyProviderIFC::doInit(
 	SecondaryInstanceProviderInfoArray& si,
 	AssociatorProviderInfoArray& apia,
 	MethodProviderInfoArray& mpia,
-	IndicationProviderInfoArray& indpia)
+	IndicationProviderInfoArray& indpia
+#if OW_OPENWBEM_MAJOR_VERSION >= 4
+	, QueryProviderInfoArray& qpia
+#endif
+	)
 {
 	LoggerRef logger = myLogger(env);
 	OW_LOG_DEBUG(logger, "PyProviderIFC::doInit called..");

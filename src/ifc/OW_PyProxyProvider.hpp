@@ -78,6 +78,10 @@ public:
 		const ProviderEnvironmentIFCRef& env,
 		const String& ns,
 		const CIMObjectPath& cop);
+#if OW_OPENWBEM_MAJOR_VERSION >= 4
+	virtual void shuttingDown(
+		const ProviderEnvironmentIFCRef& env);
+#endif
 private:
 	PyProviderRef m_pProv;
 };
@@ -125,6 +129,10 @@ public:
 		const CIMObjectPath& objectName,
 		const String& resultClass,
 		const String& role);
+#if OW_OPENWBEM_MAJOR_VERSION >= 4
+	virtual void shuttingDown(
+		const ProviderEnvironmentIFCRef& env);
+#endif
 
 private:
 	PyProviderRef m_pProv;
@@ -141,6 +149,10 @@ public:
 		const String& methodName,
 		const CIMParamValueArray& in,
 		CIMParamValueArray& out);
+#if OW_OPENWBEM_MAJOR_VERSION >= 4
+	virtual void shuttingDown(
+		const ProviderEnvironmentIFCRef& env);
+#endif
 
 private:
 	PyProviderRef m_pProv;
@@ -155,7 +167,11 @@ public:
 		const WQLSelectStatement& filter,
 		const String& eventType,
 		const String& nameSpace,
-		const StringArray& classes);
+		const StringArray& classes
+#if OW_OPENWBEM_MAJOR_VERSION >= 4
+		, bool firstActivation
+#endif
+		);
 	virtual void authorizeFilter(
 		const ProviderEnvironmentIFCRef& env,
 		const WQLSelectStatement& filter,
@@ -168,13 +184,21 @@ public:
 		const WQLSelectStatement& filter,
 		const String& eventType,
 		const String& nameSpace,
-		const StringArray& classes);
+		const StringArray& classes
+#if OW_OPENWBEM_MAJOR_VERSION >= 4
+		, bool lastActivation
+#endif
+		);
 	virtual int mustPoll(
 		const ProviderEnvironmentIFCRef& env,
 		const WQLSelectStatement& filter,
 		const String& eventType,
 		const String& nameSpace,
 		const StringArray& classes);
+#if OW_OPENWBEM_MAJOR_VERSION >= 4
+	virtual void shuttingDown(
+		const ProviderEnvironmentIFCRef& env);
+#endif
 private:
 	PyProviderRef m_pProv;
 };
@@ -187,6 +211,11 @@ public:
 	virtual void exportIndication(const ProviderEnvironmentIFCRef& env, 
 		const String& ns, const CIMInstance& indHandlerInst,
 		const CIMInstance& indicationInst);
+#if OW_OPENWBEM_MAJOR_VERSION >= 4
+	virtual void shuttingDown(
+		const ProviderEnvironmentIFCRef& env);
+	virtual void doShutdown();
+#endif
 	virtual void doCooperativeCancel();
 	virtual void doDefinitiveCancel();
 private:
@@ -200,6 +229,11 @@ public:
 	virtual Int32 poll(const ProviderEnvironmentIFCRef& env);
 	virtual Int32 getInitialPollingInterval(
 		const ProviderEnvironmentIFCRef& env);
+#if OW_OPENWBEM_MAJOR_VERSION >= 4
+	virtual void shuttingDown(
+		const ProviderEnvironmentIFCRef& env);
+	virtual void doShutdown();
+#endif
 	virtual void doCooperativeCancel();
 	virtual void doDefinitiveCancel();
 private:

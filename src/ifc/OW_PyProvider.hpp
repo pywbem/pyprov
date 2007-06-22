@@ -161,7 +161,11 @@ public:
 		const WQLSelectStatement& filter,
 		const String& eventType,
 		const String& nameSpace,
-		const StringArray& classes);
+		const StringArray& classes
+#if OW_OPENWBEM_MAJOR_VERSION >= 4
+		, bool firstActivation
+#endif
+		);
 
 	// Indication provider
 	void authorizeFilter(
@@ -178,7 +182,11 @@ public:
 		const WQLSelectStatement& filter,
 		const String& eventType,
 		const String& nameSpace,
-		const StringArray& classes);
+		const StringArray& classes
+#if OW_OPENWBEM_MAJOR_VERSION >= 4
+		, bool lastActivation
+#endif
+		);
 
 	// Indication export provider
 	StringArray getHandlerClassNames();
@@ -239,7 +247,9 @@ private:
 	Py::Object m_pyprov;
 	DateTime m_dt;
 	time_t m_fileModTime;
+#if OW_OPENWBEM_MAJOR_VERSION == 3
 	int m_activationCount;
+#endif
 	bool m_unloadableType;
 	StringArray m_handlerClassNames;
 };

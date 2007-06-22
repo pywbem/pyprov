@@ -63,7 +63,11 @@ protected:
 		AssociatorProviderInfoArray& a,
 #endif
 		MethodProviderInfoArray& m,
-		IndicationProviderInfoArray& ind);
+		IndicationProviderInfoArray& ind
+#if OW_OPENWBEM_MAJOR_VERSION >= 4
+		, QueryProviderInfoArray& q
+#endif
+		);
 
 	virtual InstanceProviderIFCRef doGetInstanceProvider(
 		const ProviderEnvironmentIFCRef& env, const char* provIdString);

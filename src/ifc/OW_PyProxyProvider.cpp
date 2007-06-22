@@ -124,6 +124,16 @@ PyProxyInstanceProvider::deleteInstance(
 	m_pProv->deleteInstance(env, ns, cop);
 }
 
+#if OW_OPENWBEM_MAJOR_VERSION >= 4
+//////////////////////////////////////////////////////////////////////////////
+void 
+PyProxyInstanceProvider::shuttingDown(
+	const ProviderEnvironmentIFCRef& env)
+{
+	m_pProv->shutDown(env);
+}
+#endif
+
 //////////////////////////////////////////////////////////////////////////////
 PyProxyAssociatorProvider::PyProxyAssociatorProvider(PyProviderRef pProv)
 	: AssociatorProviderIFC()
@@ -201,6 +211,16 @@ PyProxyAssociatorProvider::referenceNames(
 	m_pProv->referenceNames(env, result, ns, objectName, resultClass, role);
 }
 
+#if OW_OPENWBEM_MAJOR_VERSION >= 4
+//////////////////////////////////////////////////////////////////////////////
+void 
+PyProxyAssociatorProvider::shuttingDown(
+	const ProviderEnvironmentIFCRef& env)
+{
+	m_pProv->shutDown(env);
+}
+#endif
+
 //////////////////////////////////////////////////////////////////////////////
 PyProxyMethodProvider::PyProxyMethodProvider(PyProviderRef pProv)
 	: MethodProviderIFC()
@@ -222,6 +242,16 @@ PyProxyMethodProvider::invokeMethod(
 	return m_pProv->invokeMethod(env, ns, path, methodName, in, out);
 }
 
+#if OW_OPENWBEM_MAJOR_VERSION >= 4
+//////////////////////////////////////////////////////////////////////////////
+void 
+PyProxyMethodProvider::shuttingDown(
+	const ProviderEnvironmentIFCRef& env)
+{
+	m_pProv->shutDown(env);
+}
+#endif
+
 //////////////////////////////////////////////////////////////////////////////
 PyProxyIndicationProvider::PyProxyIndicationProvider(
 	PyProviderRef pProv)
@@ -237,9 +267,17 @@ PyProxyIndicationProvider::activateFilter(
 	const WQLSelectStatement& filter,
 	const String& eventType,
 	const String& nameSpace,
-	const StringArray& classes)
+	const StringArray& classes
+#if OW_OPENWBEM_MAJOR_VERSION >= 4
+	, bool firstActivation
+#endif
+	)
 {
-	m_pProv->activateFilter(env, filter, eventType, nameSpace, classes);
+	m_pProv->activateFilter(env, filter, eventType, nameSpace, classes
+#if OW_OPENWBEM_MAJOR_VERSION >= 4
+		, firstActivation
+#endif
+		);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -263,9 +301,17 @@ PyProxyIndicationProvider::deActivateFilter(
 	const WQLSelectStatement& filter,
 	const String& eventType,
 	const String& nameSpace,
-	const StringArray& classes)
+	const StringArray& classes
+#if OW_OPENWBEM_MAJOR_VERSION >= 4
+	, bool lastActivation
+#endif
+	)
 {
-	m_pProv->deActivateFilter(env, filter, eventType, nameSpace, classes);
+	m_pProv->deActivateFilter(env, filter, eventType, nameSpace, classes
+#if OW_OPENWBEM_MAJOR_VERSION >= 4
+		, lastActivation
+#endif
+		);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -279,6 +325,16 @@ PyProxyIndicationProvider::mustPoll(
 {
 	return 0;
 }
+
+#if OW_OPENWBEM_MAJOR_VERSION >= 4
+//////////////////////////////////////////////////////////////////////////////
+void 
+PyProxyIndicationProvider::shuttingDown(
+	const ProviderEnvironmentIFCRef& env)
+{
+	m_pProv->shutDown(env);
+}
+#endif
 
 //////////////////////////////////////////////////////////////////////////////
 PyProxyIndicationExportProvider::PyProxyIndicationExportProvider(
@@ -305,6 +361,23 @@ PyProxyIndicationExportProvider::exportIndication(
 {
 	m_pProv->exportIndication(env, ns, indHandlerInst, indicationInst);
 }
+
+#if OW_OPENWBEM_MAJOR_VERSION >= 4
+//////////////////////////////////////////////////////////////////////////////
+void 
+PyProxyIndicationExportProvider::shuttingDown(
+	const ProviderEnvironmentIFCRef& env)
+{
+	m_pProv->shutDown(env);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+void
+PyProxyIndicationExportProvider::doShutdown()
+{
+	// Do nothing
+}
+#endif
 
 //////////////////////////////////////////////////////////////////////////////
 void
@@ -341,6 +414,23 @@ PyProxyPolledProvider::getInitialPollingInterval(
 {
 	return m_pProv->getInitialPollingInterval(env);
 }
+
+#if OW_OPENWBEM_MAJOR_VERSION >= 4
+//////////////////////////////////////////////////////////////////////////////
+void 
+PyProxyPolledProvider::shuttingDown(
+	const ProviderEnvironmentIFCRef& env)
+{
+	m_pProv->shutDown(env);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+void 
+PyProxyPolledProvider::doShutdown()
+{
+	// Do nothing
+}
+#endif
 
 //////////////////////////////////////////////////////////////////////////////
 void

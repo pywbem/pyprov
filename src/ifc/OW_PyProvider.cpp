@@ -236,7 +236,9 @@ PyProvider::PyProvider(
 	, m_pyprov()
 	, m_dt(0)
 	, m_fileModTime(0)
+#if OW_OPENWBEM_MAJOR_VERSION == 3
 	, m_activationCount(0)
+#endif
 	, m_unloadableType(unloadableType)
 	, m_handlerClassNames()
 {
@@ -1117,7 +1119,11 @@ PyProvider::activateFilter(
 	const WQLSelectStatement& filter,
 	const String& eventType,
 	const String& nameSpace,
-	const StringArray& classes)
+	const StringArray& classes
+#if OW_OPENWBEM_MAJOR_VERSION >= 4
+	, bool firstActivation
+#endif
+	)
 {
 	GILGuard gg;	// Acquire python's GIL
 
@@ -1125,7 +1131,6 @@ PyProvider::activateFilter(
 
 	try
 	{
-		m_activationCount++;
 		Py::Callable pyfunc = getFunction(m_pyprov, "activateFilter");
 		Py::Tuple args(6);
 		args[0] = PyProviderEnvironment::newObject(env);
@@ -1138,7 +1143,12 @@ PyProvider::activateFilter(
 			pyclasses.append(Py::String(classes[i]));
 		}
 		args[4] = pyclasses;
+#if OW_OPENWBEM_MAJOR_VERSION >= 4
+		args[5] = Py::Bool(firstActivation);
+#elif OW_OPENWBEM_MAJOR_VERSION == 3
+		m_activationCount++;
 		args[5] = Py::Bool(m_activationCount == 1);
+#endif
 		pyfunc.apply(args);
 	}
 	catch(Py::Exception& e)
@@ -1215,7 +1225,11 @@ PyProvider::deActivateFilter(
 	const WQLSelectStatement& filter,
 	const String& eventType,
 	const String& nameSpace,
-	const StringArray& classes)
+	const StringArray& classes
+#if OW_OPENWBEM_MAJOR_VERSION >= 4
+	, bool lastActivation
+#endif
+	)
 {
 	GILGuard gg;	// Acquire python's GIL
 
@@ -1223,7 +1237,6 @@ PyProvider::deActivateFilter(
 
 	try
 	{
-		m_activationCount--;
 		Py::Callable pyfunc = getFunction(m_pyprov, "deActivateFilter");
 		Py::Tuple args(6);
 		args[0] = PyProviderEnvironment::newObject(env);
@@ -1236,7 +1249,12 @@ PyProvider::deActivateFilter(
 			pyclasses.append(Py::String(classes[i]));
 		}
 		args[4] = pyclasses;
+#if OW_OPENWBEM_MAJOR_VERSION >= 4
+		args[5] = Py::Bool(lastActivation);
+#elif OW_OPENWBEM_MAJOR_VERSION == 3
+		m_activationCount--;
 		args[5] = Py::Bool(m_activationCount == 0);
+#endif
 		pyfunc.apply(args);
 	}
 	catch(Py::Exception& e)
