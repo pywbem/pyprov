@@ -19,7 +19,9 @@ libpythonprovifc_la_SOURCES = \
 	OW_PyProvIFCCommon.hpp
 
 libpythonprovifc_la_LDFLAGS = \
-	-lpython2.4 \
+	$(PYTHON_LDFLAGS) \
+	$(PYTHON_EXTRA_LDFLAGS) \
+	$(PYTHON_EXTRA_LIBS) \
 	-lpthread \
 	-lopenwbem \
 	-lowprovider \

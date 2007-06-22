@@ -51,7 +51,7 @@
 // DAMAGE.
 //
 //-----------------------------------------------------------------------------
-#include <python/Python.h>
+#include <Python.h>
 #include "PyCxxExtensions.hpp"
 #include "PyCxxException.hpp"
 #include <openwbem/OW_String.hpp>

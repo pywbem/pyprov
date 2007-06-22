@@ -55,7 +55,7 @@
 #ifndef __PYCXXEXCEPTION_HPP_GUARD
 #define __PYCXXEXCEPTION_HPP_GUARD
 
-#include <python/Python.h>
+#include <Python.h>
 #include "PyCxxConfig.hpp"
 #include "PyCxxPythonWrap.hpp"
 

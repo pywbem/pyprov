@@ -20,7 +20,7 @@
 #ifndef OW_PYWBEM_converter_hpp__
 #define OW_PYWBEM_converter_hpp__
 
-#include <python/Python.h>
+#include <Python.h>
 #include <openwbem/OW_config.h>
 #include <openwbem/OW_CIMFwd.hpp>
 

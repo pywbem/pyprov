@@ -18,7 +18,7 @@
 #ifndef OWPYCOMMON_HPP_GUARD
 #define OWPYCOMMON_HPP_GUARD
 
-#include <python/Python.h>
+#include <Python.h>
 #include <openwbem/OW_Array.hpp>
 
 typedef OpenWBEM::Array<PyObject*> PyObjectPtrArray;

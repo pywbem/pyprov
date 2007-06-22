@@ -24,6 +24,10 @@ AC_PATH_PROG(RM, rm, rm)
 AC_PATH_PROG(MV, mv, mv)
 AC_PATH_PROG(CP, cp, cp)
 
+AC_PYTHON_DEVEL(>= '2.4')
+# Because everything needs to be able to find Python.h
+CPPFLAGS="$CPPFLAGS $PYTHON_CPPFLAGS"
+
 DEBUG_FLAGS="-DDEBUG -g" # Additional debugging flags.
 FULL_DEBUG_FLAGS="-D_GLIBCXX_DEBUG"	# Additional debugging flags.
 OPT_FLAGS="  -DNDEBUG -O2"	# Additional optimization flags.
@@ -129,8 +133,6 @@ AC_HEADER_DIRENT
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS([openwbem/OW_config.h fcntl.h stdlib.h string.h unistd.h sys/time.h ],,[AC_MSG_ERROR(Missing headers: likely won't compile)])
-
-AC_CHECK_HEADERS([omc/Base.hpp],[AC_MSG_ERROR(Missing omc base headers: Will not compile)])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL

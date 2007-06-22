@@ -60,7 +60,7 @@
 #pragma warning(disable: 4786)
 #endif
 
-#include <python/Python.h>
+#include <Python.h>
 #include "PyCxxConfig.hpp"
 #include "PyCxxObjects.hpp"
 #include <openwbem/OW_String.hpp>
