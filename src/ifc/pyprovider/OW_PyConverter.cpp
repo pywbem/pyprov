@@ -663,6 +663,34 @@ OWPyConv::OWQual2Py(const CIMQualifier& qual)
 //////////////////////////////////////////////////////////////////////////////
 // STATIC
 Py::Object
+OWPyConv::OWQualType2Py(const CIMQualifierType& qualt)
+{
+	Py::Callable pyfunc = g_modpywbem.getAttr("CIMQualifierDeclaration");
+	Py::Tuple pyarg(5);
+	pyarg[0] = Py::String(qualt.getName());		// name
+	Py::Object pqvalt;
+	CIMDataType dt = qualt.getDataType();
+	pyarg[1] = Py::String(OWDataType2Py(dt.getType()));	// type
+
+	CIMValue cv = qualt.getDefaultValue();
+	if (cv)
+	{
+		// pywbem.CIMQualiferDeclaration.data ?
+		pyarg[2] = OWVal2Py(cv);
+	}
+	else
+	{
+		// pywbem.CIMQualiferDeclaration.data ?
+		pyarg[2] = Py::Object();
+	}
+	pyarg[3] = bool2Py(dt.isArrayType());	// is_array
+	pyarg[4] = Py::Int(dt.getSize());		// array_size
+	return pyfunc.apply(pyarg);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+// STATIC
+Py::Object
 OWPyConv::OWCIMParam2Py(const CIMParameter& param)
 {
 	Py::Callable pyfunc = g_modpywbem.getAttr("CIMParameter");
@@ -1331,6 +1359,37 @@ OWPyConv::PyQual2OW(const Py::Object& pyqual)
 	if (pyqual.getAttr("translatable").isTrue())
 		theQual.addFlavor(CIMFlavor(CIMFlavor::TRANSLATE));
 	return theQual;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+// STATIC
+CIMQualifierType
+OWPyConv::PyQualType2OW(const Py::Object& pyqualt)
+{
+	String theName = Py::String(pyqualt.getAttr("name")).as_ow_string();
+	CIMQualifierType cqt(theName);
+	String strtype = Py::String(pyqualt.getAttr("type")).as_ow_string();
+	CIMDataType theDataType(PyDataType2OW(strtype));
+	Py::Object wko = pyqualt.getAttr("is_array");
+	if (wko.isTrue())
+	{
+		Int32 arraySize = 0;
+		wko = pyqualt.getAttr("array_size");
+		if (!wko.isNone())
+		{
+			arraySize = Py::Int(wko).asLong();
+		}
+		theDataType.setToArrayType(arraySize);
+	}
+	cqt.setDataType(theDataType);
+	wko = pyqualt.getAttr("data");
+	if (!wko.isNone())
+	{
+		// I'm assuming data is the value...not sure
+		CIMValue theValue = PyVal2OW(strtype, wko);
+		cqt.setDefaultValue(theValue);
+	}
+	return cqt;
 }
 
 //////////////////////////////////////////////////////////////////////////////

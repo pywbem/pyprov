@@ -212,7 +212,7 @@ public:
 			try
 			{
 				Py::Tuple args(1);
-				args[0] = OWPyConv::OWQual2Py(CIMQualifier(cqt));
+				args[0] = OWPyConv::OWQualType2Py(cqt);
 				m_pycb.apply(args);
 			}
 			catch(Py::Exception& e)
@@ -225,7 +225,7 @@ public:
 		}
 		else
 		{
-			m_res.append(OWPyConv::OWQual2Py(CIMQualifier(cqt)));
+			m_res.append(OWPyConv::OWQualType2Py(cqt));
 		}
 	}
 
@@ -1116,7 +1116,7 @@ PyCIMOMHandle::getQualifier(
 	try
 	{
 		CIMQualifierType cqt = m_chdl->getQualifierType(ns, qualName);
-		pyqual = OWPyConv::OWQual2Py(CIMQualifier(cqt));
+		pyqual = OWPyConv::OWQualType2Py(cqt);
 	}
 	catch(const CIMException& e)
 	{

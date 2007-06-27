@@ -23,6 +23,7 @@
 #include <openwbem/OW_CIMInstance.hpp>
 #include <openwbem/OW_CIMObjectPath.hpp>
 #include <openwbem/OW_CIMQualifier.hpp>
+#include <openwbem/OW_CIMQualifierType.hpp>
 #include <openwbem/OW_CIMClass.hpp>
 #include <openwbem/OW_CIMMethod.hpp>
 #include <openwbem/OW_CIMParameter.hpp>
@@ -46,6 +47,8 @@ public:
 	static Py::Object OWClass2Py(const CIMClass& cls);
 	static Py::Object OWProperty2Py(const CIMProperty& prop);
 	static Py::Object OWQual2Py(const CIMQualifier& qual);
+	static Py::Object OWQualType2Py(const CIMQualifierType& qualt);
+
 	static Py::Object OWCIMParam2Py(const CIMParameter& param);
 	static Py::Object OWMeth2Py(const CIMMethod& meth);
 	static String OWDataType2Py(CIMDataType::Type dt);
@@ -58,6 +61,7 @@ public:
 	static CIMClass PyClass2OW(const Py::Object& pycls);
 	static CIMProperty PyProperty2OW(const Py::Object& pyprop);
 	static CIMQualifier PyQual2OW(const Py::Object& pyqual);
+	static CIMQualifierType PyQualType2OW(const Py::Object& pyqualt);
 	static CIMParameter PyCIMParam2OW(const Py::Object& pyparam);
 	static CIMMethod PyMeth2OW(const Py::Object& pymeth);
 	static CIMDataType::Type PyDataType2OW(const String& strt);
