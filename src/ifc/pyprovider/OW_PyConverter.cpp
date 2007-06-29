@@ -23,6 +23,7 @@
 #include <openwbem/OW_DateTime.hpp>
 #include <openwbem/OW_CIMDateTime.hpp>
 #include <openwbem/OW_CIMFlavor.hpp>
+#include <openwbem/OW_CIMScope.hpp>
 #include <openwbem/OW_Format.hpp>
 
 #include <iostream>
@@ -666,25 +667,104 @@ Py::Object
 OWPyConv::OWQualType2Py(const CIMQualifierType& qualt)
 {
 	Py::Callable pyfunc = g_modpywbem.getAttr("CIMQualifierDeclaration");
-	Py::Tuple pyarg(5);
+	Py::Tuple pyarg(7);
 	pyarg[0] = Py::String(qualt.getName());		// name
 	Py::Object pqvalt;
 	CIMDataType dt = qualt.getDataType();
 	pyarg[1] = Py::String(OWDataType2Py(dt.getType()));	// type
 
 	CIMValue cv = qualt.getDefaultValue();
-	if (cv)
+	pyarg[2] = (cv) ? OWVal2Py(cv) : Py::Object();
+	if (dt.isArrayType())
 	{
-		// pywbem.CIMQualiferDeclaration.data ?
-		pyarg[2] = OWVal2Py(cv);
+		pyarg[3] = bool2Py(true);
+		pyarg[4] = (dt.getSize()) ? Py::Int(dt.getSize()) : Py::Object();
 	}
 	else
 	{
-		// pywbem.CIMQualiferDeclaration.data ?
-		pyarg[2] = Py::Object();
+		pyarg[3] = bool2Py(false);
+		pyarg[4] = Py::Object();
 	}
-	pyarg[3] = bool2Py(dt.isArrayType());	// is_array
-	pyarg[4] = Py::Int(dt.getSize());		// array_size
+
+	Py::Dict scopes;
+	CIMScopeArray sra = qualt.getScope();
+	if (sra.size())
+	{
+		bool added = false;
+		for (CIMScopeArray::size_type i = 0; i < sra.size(); i++)
+		{
+			switch(sra[i].getScope())
+			{
+				case CIMScope::CLASS:
+					scopes["CLASS"] = bool2Py(true);
+					added = true;
+					break;
+				case CIMScope::ASSOCIATION:
+					scopes["ASSOCIATION"] = bool2Py(true);
+					added = true;
+					break;
+				case CIMScope::INDICATION:
+					scopes["INDICATION"] = bool2Py(true);
+					added = true;
+					break;
+				case CIMScope::PROPERTY:
+					scopes["PROPERTY"] = bool2Py(true);
+					added = true;
+					break;
+				case CIMScope::REFERENCE:
+					scopes["REFERENCE"] = bool2Py(true);
+					added = true;
+					break;
+				case CIMScope::METHOD:
+					scopes["METHOD"] = bool2Py(true);
+					added = true;
+					break;
+				case CIMScope::PARAMETER:
+					scopes["PARAMETER"] = bool2Py(true);
+					added = true;
+					break;
+				default:
+					break;
+			}
+		}
+		pyarg[5] = (added) ? scopes : Py::Object();
+	}
+	else
+	{
+		pyarg[5] = Py::Object();
+	}
+
+	Py::Dict flavors;
+	CIMFlavorArray fra = qualt.getFlavors();
+	if (fra.size())
+	{
+		bool added = false;
+		for (CIMFlavorArray::size_type i = 0; i < fra.size(); i++)
+		{
+			switch(fra[i].getFlavor())
+			{
+				case CIMFlavor::ENABLEOVERRIDE:
+					flavors["OVERRIDABLE"] = bool2Py(true);
+					added = true;
+					break;
+				case CIMFlavor::TOSUBCLASS:
+					flavors["TOSUBCLASS"] = bool2Py(true);
+					added = true;
+					break;
+				case CIMFlavor::TRANSLATE:
+					flavors["TRANSLATABLE"] = bool2Py(true);
+					added = true;
+					break;
+				default:
+					break;
+			}
+		}
+		pyarg[6] = (added) ? flavors : Py::Object();
+	}
+	else
+	{
+		pyarg[6] = Py::Object();
+	}
 	return pyfunc.apply(pyarg);
 }
 
@@ -1382,13 +1462,79 @@ OWPyConv::PyQualType2OW(const Py::Object& pyqualt)
 		theDataType.setToArrayType(arraySize);
 	}
 	cqt.setDataType(theDataType);
-	wko = pyqualt.getAttr("data");
+	wko = pyqualt.getAttr("value");
 	if (!wko.isNone())
 	{
 		// I'm assuming data is the value...not sure
 		CIMValue theValue = PyVal2OW(strtype, wko);
 		cqt.setDefaultValue(theValue);
 	}
+	wko = pyqualt.getAttr("scopes");
+	if (!wko.isNone())
+	{
+		Py::Mapping scopes(wko);
+		if (scopes.hasKey("CLASS"))
+		{
+			if (scopes["CLASS"].isTrue())
+				cqt.addScope(CIMScope(CIMScope::CLASS));
+		}
+		if (scopes.hasKey("ASSOCIATION"))
+		{
+			if (scopes["ASSOCIATION"].isTrue())
+				cqt.addScope(CIMScope(CIMScope::ASSOCIATION));
+		}
+		if (scopes.hasKey("REFERENCE"))
+		{
+			if (scopes["REFERENCE"].isTrue())
+				cqt.addScope(CIMScope(CIMScope::REFERENCE));
+		}
+		if (scopes.hasKey("PROPERTY"))
+		{
+			if (scopes["PROPERTY"].isTrue())
+				cqt.addScope(CIMScope(CIMScope::PROPERTY));
+		}
+		if (scopes.hasKey("METHOD"))
+		{
+			if (scopes["METHOD"].isTrue())
+				cqt.addScope(CIMScope(CIMScope::METHOD));
+		}
+		if (scopes.hasKey("PARAMETER"))
+		{
+			if (scopes["PARAMETER"].isTrue())
+				cqt.addScope(CIMScope(CIMScope::PARAMETER));
+		}
+		if (scopes.hasKey("INDICATION"))
+		{
+			if (scopes["INDICATION"].isTrue())
+				cqt.addScope(CIMScope(CIMScope::INDICATION));
+		}
+	}
+
+	wko = pyqualt.getAttr("flavors");
+	if (!wko.isNone())
+	{
+		Py::Mapping flavors(wko);
+		if (flavors.hasKey("OVERRIDABLE"))
+		{
+			if (flavors["OVERRIDABLE"].isTrue())
+				cqt.addFlavor(CIMFlavor(CIMFlavor::ENABLEOVERRIDE));
+			else
+				cqt.addFlavor(CIMFlavor(CIMFlavor::DISABLEOVERRIDE));
+		}
+		if (flavors.hasKey("TOSUBCLASS"))
+		{
+			if (flavors["TOSUBCLASS"].isTrue())
+				cqt.addFlavor(CIMFlavor(CIMFlavor::TOSUBCLASS));
+			else
+				cqt.addFlavor(CIMFlavor(CIMFlavor::RESTRICTED));
+		}
+		if (flavors.hasKey("TRANSLATABLE"))
+		{
+			if (flavors["TRANSLATABLE"].isTrue())
+				cqt.addFlavor(CIMFlavor(CIMFlavor::TRANSLATE));
+		}
+	}
+
 	return cqt;
 }
 
