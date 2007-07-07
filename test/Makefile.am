@@ -8,7 +8,11 @@ test_SOURCES = \
 	converter.hpp \
 	common.hpp
 
-test_LDADD = -lpython2.4 -lopenwbem
+test_LDADD = \
+	$(PYTHON_LDFLAGS) \
+	$(PYTHON_EXTRA_LDFLAGS) \
+	$(PYTHON_EXTRA_LIBS) \
+	-lopenwbem
 test_LDFLAGS = -Xlinker -export-dynamic
 test_CFLAGS = -DDEBUG
 test_CXXFLAGS = -DDEBUG
