@@ -26,6 +26,7 @@
 #include <openwbem/OW_CIMInstance.hpp>
 #include <openwbem/OW_CIMObjectPath.hpp>
 #include <openwbem/OW_CIMParamValue.hpp>
+#include <openwbem/OW_ResultHandlers.hpp>
 #include <openwbem/OW_CIMException.hpp>
 #include <openwbem/OW_NoSuchProviderException.hpp>
 #include <openwbem/OW_Format.hpp>
@@ -498,12 +499,28 @@ PyProvider::enumInstanceNames(
 	try
 	{
 		Py::Callable pyfunc = getFunction(m_pyprov, "enumInstanceNames");
-		Py::Tuple args(4);
+		Py::Tuple args(3);
 		args[0] = PyProviderEnvironment::newObject(env); 	// Provider Environment
 		args[1] = Py::String(ns);							// Namespace
-		args[2] = PyObjectPathResultHandler::newObject(result, ns);
-		args[3] = OWPyConv::OWClass2Py(cimClass);			// CIM Class
+		args[2] = OWPyConv::OWClass2Py(cimClass);			// CIM Class
 		pyfunc.apply(args);
+		Py::Object wko = pyfunc.apply(args);
+		PyObject* ito = PyObject_GetIter(wko.ptr());
+		if (!ito)
+		{
+			PyErr_Clear();
+			String msg = Format("enumInstanceNames for provider %1 is NOT an "
+				"iterable object", m_path);
+			OW_LOG_ERROR(logger, msg);
+			OW_THROWCIMMSG(CIMException::FAILED, msg.c_str());
+		}
+		Py::Object iterable(ito, true);	// Let Py::Object manage the ref count
+		PyObject* item;
+		while((item = PyIter_Next(ito)))
+		{
+			wko = Py::Object(item, true); 
+			result.handle(OWPyConv::PyRef2OW(wko, ns));
+		}
 	}
 	catch(Py::Exception& e)
 	{
