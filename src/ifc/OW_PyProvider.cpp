@@ -503,7 +503,6 @@ PyProvider::enumInstanceNames(
 		args[0] = PyProviderEnvironment::newObject(env); 	// Provider Environment
 		args[1] = Py::String(ns);							// Namespace
 		args[2] = OWPyConv::OWClass2Py(cimClass);			// CIM Class
-		pyfunc.apply(args);
 		Py::Object wko = pyfunc.apply(args);
 		PyObject* ito = PyObject_GetIter(wko.ptr());
 		if (!ito)
@@ -520,6 +519,11 @@ PyProvider::enumInstanceNames(
 		{
 			wko = Py::Object(item, true); 
 			result.handle(OWPyConv::PyRef2OW(wko, ns));
+		}
+		if (PyErr_Occurred())
+		{
+			throw Py::Exception(Format("Calling PyIter_Next: "
+				"enumInstanceNames. Provider: %1", m_path).c_str());
 		}
 	}
 	catch(Py::Exception& e)
@@ -563,14 +567,34 @@ PyProvider::enumInstances(
 	try
 	{
 		Py::Callable pyfunc = getFunction(m_pyprov, "enumInstances");
-		Py::Tuple args(6);
+		Py::Tuple args(5);
 		args[0] = PyProviderEnvironment::newObject(env); 	// Provider Environment
 		args[1] = Py::String(ns);							// Namespace
-		args[2] = PyInstanceResultHandler::newObject(result, ns);
-		args[3] = getPropertyList(propertyList);
-		args[4] = OWPyConv::OWClass2Py(requestedClass);
-		args[5] = OWPyConv::OWClass2Py(cimClass);
-		pyfunc.apply(args);
+		args[2] = getPropertyList(propertyList);
+		args[3] = OWPyConv::OWClass2Py(requestedClass);
+		args[4] = OWPyConv::OWClass2Py(cimClass);
+		Py::Object wko = pyfunc.apply(args);
+		PyObject* ito = PyObject_GetIter(wko.ptr());
+		if (!ito)
+		{
+			PyErr_Clear();
+			String msg = Format("enumInstances for provider %1 is NOT an "
+				"iterable object", m_path);
+			OW_LOG_ERROR(logger, msg);
+			OW_THROWCIMMSG(CIMException::FAILED, msg.c_str());
+		}
+		Py::Object iterable(ito, true);	// Let Py::Object manage the ref count
+		PyObject* item;
+		while((item = PyIter_Next(ito)))
+		{
+			wko = Py::Object(item, true); 
+			result.handle(OWPyConv::PyInst2OW(wko, ns));
+		}
+		if (PyErr_Occurred())
+		{
+			throw Py::Exception(Format("Calling PyIter_Next: "
+				"enumInstances. Provider: %1", m_path).c_str());
+		}
 	}
 	catch(Py::Exception& e)
 	{
@@ -814,16 +838,36 @@ PyProvider::associators(
 			lcop.setNameSpace(ns);
 		}
 		Py::Callable pyfunc = getFunction(m_pyprov, "associators");
-		Py::Tuple args(8);
+		Py::Tuple args(7);
 		args[0] = PyProviderEnvironment::newObject(env); 	// Provider Environment
-		args[1] = PyInstanceResultHandler::newObject(result, ns);
-		args[2] = OWPyConv::OWRef2Py(lcop);
-		args[3] = Py::String(assocClass);
-		args[4] = Py::String(resultClass);
-		args[5] = Py::String(role);
-		args[6] = Py::String(resultRole);
-		args[7] = getPropertyList(propertyList);
-		pyfunc.apply(args);
+		args[1] = OWPyConv::OWRef2Py(lcop);
+		args[2] = Py::String(assocClass);
+		args[3] = Py::String(resultClass);
+		args[4] = Py::String(role);
+		args[5] = Py::String(resultRole);
+		args[6] = getPropertyList(propertyList);
+		Py::Object wko = pyfunc.apply(args);
+		PyObject* ito = PyObject_GetIter(wko.ptr());
+		if (!ito)
+		{
+			PyErr_Clear();
+			String msg = Format("associators for provider %1 is NOT an "
+				"iterable object", m_path);
+			OW_LOG_ERROR(logger, msg);
+			OW_THROWCIMMSG(CIMException::FAILED, msg.c_str());
+		}
+		Py::Object iterable(ito, true);	// Let Py::Object manage the ref count
+		PyObject* item;
+		while((item = PyIter_Next(ito)))
+		{
+			wko = Py::Object(item, true); 
+			result.handle(OWPyConv::PyInst2OW(wko, ns));
+		}
+		if (PyErr_Occurred())
+		{
+			throw Py::Exception(Format("Calling PyIter_Next: "
+				"associators. Provider: %1", m_path).c_str());
+		}
 	}
 	catch(Py::Exception& e)
 	{
@@ -868,15 +912,35 @@ PyProvider::associatorNames(
 			lcop.setNameSpace(ns);
 		}
 		Py::Callable pyfunc = getFunction(m_pyprov, "associatorNames");
-		Py::Tuple args(7);
+		Py::Tuple args(6);
 		args[0] = PyProviderEnvironment::newObject(env); 	// Provider Environment
-		args[1] = PyObjectPathResultHandler::newObject(result, ns);
-		args[2] = OWPyConv::OWRef2Py(lcop);
-		args[3] = Py::String(assocClass);
-		args[4] = Py::String(resultClass);
-		args[5] = Py::String(role);
-		args[6] = Py::String(resultRole);
-		pyfunc.apply(args);
+		args[1] = OWPyConv::OWRef2Py(lcop);
+		args[2] = Py::String(assocClass);
+		args[3] = Py::String(resultClass);
+		args[4] = Py::String(role);
+		args[5] = Py::String(resultRole);
+		Py::Object wko = pyfunc.apply(args);
+		PyObject* ito = PyObject_GetIter(wko.ptr());
+		if (!ito)
+		{
+			PyErr_Clear();
+			String msg = Format("associatorNames for provider %1 is NOT an "
+				"iterable object", m_path);
+			OW_LOG_ERROR(logger, msg);
+			OW_THROWCIMMSG(CIMException::FAILED, msg.c_str());
+		}
+		Py::Object iterable(ito, true);	// Let Py::Object manage the ref count
+		PyObject* item;
+		while((item = PyIter_Next(ito)))
+		{
+			wko = Py::Object(item, true); 
+			result.handle(OWPyConv::PyRef2OW(wko, ns));
+		}
+		if (PyErr_Occurred())
+		{
+			throw Py::Exception(Format("Calling PyIter_Next: "
+				"associatorNames. Provider: %1", m_path).c_str());
+		}
 	}
 	catch(Py::Exception& e)
 	{
@@ -922,14 +986,34 @@ PyProvider::references(
 			lcop.setNameSpace(ns);
 		}
 		Py::Callable pyfunc = getFunction(m_pyprov, "references");
-		Py::Tuple args(6);
+		Py::Tuple args(5);
 		args[0] = PyProviderEnvironment::newObject(env); 	// Provider Environment
-		args[1] = PyInstanceResultHandler::newObject(result, ns);
-		args[2] = OWPyConv::OWRef2Py(lcop);
-		args[3] = Py::String(resultClass);
-		args[4] = Py::String(role);
-		args[5] = getPropertyList(propertyList);
-		pyfunc.apply(args);
+		args[1] = OWPyConv::OWRef2Py(lcop);
+		args[2] = Py::String(resultClass);
+		args[3] = Py::String(role);
+		args[4] = getPropertyList(propertyList);
+		Py::Object wko = pyfunc.apply(args);
+		PyObject* ito = PyObject_GetIter(wko.ptr());
+		if (!ito)
+		{
+			PyErr_Clear();
+			String msg = Format("references for provider %1 is NOT an "
+				"iterable object", m_path);
+			OW_LOG_ERROR(logger, msg);
+			OW_THROWCIMMSG(CIMException::FAILED, msg.c_str());
+		}
+		Py::Object iterable(ito, true);	// Let Py::Object manage the ref count
+		PyObject* item;
+		while((item = PyIter_Next(ito)))
+		{
+			wko = Py::Object(item, true); 
+			result.handle(OWPyConv::PyInst2OW(wko, ns));
+		}
+		if (PyErr_Occurred())
+		{
+			throw Py::Exception(Format("Calling PyIter_Next: "
+				"references. Provider: %1", m_path).c_str());
+		}
 	}
 	catch(Py::Exception& e)
 	{
@@ -972,13 +1056,33 @@ PyProvider::referenceNames(
 			lcop.setNameSpace(ns);
 		}
 		Py::Callable pyfunc = getFunction(m_pyprov, "referenceNames");
-		Py::Tuple args(5);
+		Py::Tuple args(4);
 		args[0] = PyProviderEnvironment::newObject(env); 	// Provider Environment
-		args[1] = PyObjectPathResultHandler::newObject(result, ns);
-		args[2] = OWPyConv::OWRef2Py(lcop);
-		args[3] = Py::String(resultClass);
-		args[4] = Py::String(role);
-		pyfunc.apply(args);
+		args[1] = OWPyConv::OWRef2Py(lcop);
+		args[2] = Py::String(resultClass);
+		args[3] = Py::String(role);
+		Py::Object wko = pyfunc.apply(args);
+		PyObject* ito = PyObject_GetIter(wko.ptr());
+		if (!ito)
+		{
+			PyErr_Clear();
+			String msg = Format("referenceNames for provider %1 is NOT an "
+				"iterable object", m_path);
+			OW_LOG_ERROR(logger, msg);
+			OW_THROWCIMMSG(CIMException::FAILED, msg.c_str());
+		}
+		Py::Object iterable(ito, true);	// Let Py::Object manage the ref count
+		PyObject* item;
+		while((item = PyIter_Next(ito)))
+		{
+			wko = Py::Object(item, true); 
+			result.handle(OWPyConv::PyRef2OW(wko, ns));
+		}
+		if (PyErr_Occurred())
+		{
+			throw Py::Exception(Format("Calling PyIter_Next: "
+				"referenceNames. Provider: %1", m_path).c_str());
+		}
 	}
 	catch(Py::Exception& e)
 	{
