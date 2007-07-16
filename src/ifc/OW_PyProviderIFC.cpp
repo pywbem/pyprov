@@ -318,7 +318,13 @@ PyProviderIFC::initPython(
 	GILGuard gg;	// Acquire python's GIL
 
 	try
-	{	
+	{
+		// Explicitly importing 'threading' right here seems to get rid of the
+		// atexit error we get when exiting after a provider has imported
+		// threading. Might have something to do with importing threading
+		// from the main thread...
+		Py::Module tmod = Py::Module("threading", true);	// Explicity import threading
+
 		// Load the pywbem module for use in interacting
 		// with python providers
 		OW_LOG_DEBUG(logger, "Python provider ifc loading pywbem module...");
