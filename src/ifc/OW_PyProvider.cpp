@@ -517,13 +517,12 @@ PyProvider::enumInstanceNames(
 		PyObject* item;
 		while((item = PyIter_Next(ito)))
 		{
+			if (PyErr_Occurred())
+			{
+				throw Py::Exception();
+			}
 			wko = Py::Object(item, true); 
 			result.handle(OWPyConv::PyRef2OW(wko, ns));
-		}
-		if (PyErr_Occurred())
-		{
-			throw Py::Exception(Format("Calling PyIter_Next: "
-				"enumInstanceNames. Provider: %1", m_path).c_str());
 		}
 	}
 	catch(Py::Exception& e)
@@ -587,13 +586,12 @@ PyProvider::enumInstances(
 		PyObject* item;
 		while((item = PyIter_Next(ito)))
 		{
+			if (PyErr_Occurred())
+			{
+				throw Py::Exception();
+			}
 			wko = Py::Object(item, true); 
 			result.handle(OWPyConv::PyInst2OW(wko, ns));
-		}
-		if (PyErr_Occurred())
-		{
-			throw Py::Exception(Format("Calling PyIter_Next: "
-				"enumInstances. Provider: %1", m_path).c_str());
 		}
 	}
 	catch(Py::Exception& e)
@@ -860,13 +858,12 @@ PyProvider::associators(
 		PyObject* item;
 		while((item = PyIter_Next(ito)))
 		{
+			if (PyErr_Occurred())
+			{
+				throw Py::Exception();
+			}
 			wko = Py::Object(item, true); 
 			result.handle(OWPyConv::PyInst2OW(wko, ns));
-		}
-		if (PyErr_Occurred())
-		{
-			throw Py::Exception(Format("Calling PyIter_Next: "
-				"associators. Provider: %1", m_path).c_str());
 		}
 	}
 	catch(Py::Exception& e)
@@ -933,13 +930,12 @@ PyProvider::associatorNames(
 		PyObject* item;
 		while((item = PyIter_Next(ito)))
 		{
+			if (PyErr_Occurred())
+			{
+				throw Py::Exception();
+			}
 			wko = Py::Object(item, true); 
 			result.handle(OWPyConv::PyRef2OW(wko, ns));
-		}
-		if (PyErr_Occurred())
-		{
-			throw Py::Exception(Format("Calling PyIter_Next: "
-				"associatorNames. Provider: %1", m_path).c_str());
 		}
 	}
 	catch(Py::Exception& e)
@@ -1006,13 +1002,12 @@ PyProvider::references(
 		PyObject* item;
 		while((item = PyIter_Next(ito)))
 		{
+			if (PyErr_Occurred())
+			{
+				throw Py::Exception();
+			}
 			wko = Py::Object(item, true); 
 			result.handle(OWPyConv::PyInst2OW(wko, ns));
-		}
-		if (PyErr_Occurred())
-		{
-			throw Py::Exception(Format("Calling PyIter_Next: "
-				"references. Provider: %1", m_path).c_str());
 		}
 	}
 	catch(Py::Exception& e)
@@ -1075,13 +1070,12 @@ PyProvider::referenceNames(
 		PyObject* item;
 		while((item = PyIter_Next(ito)))
 		{
+			if (PyErr_Occurred())
+			{
+				throw Py::Exception();
+			}
 			wko = Py::Object(item, true); 
 			result.handle(OWPyConv::PyRef2OW(wko, ns));
-		}
-		if (PyErr_Occurred())
-		{
-			throw Py::Exception(Format("Calling PyIter_Next: "
-				"referenceNames. Provider: %1", m_path).c_str());
 		}
 	}
 	catch(Py::Exception& e)
