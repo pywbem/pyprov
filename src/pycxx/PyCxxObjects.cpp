@@ -1344,9 +1344,11 @@ String::size_type String::size () const
 
 OpenWBEM::String String::as_ow_string() const
 {
-	if( isUnicode() )
+	if(isUnicode())
 	{
-		throw TypeError("cannot return OpenWBEM::String from Unicode object");
+		Py::String s(PyUnicode_AsUTF8String(ptr()), true);
+		return OpenWBEM::String(PyString_AsString(s.ptr()));
+		//throw TypeError("cannot return OpenWBEM::String from Unicode object");
 	}
 	else
 	{
