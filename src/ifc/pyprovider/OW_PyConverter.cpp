@@ -946,6 +946,7 @@ OWPyConv::PyRef2OW(
 	Py::List items = kb.items();
 	Py::Object pciName = g_modpywbem.getAttr("CIMInstanceName");
 	Py::Object pciClassName = g_modpywbem.getAttr("CIMClassName");
+	Py::Object pciDateTime = g_modpywbem.getAttr("CIMDateTime");
 	
 	for (int i = 0; i < int(items.length()); i++)
 	{
@@ -1002,6 +1003,10 @@ OWPyConv::PyRef2OW(
 			|| pkval.isInstanceOf(pciName))
 		{
 			cv = PyVal2OW("reference", pkval); 
+		}
+		else if (pkval.isInstanceOf(pciDateTime))
+		{
+			cv = PyVal2OW("datetime", pkval);
 		}
 		else
 		{
