@@ -1050,11 +1050,11 @@ OWPyConv::PyVal2OW(
 			StringArray sra(sz);
 			for(size_t i = 0; i < sz; i++)
 			{
-				sra[i] = String(Py::String(sl[i]));
+				sra[i] = Py::String(sl[i]).as_ow_string();
 			}
 			return CIMValue(sra);
 		}
-		return CIMValue(String(Py::String(pyval)));
+		return CIMValue(Py::String(pyval).as_ow_string());
 	}
 	else if (type == "uint8")
 	{
