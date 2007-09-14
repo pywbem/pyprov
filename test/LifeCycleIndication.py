@@ -104,105 +104,175 @@ def shutdown(env):
     print '#### Threaded python shutdown returning'
 
 
-##############################################################################
-def MI_enumInstanceNames(env, 
-                         ns, 
-                         result, 
-                         cimClass):
-    for k in _PyFooInsts.keys():
-        iname = pywbem.CIMInstanceName('PyIndFoo', {'TheKey':k}, namespace=ns)
-        result(iname)
 
-##############################################################################
-def MI_enumInstances(env, 
-                     ns, 
-                     result, 
-                     localOnly, 
-                     deep, 
-                     incQuals, 
-                     incClassOrigin, 
-                     propertyList, 
-                     requestedCimClass, 
-                     cimClass):
-    for k,v in _PyFooInsts.items():
-        cipath = pywbem.CIMInstanceName('PyIndFoo', {'TheKey':k}, namespace=ns)
-        ci = pywbem.CIMInstance('PyIndFoo',
-            {'TheKey':k, 'TheValue':v}, path=cipath)
-        result(ci)
 
-##############################################################################
-def MI_getInstance(env, 
-                   instanceName, 
-                   localOnly, 
-                   incQuals, 
-                   incClassOrigin, 
-                   propertyList, 
-                   cimClass):
-    if instanceName.keybindings.has_key('TheKey'):
-        kv = instanceName['TheKey']
-        if _PyFooInsts.has_key(kv):
-            ci = pywbem.CIMInstance('PyIndFoo',
-                {'TheKey':kv, 'TheValue':_PyFooInsts[kv]}, path=instanceName)
-            return ci
-    raise pywbem.CIMError(pywbem.CIM_ERR_NOT_FOUND)
+class PyIndFooProvider(pywbem.CIMProvider):
+    """Instrument the CIM class PyIndFoo 
 
-##############################################################################
-def MI_createInstance(env, 
-                      instance):
-    kv, val = None, None
-    if instance.properties.has_key('TheKey'):
-        kv = instance['TheKey']
-    if not kv:
-        raise pywbem.CIMError(pywbem.CIM_ERR_INVALID_PARAMETER,
-            "'TheKey' is a required property")
+    Test class for a python life cycle indication provider
+    
+    """
 
-    if instance.properties.has_key('TheValue'):
-        val = instance['TheValue']
-    if not val:
-        raise pywbem.CIMError(pywbem.CIM_ERR_INVALID_PARAMETER,
-            "'TheValue' is a required property")
+    def __init__ (self, env):
+        logger = env.get_logger()
+        logger.log_debug('Initializing provider %s from %s' \
+                % (self.__class__.__name__, __file__))
+        # If you will be filtering instances yourself according to 
+        # property_list, role, result_role, and result_class_name 
+        # parameters, set self.filter_results to False
+        # self.filter_results = False
 
-    if _PyFooInsts.has_key(kv):
-        raise pywbem.CIMError(pywbem.CIM_ERR_ALREADY_EXISTS)
+    def get_instance(self, env, model, cim_class):
+        """Return an instance.
 
-    _PyFooInsts[kv] = val
+        Keyword arguments:
+        env -- Provider Environment (pycimmb.ProviderEnvironment)
+        model -- A template of the pywbem.CIMInstance to be returned.  The 
+            key properties are set on this instance to correspond to the 
+            instanceName that was requested.  The properties of the model
+            are already filtered according to the PropertyList from the 
+            request.  Only properties present in the model need to be
+            given values.  If you prefer, you can set all of the 
+            values, and the instance will be filtered for you. 
+        cim_class -- The pywbem.CIMClass
 
-    return pywbem.CIMInstanceName('PyIndFoo', {'TheKey':kv},
-        namespace=instance.path)
+        Possible Errors:
+        CIM_ERR_ACCESS_DENIED
+        CIM_ERR_INVALID_PARAMETER (including missing, duplicate, unrecognized 
+            or otherwise incorrect parameters)
+        CIM_ERR_NOT_FOUND (the CIM Class does exist, but the requested CIM 
+            Instance does not exist in the specified namespace)
+        CIM_ERR_FAILED (some other unspecified error occurred)
 
-##############################################################################
-def MI_modifyInstance(env, 
-                      modifiedInstance, 
-                      previousInstance, 
-                      incQuals, 
-                      propertyList, 
-                      cimClass):
-    if modifiedInstance.properties.has_key('TheKey'):
-        kv = modifiedInstance['TheKey']
-    if not kv:
-        raise pywbem.CIMError(pywbem.CIM_ERR_INVALID_PARAMETER,
-            "'TheKey' is a required property")
+        """
+        
+        logger = env.get_logger()
+        logger.log_debug('Entering %s.get_instance()' \
+                % self.__class__.__name__)
+        
+        try:
+            model['TheValue'] = _PyFooInsts[model['TheKey']]
+        except KeyError:
+            raise pywbem.CIMError(pywbem.CIM_ERR_NOT_FOUND)
+        return model
 
-    if modifiedInstance.properties.has_key('TheValue'):
-        val = modifiedInstance['TheValue']
-    if not val:
-        raise pywbem.CIMError(pywbem.CIM_ERR_INVALID_PARAMETER,
-            "'TheValue' is a required property")
+    def enum_instances(self, env, model, cim_class, keys_only):
+        """Enumerate instances.
 
-    if not _PyFooInsts.has_key(kv):
-        raise pywbem.CIMError(pywbem.CIM_ERR_NOT_FOUND)
+        The WBEM operations EnumerateInstances and EnumerateInstanceNames
+        are both mapped to this method. 
+        This method is a python generator
 
-    _PyFooInsts[kv] = val;
+        Keyword arguments:
+        env -- Provider Environment (pycimmb.ProviderEnvironment)
+        model -- A template of the pywbem.CIMInstances to be generated.  
+            The properties of the model are already filtered according to 
+            the PropertyList from the request.  Only properties present in 
+            the model need to be given values.  If you prefer, you can 
+            always set all of the values, and the instance will be filtered 
+            for you. 
+        cim_class -- The pywbem.CIMClass
+        keys_only -- A boolean.  True if only the key properties should be
+            set on the generated instances.
 
-##############################################################################
-def MI_deleteInstance(env, 
-                      instance_name):
-    if instance_name.keybindings.has_key('TheKey'):
-        kv = instance_name['TheKey']
-        if _PyFooInsts.has_key(kv):
-            del(_PyFooInsts[kv])
-            return
-    raise pywbem.CIMError(pywbem.CIM_ERR_NOT_FOUND)
+        Possible Errors:
+        CIM_ERR_FAILED (some other unspecified error occurred)
+
+        """
+
+        logger = env.get_logger()
+        logger.log_debug('Entering %s.enum_instances()' \
+                % self.__class__.__name__)
+
+        for k,v in _PyFooInsts.items():
+            model['TheKey'] = k
+            model['TheValue'] = v
+            yield model
+
+    def set_instance(self, env, instance, previous_instance, cim_class):
+        """Return a newly created or modified instance.
+
+        Keyword arguments:
+        env -- Provider Environment (pycimmb.ProviderEnvironment)
+        instance -- The new pywbem.CIMInstance.  If modifying an existing 
+            instance, the properties on this instance have been filtered by 
+            the PropertyList from the request.
+        previous_instance -- The previous pywbem.CIMInstance if modifying 
+            an existing instance.  None if creating a new instance. 
+        cim_class -- The pywbem.CIMClass
+
+        Return the new instance.  The keys must be set on the new instance. 
+
+        Possible Errors:
+        CIM_ERR_ACCESS_DENIED
+        CIM_ERR_NOT_SUPPORTED
+        CIM_ERR_INVALID_PARAMETER (including missing, duplicate, unrecognized 
+            or otherwise incorrect parameters)
+        CIM_ERR_ALREADY_EXISTS (the CIM Instance already exists -- only 
+            valid if previous_instance is None, indicating that the operation
+            was CreateInstance)
+        CIM_ERR_NOT_FOUND (the CIM Instance does not exist -- only valid 
+            if previous_instance is not None, indicating that the operation
+            was ModifyInstance)
+        CIM_ERR_FAILED (some other unspecified error occurred)
+
+        """
+
+        logger = env.get_logger()
+        logger.log_debug('Entering %s.set_instance()' \
+                % self.__class__.__name__)
+
+        if previous_instance is None:
+            _PyFooInsts[model['TheKey']] = instance['TheValue']
+        else:
+            if 'TheValue' in instance:
+                try:
+                    _PyFooInsts[instance['TheKey']] = instance['TheValue']
+                except KeyError:
+                    raise pywbem.CIMError(pywbem.CIM_ERR_NOT_FOUND)
+                ci = pywbem.CIMInstance('CIM_InstModification')
+                ci['PreviousInstance'] = previous_instance
+                ci['SourceInstance'] = instance
+                ci['SourceInstanceModelPath'] = instance.path
+                ci['IndicationIdentifier'] = 'PyTestInd:%s' % 'one'
+                ci['IndicationTime'] = pywbem.CIMDateTime.now()
+                ci['PerceivedSeverity'] = pywbem.Uint16(2)
+                ch = env.get_cimom_handle()
+                ch.export_indication(ci, 'root/cimv2')
+        return instance
+
+    def delete_instance(self, env, instance_name):
+        """Delete an instance.
+
+        Keyword arguments:
+        env -- Provider Environment (pycimmb.ProviderEnvironment)
+        instance_name -- A pywbem.CIMInstanceName specifying the instance 
+            to delete.
+
+        Possible Errors:
+        CIM_ERR_ACCESS_DENIED
+        CIM_ERR_NOT_SUPPORTED
+        CIM_ERR_INVALID_NAMESPACE
+        CIM_ERR_INVALID_PARAMETER (including missing, duplicate, unrecognized 
+            or otherwise incorrect parameters)
+        CIM_ERR_INVALID_CLASS (the CIM Class does not exist in the specified 
+            namespace)
+        CIM_ERR_NOT_FOUND (the CIM Class does exist, but the requested CIM 
+            Instance does not exist in the specified namespace)
+        CIM_ERR_FAILED (some other unspecified error occurred)
+
+        """ 
+
+        logger = env.get_logger()
+        logger.log_debug('Entering %s.delete_instance()' \
+                % self.__class__.__name__)
+
+        try:
+            del _PyFooInsts[instance_name['TheKey']]
+        except KeyError:
+            raise pywbem.CIMError(pywbem.CIM_ERR_NOT_FOUND)
+        
+## end of class PyIndFooProvider
 
 ##############################################################################
 def activate_filter(env, filter, eventType, namespace, classes, firstActivation):
@@ -235,4 +305,9 @@ def authorize_filter(env, filter, eventType, namespace, classes, owner):
     logger = env.get_logger();
     logger.log_debug('#### Python authorize_filter called. filter: %s' % filter)
     logger.log_debug('#### Python authorize_filter owner: %s' % owner)
+
+
+def get_providers(env): 
+    pyindfoo_prov = PyIndFooProvider(env)  
+    return {'PyIndFoo': pyindfoo_prov} 
 
