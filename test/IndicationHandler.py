@@ -1,4 +1,4 @@
-import pyprovider, pywbem
+import pywbem
 
 def handle_indication(env, ns, handlerInstance, indicationInstance):
     logger = env.get_logger();

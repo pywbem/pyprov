@@ -11,7 +11,7 @@ INSTANCE OF CIM_IndicationFilter as $filter
 	CreationClassName = "CIM_IndicationFilter";
 	Name = "/PythonTestIndicationHandler";
 	SourceNamespace = "root/cimv2";
-	Query = "select * from cim_instmodification where sourceinstance isa PyFoo";
+	Query = "select * from cim_instmodification where sourceinstance isa PyIndFoo";
 	QueryLanguage = "wql1";
 };
 
