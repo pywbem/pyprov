@@ -1375,7 +1375,7 @@ PyProvider::deActivateFilter(
 	catch(Py::Exception& e)
 	{
 		OW_LOG_ERROR(logger, Format("Caught python exception invoking "
-			"authorizeFilter on provider %1", m_path));
+			"deActivateFilter on provider %1", m_path));
 
 		// Rethrow as an exception OW understands
 		processPyException(e, __LINE__, logger);

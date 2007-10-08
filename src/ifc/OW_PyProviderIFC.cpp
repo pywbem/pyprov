@@ -210,9 +210,16 @@ PyProviderIFC::doInit(
 						*pIndicationClassName != 0; ++pIndicationClassName)
 					{
 						const char* indicationClassName = *pIndicationClassName;
-						IndicationProviderInfoEntry e(indicationClassName, namespaces,
+
+						OW_LOG_DEBUG(logger, Format("PyProviderIFC::Registering"
+							"indication provider %1  for %2 - %3",
+							provid, className, indicationClassName));
+
+						IndicationProviderInfoEntry e1(indicationClassName, namespaces,
 							StringArray(1, className));
-						ipi.addInstrumentedClass(e);
+						ipi.addInstrumentedClass(e1);
+						IndicationProviderInfoEntry e2(indicationClassName, namespaces);
+						ipi.addInstrumentedClass(e2);
 					}
 					indpia.append(ipi);
 					break;
