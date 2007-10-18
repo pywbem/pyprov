@@ -159,6 +159,7 @@ public:
 
 	virtual void doHandle(const CIMClass& cc)
 	{
+		Py::GILGuard gg;	// Acquire python's GIL
 		if (!m_pycb.isNone())
 		{
 			try
@@ -207,6 +208,7 @@ public:
 
 	virtual void doHandle(const CIMQualifierType& cqt)
 	{
+		Py::GILGuard gg;	// Acquire python's GIL
 		if (!m_pycb.isNone())
 		{
 			try
@@ -256,6 +258,7 @@ public:
 
 	virtual void doHandle(const CIMObjectPath& cop)
 	{
+		Py::GILGuard gg;	// Acquire python's GIL
 		CIMObjectPath lcop(cop);
 		if (lcop.getNameSpace().empty())
 		{
@@ -312,6 +315,7 @@ public:
 
 	virtual void doHandle(const CIMInstance& ci)
 	{
+		Py::GILGuard gg;	// Acquire python's GIL
 		if (!m_pycb.isNone())
 		{
 			try
@@ -361,6 +365,7 @@ public:
 
 	virtual void doHandle(const String& arg)
 	{
+		Py::GILGuard gg;	// Acquire python's GIL
 		if (!m_pycb.isNone())
 		{
 			try
@@ -456,7 +461,9 @@ PyCIMOMHandle::exportIndication(
 
 	try
 	{
+		PYCXX_ALLOW_THREADS
 		m_chdl->exportIndication(ci, ns);
+		PYCXX_END_ALLOW_THREADS
 	}
 	catch(const CIMException& e)
 	{
@@ -523,8 +530,11 @@ PyCIMOMHandle::invokeMethod(
 	try
 	{
 		String className = objectName.getClassName();
-		CIMClass cc = m_chdl->getClass(ns, className, E_NOT_LOCAL_ONLY,
+		CIMClass cc;
+		PYCXX_ALLOW_THREADS
+		cc = m_chdl->getClass(ns, className, E_NOT_LOCAL_ONLY,
 			E_INCLUDE_QUALIFIERS, E_INCLUDE_CLASS_ORIGIN);
+		PYCXX_END_ALLOW_THREADS
 		CIMMethod method = cc.getMethod(methodName);
 		if (!method)
 		{
@@ -553,8 +563,11 @@ PyCIMOMHandle::invokeMethod(
 		}
 
 		CIMParamValueArray outParams;
-		CIMValue rcv = m_chdl->invokeMethod(ns, objectName, methodName,
+		CIMValue rcv(CIMNULL);
+		PYCXX_ALLOW_THREADS
+		rcv = m_chdl->invokeMethod(ns, objectName, methodName,
 			inParams, outParams);
+		PYCXX_END_ALLOW_THREADS
 
 		Py::Tuple rtuple(2);
 		rtuple[0] = OWPyConv::OWVal2Py(rcv);
@@ -646,7 +659,9 @@ PyCIMOMHandle::enumClassNames(
 	PyStringResultHandler rhandler(cb);
 	try
 	{
+		PYCXX_ALLOW_THREADS
 		m_chdl->enumClassNames(ns, className, rhandler, flg);
+		PYCXX_END_ALLOW_THREADS
 	}
 	catch(const CIMException& e)
 	{
@@ -745,8 +760,10 @@ PyCIMOMHandle::enumClass(
 	PyClassResultHandler rhandler(cb);
 	try
 	{
+		PYCXX_ALLOW_THREADS
 		m_chdl->enumClass(ns, className, rhandler, deepFlg, localOnlyFlag,
 			incQualsFlag, classOriginFlag);
+		PYCXX_END_ALLOW_THREADS
 	}
 	catch(const CIMException& e)
 	{
@@ -844,8 +861,11 @@ PyCIMOMHandle::getClass(
 	Py::Object pycc;
 	try
 	{
-		CIMClass cc = m_chdl->getClass(ns, className, localOnlyFlag,
+		CIMClass cc;
+		PYCXX_ALLOW_THREADS
+		cc = m_chdl->getClass(ns, className, localOnlyFlag,
 			incQualsFlag, classOriginFlag, pPropList);
+		PYCXX_END_ALLOW_THREADS
 		pycc = OWPyConv::OWClass2Py(cc);
 	}
 	catch(const CIMException& e)
@@ -900,7 +920,9 @@ PyCIMOMHandle::createClass(
 
 	try
 	{
+		PYCXX_ALLOW_THREADS
 		m_chdl->createClass(ns, cc);
+		PYCXX_END_ALLOW_THREADS
 	}
 	catch(const CIMException& e)
 	{
@@ -954,7 +976,9 @@ PyCIMOMHandle::deleteClass(
 
 	try
 	{
+		PYCXX_ALLOW_THREADS
 		m_chdl->deleteClass(ns, className);
+		PYCXX_END_ALLOW_THREADS
 	}
 	catch(const CIMException& e)
 	{
@@ -1008,7 +1032,9 @@ PyCIMOMHandle::modifyClass(
 
 	try
 	{
+		PYCXX_ALLOW_THREADS
 		m_chdl->modifyClass(ns, cc);
+		PYCXX_END_ALLOW_THREADS
 	}
 	catch(const CIMException& e)
 	{
@@ -1061,7 +1087,9 @@ PyCIMOMHandle::enumQualifiers(
 	PyQualResultHandler rhandler(cb);
 	try
 	{
+		PYCXX_ALLOW_THREADS
 		m_chdl->enumQualifierTypes(ns, rhandler);
+		PYCXX_END_ALLOW_THREADS
 	}
 	catch(const CIMException& e)
 	{
@@ -1115,7 +1143,10 @@ PyCIMOMHandle::getQualifier(
 	Py::Object pyqual;
 	try
 	{
-		CIMQualifierType cqt = m_chdl->getQualifierType(ns, qualName);
+		CIMQualifierType cqt;
+		PYCXX_ALLOW_THREADS
+		cqt = m_chdl->getQualifierType(ns, qualName);
+		PYCXX_END_ALLOW_THREADS
 		pyqual = OWPyConv::OWQualType2Py(cqt);
 	}
 	catch(const CIMException& e)
@@ -1174,7 +1205,9 @@ PyCIMOMHandle::setQualifier(
 		cqt.setName(cq.getName());
 		CIMValue cv = cq.getValue();
 		cqt.setDefaultValue(cv);
+		PYCXX_ALLOW_THREADS
 		m_chdl->setQualifierType(ns, cqt);
+		PYCXX_END_ALLOW_THREADS
 	}
 	catch(const CIMException& e)
 	{
@@ -1228,7 +1261,9 @@ PyCIMOMHandle::deleteQualifier(
 
 	try
 	{
+		PYCXX_ALLOW_THREADS
 		m_chdl->deleteQualifierType(ns, qualName);
+		PYCXX_END_ALLOW_THREADS
 	}
 	catch(const CIMException& e)
 	{
@@ -1291,7 +1326,9 @@ PyCIMOMHandle::enumInstanceNames(
 	PyOpResultHandler rhandler(ns, cb);
 	try
 	{
+		PYCXX_ALLOW_THREADS
 		m_chdl->enumInstanceNames(ns, className, rhandler);
+		PYCXX_END_ALLOW_THREADS
 	}
 	catch(const CIMException& e)
 	{
@@ -1395,8 +1432,10 @@ PyCIMOMHandle::enumInstances(
 	PyInstResultHandler rhandler(ns, cb);
 	try
 	{
+		PYCXX_ALLOW_THREADS
 		m_chdl->enumInstances(ns, className, rhandler, deepFlg, localOnlyFlag,
 			incQualsFlag, classOriginFlag, pPropList);
+		PYCXX_END_ALLOW_THREADS
 	}
 	catch(const CIMException& e)
 	{
@@ -1480,8 +1519,11 @@ PyCIMOMHandle::getInstance(
 	Py::Object pyinst;	
 	try
 	{
-		CIMInstance ci = m_chdl->getInstance(ns, instanceName, localOnlyFlag,
+		CIMInstance ci;
+		PYCXX_ALLOW_THREADS
+		ci = m_chdl->getInstance(ns, instanceName, localOnlyFlag,
 			incQualsFlag, classOriginFlag, pPropList);
+		PYCXX_END_ALLOW_THREADS
 		pyinst = OWPyConv::OWInst2Py(ci, ns);
 	}
 	catch(const CIMException& e)
@@ -1530,7 +1572,9 @@ PyCIMOMHandle::deleteInstance(
 
 	try
 	{
+		PYCXX_ALLOW_THREADS
 		m_chdl->deleteInstance(ns, instanceName);
+		PYCXX_END_ALLOW_THREADS
 	}
 	catch(const CIMException& e)
 	{
@@ -1580,7 +1624,10 @@ PyCIMOMHandle::createInstance(
 	Py::Object pyref;
 	try
 	{
+		CIMObjectPath mcop;
+		PYCXX_ALLOW_THREADS
 		CIMObjectPath mcop = m_chdl->createInstance(ns, ci);
+		PYCXX_END_ALLOW_THREADS
 		pyref = OWPyConv::OWRef2Py(mcop);
 	}
 	catch(const CIMException& e)
@@ -1650,7 +1697,9 @@ PyCIMOMHandle::modifyInstance(
 
 	try
 	{
+		PYCXX_ALLOW_THREADS
 		m_chdl->modifyInstance(ns, ci, incQualsFlag, pPropList);
+		PYCXX_END_ALLOW_THREADS
 	}
 	catch(const CIMException& e)
 	{
@@ -1760,8 +1809,10 @@ PyCIMOMHandle::associators(
 	PyInstResultHandler rhandler(ns, cb);
 	try
 	{
+		PYCXX_ALLOW_THREADS
 		m_chdl->associators(ns, objectName, rhandler, assocClass, resultClass,
 			role, resultRole, incQualsFlag, classOriginFlag, pPropList);
+		PYCXX_END_ALLOW_THREADS
 	}
 	catch(const CIMException& e)
 	{
@@ -1845,8 +1896,10 @@ PyCIMOMHandle::associatorNames(
 	PyOpResultHandler rhandler(ns, cb);
 	try
 	{
+		PYCXX_ALLOW_THREADS
 		m_chdl->associatorNames(ns, objectName, rhandler, assocClass,
 				resultClass, role, resultRole);
+		PYCXX_END_ALLOW_THREADS
 	}
 	catch(const CIMException& e)
 	{
@@ -1944,8 +1997,10 @@ PyCIMOMHandle::references(
 	PyInstResultHandler rhandler(ns, cb);
 	try
 	{
+		PYCXX_ALLOW_THREADS
 		m_chdl->references(ns, objectName, rhandler, resultClass, role, 
 			incQualsFlag, classOriginFlag, pPropList);
+		PYCXX_END_ALLOW_THREADS
 	}
 	catch(const CIMException& e)
 	{
@@ -2017,7 +2072,9 @@ PyCIMOMHandle::referenceNames(
 	PyOpResultHandler rhandler(ns, cb);
 	try
 	{
+		PYCXX_ALLOW_THREADS
 		m_chdl->referenceNames(ns, objectName, rhandler, resultClass, role);
+		PYCXX_END_ALLOW_THREADS
 	}
 	catch(const CIMException& e)
 	{

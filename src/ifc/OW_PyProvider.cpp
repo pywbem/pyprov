@@ -243,7 +243,7 @@ PyProvider::PyProvider(
 	, m_unloadableType(unloadableType)
 	, m_handlerClassNames()
 {
-	GILGuard gg;	// Acquire python's GIL
+	Py::GILGuard gg;	// Acquire python's GIL
 
 	LoggerRef logger = myLogger(env);
 
@@ -274,7 +274,7 @@ PyProvider::~PyProvider()
 {
 	try
 	{
-		GILGuard gg;	// Acquire python's GIL
+		Py::GILGuard gg;	// Acquire python's GIL
 		m_pyprov.release();
 	}
 	catch(Py::Exception& e)
@@ -398,7 +398,7 @@ bool
 PyProvider::canShutDown(
 	const ProviderEnvironmentIFCRef& env) const
 {
-	GILGuard gg;	// Acquire python's GIL
+	Py::GILGuard gg;	// Acquire python's GIL
 
 	LoggerRef logger = myLogger(env);
 
@@ -444,7 +444,7 @@ void
 PyProvider::shutDown(
 	const ProviderEnvironmentIFCRef& env)
 {
-	GILGuard gg;	// Acquire python's GIL
+	Py::GILGuard gg;	// Acquire python's GIL
 
 	LoggerRef logger = myLogger(env);
 
@@ -492,7 +492,7 @@ PyProvider::enumInstanceNames(
 	CIMObjectPathResultHandlerIFC& result,
 	const CIMClass& cimClass)
 {
-	GILGuard gg;	// Acquire python's GIL
+	Py::GILGuard gg;	// Acquire python's GIL
 
 	LoggerRef logger = myLogger(env);
 
@@ -559,7 +559,7 @@ PyProvider::enumInstances(
 	const CIMClass& requestedClass,
 	const CIMClass& cimClass)
 {
-	GILGuard gg;	// Acquire python's GIL
+	Py::GILGuard gg;	// Acquire python's GIL
 
 	LoggerRef logger = myLogger(env);
 
@@ -625,7 +625,7 @@ PyProvider::getInstance(
 	const StringArray* propertyList, 
 	const CIMClass& cimClass)
 {
-	GILGuard gg;	// Acquire python's GIL
+	Py::GILGuard gg;	// Acquire python's GIL
 	LoggerRef logger = myLogger(env);
 
 	try
@@ -681,7 +681,7 @@ PyProvider::createInstance(
 	const String& ns,
 	const CIMInstance& cimInstance)
 {
-	GILGuard gg;	// Acquire python's GIL
+	Py::GILGuard gg;	// Acquire python's GIL
 
 	LoggerRef logger = myLogger(env);
 
@@ -734,7 +734,7 @@ PyProvider::modifyInstance(
 	const StringArray* propertyList,
 	const CIMClass& theClass)
 {
-	GILGuard gg;	// Acquire python's GIL
+	Py::GILGuard gg;	// Acquire python's GIL
 	LoggerRef logger = myLogger(env);
 
 	try
@@ -774,7 +774,7 @@ PyProvider::deleteInstance(
 	const String& ns,
 	const CIMObjectPath& cop)
 {
-	GILGuard gg;	// Acquire python's GIL
+	Py::GILGuard gg;	// Acquire python's GIL
 	LoggerRef logger = myLogger(env);
 
 	try
@@ -824,7 +824,7 @@ PyProvider::associators(
 	EIncludeClassOriginFlag includeClassOrigin,
 	const StringArray* propertyList)
 {
-	GILGuard gg;	// Acquire python's GIL
+	Py::GILGuard gg;	// Acquire python's GIL
 
 	LoggerRef logger = myLogger(env);
 
@@ -897,7 +897,7 @@ PyProvider::associatorNames(
 	const String& role,
 	const String& resultRole)
 {
-	GILGuard gg;	// Acquire python's GIL
+	Py::GILGuard gg;	// Acquire python's GIL
 
 	LoggerRef logger = myLogger(env);
 
@@ -970,7 +970,7 @@ PyProvider::references(
 	EIncludeClassOriginFlag includeClassOrigin,
 	const StringArray* propertyList)
 {
-	GILGuard gg;	// Acquire python's GIL
+	Py::GILGuard gg;	// Acquire python's GIL
 
 	LoggerRef logger = myLogger(env);
 
@@ -1039,7 +1039,7 @@ PyProvider::referenceNames(
 	const String& resultClass,
 	const String& role)
 {
-	GILGuard gg;	// Acquire python's GIL
+	Py::GILGuard gg;	// Acquire python's GIL
 
 	LoggerRef logger = myLogger(env);
 
@@ -1107,7 +1107,7 @@ PyProvider::invokeMethod(
 	const CIMParamValueArray& in,
 	CIMParamValueArray& out)
 {
-	GILGuard gg;	// Acquire python's GIL
+	Py::GILGuard gg;	// Acquire python's GIL
 	LoggerRef logger = myLogger(env);
 
 	CIMObjectPath lpath(path);
@@ -1240,7 +1240,7 @@ PyProvider::activateFilter(
 #endif
 	)
 {
-	GILGuard gg;	// Acquire python's GIL
+	Py::GILGuard gg;	// Acquire python's GIL
 
 	LoggerRef logger = myLogger(env);
 
@@ -1294,7 +1294,7 @@ PyProvider::authorizeFilter(
 	const StringArray& classes,
 	const String& owner)
 {
-	GILGuard gg;	// Acquire python's GIL
+	Py::GILGuard gg;	// Acquire python's GIL
 
 	LoggerRef logger = myLogger(env);
 
@@ -1346,7 +1346,7 @@ PyProvider::deActivateFilter(
 #endif
 	)
 {
-	GILGuard gg;	// Acquire python's GIL
+	Py::GILGuard gg;	// Acquire python's GIL
 
 	LoggerRef logger = myLogger(env);
 
@@ -1405,7 +1405,7 @@ PyProvider::exportIndication(
 	const CIMInstance& indHandlerInst,
 	const CIMInstance& indicationInst)
 {
-	GILGuard gg;	// Acquire python's GIL
+	Py::GILGuard gg;	// Acquire python's GIL
 
 	LoggerRef logger = myLogger(env);
 
@@ -1442,7 +1442,7 @@ Int32
 PyProvider::poll(
 	const ProviderEnvironmentIFCRef& env)
 {
-	GILGuard gg;	// Acquire python's GIL
+	Py::GILGuard gg;	// Acquire python's GIL
 
 	LoggerRef logger = myLogger(env);
 	Int32 rv = 0;
@@ -1481,7 +1481,7 @@ Int32
 PyProvider::getInitialPollingInterval(
 	const ProviderEnvironmentIFCRef& env)
 {
-	GILGuard gg;	// Acquire python's GIL
+	Py::GILGuard gg;	// Acquire python's GIL
 
 	LoggerRef logger = myLogger(env);
 	Int32 rv = 0;

@@ -42,7 +42,9 @@ PyLogger::logFatalError(const Py::Tuple& args)
 	if (args.length() && !args[0].isNone())
 	{
 		Py::String msg(args[0]);
+		PYCXX_ALLOW_THREADS
 		m_logger->logFatalError(String(msg));
+		PYCXX_END_ALLOW_THREADS
 	}
 	return Py::Nothing();
 }
@@ -54,7 +56,9 @@ PyLogger::logError(const Py::Tuple& args)
 	if (args.length() && !args[0].isNone())
 	{
 		Py::String msg(args[0]);
+		PYCXX_ALLOW_THREADS
 		m_logger->logError(String(msg));
+		PYCXX_END_ALLOW_THREADS
 	}
 	return Py::Nothing();
 }
@@ -66,7 +70,9 @@ PyLogger::logInfo(const Py::Tuple& args)
 	if (args.length() && !args[0].isNone())
 	{
 		Py::String msg(args[0]);
+		PYCXX_ALLOW_THREADS
 		m_logger->logInfo(String(msg));
+		PYCXX_END_ALLOW_THREADS
 	}
 	return Py::Nothing();
 }
@@ -78,7 +84,9 @@ PyLogger::logDebug(const Py::Tuple& args)
 	if (args.length() && !args[0].isNone())
 	{
 		Py::String msg(args[0]);
+		PYCXX_ALLOW_THREADS
 		m_logger->logDebug(String(msg));
+		PYCXX_END_ALLOW_THREADS
 	}
 	return Py::Nothing();
 }

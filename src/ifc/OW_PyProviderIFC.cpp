@@ -322,7 +322,7 @@ PyProviderIFC::initPython(
 	PyEval_ReleaseLock();
 	m_pythonInitialized = true;
 
-	GILGuard gg;	// Acquire python's GIL
+	Py::GILGuard gg;	// Acquire python's GIL
 
 	try
 	{

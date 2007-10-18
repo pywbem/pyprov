@@ -71,6 +71,41 @@
 namespace Py
 {
 
+class ThreadSaver
+{
+public:
+	ThreadSaver()
+	{
+		m_tstate = PyEval_SaveThread();
+	}
+	~ThreadSaver()
+	{
+		PyEval_RestoreThread(m_tstate);
+	}
+private:
+	PyThreadState* m_tstate;
+};
+#define PYCXX_ALLOW_THREADS { Py::ThreadSaver ts;
+#define PYCXX_END_ALLOW_THREADS }
+
+// The GILGuard class is used to acquire python global interpreter lock.
+// It acquires the lock within its constructor and releases it in its
+// destructor. Do use it just declare an instance of the GILGuard when
+// you want to acquire the lock. When the instance goes out of scope,
+// the lock will be released.
+class GILGuard
+{
+public:
+	GILGuard();
+	~GILGuard();
+	void release();
+	void acquire();
+private:
+	PyGILState_STATE m_gstate;
+	bool m_acquired;
+};
+
+
 typedef int sequence_index_type;    // type of an index into a sequence
 
 // Forward declarations

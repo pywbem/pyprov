@@ -66,7 +66,10 @@ PyInstanceResultHandler::handle(
 
 	try
 	{
-		m_result.handle(OWPyConv::PyInst2OW(args[0], m_ns));
+		CIMInstance ci = OWPyConv::PyInst2OW(args[0], m_ns);
+		PYCXX_ALLOW_THREADS
+		m_result.handle(ci);
+		PYCXX_END_ALLOW_THREADS
 	}
 	catch(const PyConversionException& e)
 	{
@@ -177,7 +180,10 @@ PyObjectPathResultHandler::handle(
 
 	try
 	{
-		m_result.handle(OWPyConv::PyRef2OW(args[0], m_ns));
+		CIMObjectPath ref = OWPyConv::PyRef2OW(args[0], m_ns);
+		PYCXX_ALLOW_THREADS
+		m_result.handle(ref);
+		PYCXX_END_ALLOW_THREADS
 	}
 	catch(const PyConversionException& e)
 	{
