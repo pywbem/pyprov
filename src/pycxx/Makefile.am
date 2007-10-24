@@ -3,7 +3,7 @@ include $(top_srcdir)/Makefile.incl.am
 INCLUDES = -I$(top_builddir)
 
 noinst_LTLIBRARIES = \
-	libowpycxx.la
+	libpegpycxx.la
 
 libowpycxx_la_SOURCES = \
 	PyCxxConfig.hpp \
