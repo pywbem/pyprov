@@ -81,12 +81,12 @@ public:
 	
 	Exception (const Pegasus::String& reason)
 	{
-		PyErr_SetString (Py::_Exc_RuntimeError(), reason.getCString());
+		PyErr_SetString (Py::_Exc_RuntimeError(), (const char*)reason.getCString());
 	}
 	
 	Exception (PyObject* exception, const Pegasus::String& reason)
 	{
-		PyErr_SetString (exception, reason.getCString());
+		PyErr_SetString (exception, (const char*)reason.getCString());
 	}
 	
 	Exception (PyObject* exception, Object& reason);        
@@ -147,7 +147,7 @@ public:
 	TypeError (const Pegasus::String& reason)
 		: StandardError()
 	{
-		PyErr_SetString (Py::_Exc_TypeError(),reason.getCString());
+		PyErr_SetString (Py::_Exc_TypeError(),(const char*)reason.getCString());
 	}
 	friend class Exception;
 };
@@ -159,7 +159,7 @@ public:
 	IndexError (const Pegasus::String& reason)
 		: LookupError()
 	{
-		PyErr_SetString (Py::_Exc_IndexError(), reason.getCString());
+		PyErr_SetString (Py::_Exc_IndexError(), (const char*)reason.getCString());
 	}
 	friend class Exception;
 };
@@ -171,7 +171,7 @@ public:
 	AttributeError (const Pegasus::String& reason)
 		: StandardError()
 	{
-		PyErr_SetString (Py::_Exc_AttributeError(), reason.getCString());
+		PyErr_SetString (Py::_Exc_AttributeError(), (const char*)reason.getCString());
 	}        
 	friend class Exception;
 };
@@ -183,7 +183,7 @@ public:
 	NameError (const Pegasus::String& reason)
 		: StandardError()
 	{
-		PyErr_SetString (Py::_Exc_NameError(), reason.getCString());
+		PyErr_SetString (Py::_Exc_NameError(), (const char*)reason.getCString());
 	}
 	friend class Exception;
 };
@@ -195,7 +195,7 @@ public:
 	RuntimeError (const Pegasus::String& reason)
 		: StandardError()
 	{
-		PyErr_SetString (Py::_Exc_RuntimeError(), reason.getCString());
+		PyErr_SetString (Py::_Exc_RuntimeError(), (const char*)reason.getCString());
 	}
 	friend class Exception;
 };
@@ -207,7 +207,7 @@ public:
 	SystemError (const Pegasus::String& reason)
 		: StandardError()
 	{
-		PyErr_SetString (Py::_Exc_SystemError(),reason.getCString());
+		PyErr_SetString (Py::_Exc_SystemError(),(const char*)reason.getCString());
 	}
 	friend class Exception;
 };
@@ -219,7 +219,7 @@ public:
 	KeyError (const Pegasus::String& reason)
 		: LookupError()
 	{
-		PyErr_SetString (Py::_Exc_KeyError(),reason.getCString());
+		PyErr_SetString (Py::_Exc_KeyError(),(const char*)reason.getCString());
 	}
 	friend class Exception;
 };
@@ -231,7 +231,7 @@ public:
 	ValueError (const Pegasus::String& reason)
 		: StandardError()
 	{
-		PyErr_SetString (Py::_Exc_ValueError(), reason.getCString());
+		PyErr_SetString (Py::_Exc_ValueError(), (const char*)reason.getCString());
 	}
 	friend class Exception;
 };
@@ -243,7 +243,7 @@ public:
 	OverflowError (const Pegasus::String& reason)
 		: ArithmeticError()
 	{
-		PyErr_SetString (Py::_Exc_OverflowError(), reason.getCString());
+		PyErr_SetString (Py::_Exc_OverflowError(), (const char*)reason.getCString());
 	}        
 	friend class Exception;
 };
@@ -255,7 +255,7 @@ public:
 	ZeroDivisionError (const Pegasus::String& reason)
 		: ArithmeticError() 
 	{
-		PyErr_SetString (Py::_Exc_ZeroDivisionError(), reason.getCString());
+		PyErr_SetString (Py::_Exc_ZeroDivisionError(), (const char*)reason.getCString());
 	}
 	friend class Exception;
 };
@@ -267,7 +267,7 @@ public:
 	FloatingPointError (const Pegasus::String& reason)
 		: ArithmeticError() 
 	{
-		PyErr_SetString (Py::_Exc_FloatingPointError(), reason.getCString());
+		PyErr_SetString (Py::_Exc_FloatingPointError(), (const char*)reason.getCString());
 	}
 	friend class Exception;
 };
@@ -279,7 +279,7 @@ public:
 	MemoryError (const Pegasus::String& reason)
 		: StandardError()
 	{
-		PyErr_SetString (Py::_Exc_MemoryError(), reason.getCString());
+		PyErr_SetString (Py::_Exc_MemoryError(), (const char*)reason.getCString());
 	}    
 	friend class Exception;
 };
@@ -291,7 +291,7 @@ public:
 	SystemExit (const Pegasus::String& reason)
 		: StandardError() 
 	{
-		PyErr_SetString (Py::_Exc_SystemExit(),reason.getCString());
+		PyErr_SetString (Py::_Exc_SystemExit(),(const char*)reason.getCString());
 	}
 	friend class Exception;
 };

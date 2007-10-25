@@ -633,7 +633,7 @@ public:
 	}
 	bool hasAttr(const Pegasus::String& attr_name) const
 	{
-		return hasAttr(attr_name.getCString());
+		return hasAttr((const char*)attr_name.getCString());
 	}
 
 	Object getAttr(const char* attr_name) const
@@ -642,7 +642,7 @@ public:
 	}
 	Object getAttr(const Pegasus::String& attr_name) const
 	{
-		return getAttr(attr_name.getCString());
+		return getAttr((const char*)attr_name.getCString());
 	}
 
 	Object getItem (const Object& key) const
@@ -716,7 +716,7 @@ public:
 	}
 	void setAttr (const Pegasus::String& attr_name, const Object& value)
 	{
-		setAttr(attr_name.getCString(), value);
+		setAttr((const char*)attr_name.getCString(), value);
 	}
 
 	void delAttr (const char* attr_name)
@@ -725,7 +725,7 @@ public:
 	}
 	void delAttr (const Pegasus::String& attr_name)
 	{
-		delAttr(attr_name.getCString());
+		delAttr((const char*)attr_name.getCString());
 	}
 
 	void delItem (const Object& key)
@@ -1032,7 +1032,7 @@ public:
 		{
 			std::iostream ios;
 			ios << "iterator diagnosis " << seq << ", " << count;
-			return String((char *)ios);
+			return Pegasus::String((char *)ios);
 		}
 	};    // end of class SeqBase<T>::iterator
 
@@ -1278,7 +1278,7 @@ public:
 	String decode( const char *encoding, const char *error="strict" );
 	// Queries
 	virtual size_type size () const;
-	Pegasus::String as_ow_string() const;
+	Pegasus::String as_peg_string() const;
 	operator Pegasus::String () const;
 	unicodestring as_unicodestring() const;
 };
@@ -1423,7 +1423,7 @@ public:
 
 	bool hasAttr (const Pegasus::String& attr_name) const
 	{
-		return hasAttr(attr_name.getCString());
+		return hasAttr((const char*)attr_name.getCString());
 	}
 
 	Object getAttr (const char* attr_name) const
@@ -1433,7 +1433,7 @@ public:
 
 	Object getAttr (const Pegasus::String& attr_name) const
 	{
-		return getAttr(attr_name.getCString());
+		return getAttr((const char*)attr_name.getCString());
 	}
 
 	Object getItem (const Object& k) const
@@ -1503,7 +1503,7 @@ public:
 	}
 	void setAttr (const Pegasus::String& attr_name, const Object& value)
 	{
-		setAttr(attr_name.getCString(), value);
+		setAttr((const char*)attr_name.getCString(), value);
 	}
 
 	void delAttr (const char* attr_name)
@@ -1512,7 +1512,7 @@ public:
 	}
 	void delAttr (const Pegasus::String& attr_name)
 	{
-		delAttr(attr_name.getCString());
+		delAttr((const char*)attr_name.getCString());
 	}
 
 	void delItem (const Object& k)
@@ -1642,7 +1642,7 @@ public:
 	}
 	bool hasKey (const Pegasus::String& s) const
 	{
-		return hasKey(s.getCString());
+		return hasKey((const char*)s.getCString());
 	}
 
 	bool hasKey (const Object& s) const
@@ -1657,7 +1657,7 @@ public:
 	}
 	T getItem (const Pegasus::String& s) const
 	{
-		return getItem(s.getCString());
+		return getItem((const char*)s.getCString());
 	}
 
 	T getItem (const Object& s) const
@@ -1674,7 +1674,7 @@ public:
 	}
 	virtual void setItem (const Pegasus::String& s, const Object& ob)
 	{
-		setItem(s.getCString(), ob);
+		setItem((const char*)s.getCString(), ob);
 	}
 
 	virtual void setItem (const Object& s, const Object& ob)
@@ -1694,7 +1694,7 @@ public:
 	}
 	void delItem (const Pegasus::String& s)
 	{
-		delItem(s.getCString());
+		delItem((const char*)s.getCString());
 	}
 
 	void delItem (const Object& s)

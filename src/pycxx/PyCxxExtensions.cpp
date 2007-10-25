@@ -173,7 +173,7 @@ void ExtensionModuleBase::initialize( const char *module_doc )
     PyObject *module_ptr = new ExtensionModuleBasePtr( this );
 
     Py_InitModule4(
-		const_cast<char *>( (const char *)module_name.getCString() ),	// name
+		const_cast<char *>((const char *)module_name.getCString()),	// name
 		method_table.table(),                		// methods
 		const_cast<char *>( module_doc ),        	// docs
 		module_ptr,                    				// pass to functions as "self"
@@ -1331,7 +1331,7 @@ extern "C" PyObject *method_keyword_call_handler( PyObject *_self_and_name_tuple
         ExtensionModuleBase *self = static_cast<ExtensionModuleBase *>( self_as_void );
 
         String py_name( self_and_name_tuple[1] );
-		Pegasus::String name( py_name.as_ow_string() );
+		Pegasus::String name( py_name.as_peg_string() );
 
         Tuple args( _args );
         if( _keywords == NULL )
@@ -1367,7 +1367,7 @@ extern "C" PyObject *method_varargs_call_handler( PyObject *_self_and_name_tuple
         ExtensionModuleBase *self = static_cast<ExtensionModuleBase *>( self_as_void );
 
         String py_name( self_and_name_tuple[1] );
-		Pegasus::String name( py_name.as_ow_string() );
+		Pegasus::String name( py_name.as_peg_string() );
 
         Tuple args( _args );
 
@@ -1401,7 +1401,8 @@ void ExtensionExceptionType::init( ExtensionModuleBase &module, const Pegasus::S
     module_name.append(".");
     module_name.append(name);
 
-    set( PyErr_NewException( const_cast<char *>( (const char *)module_name.getCString() ), NULL, NULL ), true );
+    set(PyErr_NewException( const_cast<char *>( (const char *)module_name.getCString()), 
+		NULL, NULL ), true );
 }
 
 void ExtensionExceptionType::init(
@@ -1497,7 +1498,7 @@ Exception::Exception(
 	ExtensionExceptionType &exception,
 	const Pegasus::String& reason)
 {
-    PyErr_SetString (exception.ptr(), reason.getCString());
+    PyErr_SetString (exception.ptr(), (const char*)reason.getCString());
 }
 
 Exception::Exception(

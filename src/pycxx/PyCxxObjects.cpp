@@ -205,7 +205,7 @@ bool Object::hasAttr(const char* s) const
 
 bool Object::hasAttr(const Pegasus::String& s) const
 {
-	return hasAttr(s.getCString());
+	return hasAttr((const char*)s.getCString());
 }
 
 Object Object::getAttr(const char* s) const
@@ -215,7 +215,7 @@ Object Object::getAttr(const char* s) const
 
 Object Object::getAttr(const Pegasus::String& s) const
 {
-	return getAttr(s.getCString());
+	return getAttr((const char*)s.getCString());
 }
 
 Object Object::getItem(const Object& key) const
@@ -334,7 +334,7 @@ void Object::setAttr(const char* s, const Object& value)
 }
 void Object::setAttr(const Pegasus::String& s, const Object& value)
 {
-	setAttr(s.getCString(), value);
+	setAttr((const char*)s.getCString(), value);
 }
 
 void Object::delAttr(const char* s)
@@ -344,7 +344,7 @@ void Object::delAttr(const char* s)
 }
 void Object::delAttr(const Pegasus::String& s)
 {
-	delAttr(s.getCString());
+	delAttr((const char*)s.getCString());
 }
 
 // PyObject_SetItem is too weird to be using from C++
@@ -1283,7 +1283,7 @@ String::String(const char *s, int len, const char *encoding, const char *error)
 }
 
 String::String( const Pegasus::String &s, const char *encoding, const char *error)
-	: SeqBase<Char>(PyUnicode_Decode( s.getCString(), s.size(), encoding, error ), true)
+	: SeqBase<Char>(PyUnicode_Decode((const char*)s.getCString(), s.size(), encoding, error ), true)
 {
 	validate();
 }
@@ -1379,7 +1379,7 @@ String::size_type String::size () const
 	}
 }
 
-Pegasus::String String::as_ow_string() const
+Pegasus::String String::as_peg_string() const
 {
 	if(isUnicode())
 	{
@@ -1395,7 +1395,7 @@ Pegasus::String String::as_ow_string() const
 
 String::operator Pegasus::String () const
 {
-	return as_ow_string();
+	return as_peg_string();
 }
 
 unicodestring String::as_unicodestring() const
@@ -1751,7 +1751,7 @@ Module::Module (const char* s, bool doLoad)
 Module::Module (const Pegasus::String& s, bool doLoad)
 	: Object()
 {
-	loadOrAdd(s.getCString(), doLoad);
+	loadOrAdd((const char*)s.getCString(), doLoad);
 }
 
 // Copy constructor acquires new ownership of pointer
