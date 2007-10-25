@@ -11,6 +11,7 @@ AC_PROG_LIBTOOL
 AC_PREFIX_DEFAULT(/usr)
 
 # Checks for programs.
+#AC_CANONICAL_HOST
 AC_PROG_CXX
 AC_PROG_CC
 AC_PROG_CPP
@@ -31,22 +32,6 @@ CPPFLAGS="$CPPFLAGS $PYTHON_CPPFLAGS"
 DEBUG_FLAGS="-DDEBUG -g" # Additional debugging flags.
 FULL_DEBUG_FLAGS="-D_GLIBCXX_DEBUG"	# Additional debugging flags.
 OPT_FLAGS="  -DNDEBUG -O2"	# Additional optimization flags.
-
-CXXFLAGS="$CXXFLAGS -fno-strict-aliasing"
-CPPFLAGS="$CPPFLAGS -fno-strict-aliasing"
-CFLAGS="$CFLAGS -fno-strict-aliasing"
-
-
-# TODO
-# Discover platform
-CXXFLAGS="$CXXFLAGS -DPEGASUS_PLATFORM_LINUX_IX86_GNU"
-CPPFLAGS="$CPPFLAGS -DPEGASUS_PLATFORM_LINUX_IX86_GNU"
-CFLAGS="$CFLAGS -DPEGASUS_PLATFORM_LINUX_IX86_GNU"
-
-
-##NOTE:  whereever CXXFLAGS is used, we need to also use CPPFLAGS, for the AC_CHECK_HEADERS - 
-##       It now uses compile (primarily) but still uses pre-processor for interim transition / backward compatibility
-##       pre-processor needs the CPPFLAGS
 
 if test "x$prefix" != "xNONE"; then
 	prefixDir=${prefix}
@@ -126,6 +111,82 @@ case $debuglevel in
 	LDFLAGS=" $LDFLAGS  $OPT_FLAGS";;
 esac
 
+if test -z "$target"; then
+	target="$host"
+fi
+
+# Figure out the architecture of the target platform
+case "$target" in
+i?86-*-*)
+	AC_DEFINE(ARCH_X86, 1, Intel x86 architecture)
+	ARCH="IX86_GNU"
+	;;
+powerpc-*-*|powerpc-*-*-*|ppc-*-*)
+	AC_DEFINE(ARCH_PPC, 1, PowerPC architecture)
+	ARCH="PPC_GNU"
+	;;
+ia64-*-*|ia64-*-*-*)
+	AC_DEFINE(ARCH_IA64, 1, Itanium architecture)
+	ARCH="IA64_GNU"
+	;;
+powerpc64-*-*|powerpc64-*-*-*|ppc64-*-*)
+	AC_DEFINE(ARCH_PPC64, 1, PowerPC64 architecture)
+	ARCH="PPC64_GNU"
+	;;
+sparc-*-*)
+	AC_DEFINE(ARCH_SPARC, 1, SPARC architecture)
+	ARCH="SPARC_GNU"
+	;;
+x86_64-*-*)
+	AC_DEFINE(ARCH_X86_64, 1, x86-64 architecture)
+	ARCH="X86_64_GNU"
+	;;
+#hppa2.0*-*-*)
+#	AC_DEFINE(ARCH_HPPA20, 1, HP PA-RISC 2.0 architecture)
+#	ARCH="PARISC"
+#	;;
+#s390-*-*|s390-*-*-*)
+#	AC_DEFINE(ARCH_S390, 1, s390 architecture)
+#	;;
+#s390x-*-*|s390x-*-*-*)
+#	AC_DEFINE(ARCH_S390X, 1, s390x architecture)
+#	;;
+*)
+	AC_DEFINE(ARCH_UNKNOWN, 1, Unknown architecture)
+	;;
+esac
+
+# Figure out which platform we're building for
+case "$target" in
+*-*-linux*)
+	PLAT="LINUX_"
+	;;
+*-*-solaris*)
+	PLAT="SOLARIS_"
+	;;
+*-*-darwin*)
+	PLAT="DARWIN_"
+	;;
+#*-*-hpux11*)
+#	HPUX=1
+#	;;
+#*-*-aix*)
+#	AIX=1
+#	;;
+#*-*-freebsd*)
+#	PLAT="FREEBSD"
+#	;;
+esac
+
+PLATARCH="PEGASUS_PLATFORM_$PLAT$ARCH"
+CXXFLAGS="$CXXFLAGS -fno-strict-aliasing -D$PLATARCH"
+CPPFLAGS="$CPPFLAGS -fno-strict-aliasing -D$PLATARCH"
+CFLAGS="$CFLAGS -fno-strict-aliasing -D$PLATARCH"
+
+##NOTE:  whereever CXXFLAGS is used, we need to also use CPPFLAGS, for the AC_CHECK_HEADERS - 
+##       It now uses compile (primarily) but still uses pre-processor for interim transition / backward compatibility
+##       pre-processor needs the CPPFLAGS
+
 
 #
 # If enable-dist-only specified, don't check for dependencies
@@ -176,9 +237,7 @@ AC_CONFIG_FILES([
 	src/ifc/Makefile
 	mof/Makefile
 	doc/Makefile
-	doc/tutorial/Makefile
 	test/Makefile
-	test/LogicalFile/Makefile
 	])
 
 AC_OUTPUT

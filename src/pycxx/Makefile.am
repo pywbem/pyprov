@@ -5,7 +5,7 @@ INCLUDES = -I$(top_builddir)
 noinst_LTLIBRARIES = \
 	libpegpycxx.la
 
-libowpycxx_la_SOURCES = \
+libpegpycxx_la_SOURCES = \
 	PyCxxConfig.hpp \
 	PyCxxException.hpp \
 	PyCxxExtensions.cpp \
@@ -15,3 +15,4 @@ libowpycxx_la_SOURCES = \
 	PyCxxPythonWrap.cpp \
 	PyCxxPythonWrap.hpp \
 	PyCxxSupport.cpp
+
