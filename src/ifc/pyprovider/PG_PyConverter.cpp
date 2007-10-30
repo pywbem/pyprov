@@ -105,6 +105,37 @@ _bool2Py(bool v)
 }
 
 //////////////////////////////////////////////////////////////////////////////
+CIMName
+_stringAttr2CIMName(
+	const Py::Object& pyobj,
+	const char* attrName=0)
+{
+	CIMName cnm;
+	Py::Object attrobj = Py::None();
+	if (attrName)
+	{
+		if (pyobj.hasAttr(attrName))
+		{
+			attrobj = pyobj.getAttr(attrName);
+		}
+	}
+	else
+	{
+		attrobj = pyobj;
+	}
+
+	if (attrobj.isString())
+	{
+		String wkstr = Py::String(attrobj).as_peg_string();
+		if (wkstr.size())
+		{
+			cnm = CIMName(wkstr);
+		}
+	}
+	return cnm;
+}
+
+//////////////////////////////////////////////////////////////////////////////
 String
 _stringAttr(
 	const Py::Object& pyobj,
@@ -114,7 +145,7 @@ _stringAttr(
 	if (pyobj.hasAttr(attrName))
 	{
 		Py::Object attrobj = pyobj.getAttr(attrName);
-		if (!attrobj.isNone() && attrobj.isString())
+		if (attrobj.isString())
 		{
 			rv = Py::String(attrobj).as_peg_string();
 		}
@@ -256,21 +287,6 @@ _setQuals(
 	{
 		cobj.addQualifier(PGPyConv::PyQual2PG(items[i]));
 	}
-}
-
-//////////////////////////////////////////////////////////////////////////////
-Array<CIMProperty>
-_getProps(const Py::Mapping& pyprops)
-{
-	Array<CIMProperty> rv;
-	Py::List propList = pyprops.values();
-	int len = int(propList.length());
-	for(int i = 0; i < len; i++)
-	{
-		rv.append(PGPyConv::PyProperty2PG(propList[i]));
-	}
-
-	return rv;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -880,7 +896,7 @@ PGPyConv::PGClass2Py(const CIMConstClass& cls)
 CIMInstance
 PGPyConv::PyInst2PG(const Py::Object& pyci, const String& nsArg)
 {
-    CIMInstance inst(_stringAttr(pyci, "classname"));
+    CIMInstance inst(_stringAttr2CIMName(pyci, "classname"));
 	CIMObjectPath cop;
 	if (pyci.hasAttr("path"))
 	{
@@ -891,7 +907,6 @@ PGPyConv::PyInst2PG(const Py::Object& pyci, const String& nsArg)
 			inst.setPath(cop);
 		}
 	}
-
 	Py::Mapping props = pyci.getAttr("properties");
 	_setProps(inst, props);
     return inst; 
@@ -904,7 +919,7 @@ PGPyConv::PyRef2PG(
 	const Py::Object& pycop,
 	const String& nsArg)
 {
-	String className = _stringAttr(pycop, "classname");
+	CIMName className = _stringAttr2CIMName(pycop, "classname");
 	String ns = _stringAttr(pycop, "namespace");
 	if (!ns.size())
 	{
@@ -927,7 +942,7 @@ PGPyConv::PyRef2PG(
 			THROW_CONV_EXC(msg);
 		}
 
-		String kname(Py::String(tup[0]).as_peg_string());
+		CIMName kname = _stringAttr2CIMName(tup[0]);
 		Py::Object pkval = tup[1];
 		CIMValue cv;
 
@@ -939,7 +954,7 @@ PGPyConv::PyRef2PG(
 		else if (pkval.isString())
 		{
 			cv = PyVal2PG("string", pkval);
-			ckbs.append(CIMKeyBinding(CIMName(kname), cv.toString(), CIMKeyBinding::STRING));
+			ckbs.append(CIMKeyBinding(kname, cv.toString(), CIMKeyBinding::STRING));
 		}
 		else if (pkval.isInt())
 		{
@@ -953,7 +968,7 @@ PGPyConv::PyRef2PG(
 				// This can throw
 				cv = CIMValue(Sint64(Py::Int(pkval).asUnsignedLongLong()));
 			}
-			ckbs.append(CIMKeyBinding(CIMName(kname), cv.toString(), CIMKeyBinding::NUMERIC));
+			ckbs.append(CIMKeyBinding(kname, cv.toString(), CIMKeyBinding::NUMERIC));
 		}
 		else if (pkval.isLong())
 		{
@@ -967,28 +982,28 @@ PGPyConv::PyRef2PG(
 				// This can throw
 				cv = CIMValue(Sint64(Py::Long(pkval).asUnsignedLongLong()));
 			}
-			ckbs.append(CIMKeyBinding(CIMName(kname), cv.toString(), CIMKeyBinding::NUMERIC));
+			ckbs.append(CIMKeyBinding(kname, cv.toString(), CIMKeyBinding::NUMERIC));
 		}
 		else if (pkval.isFloat())
 		{
 			cv = PyVal2PG("real64", pkval); 
-			ckbs.append(CIMKeyBinding(CIMName(kname), cv.toString(), CIMKeyBinding::NUMERIC));
+			ckbs.append(CIMKeyBinding(kname, cv.toString(), CIMKeyBinding::NUMERIC));
 		}
 		else if (pkval.isInstanceOf(pciClassName)
 			|| pkval.isInstanceOf(pciName))
 		{
 			cv = PyVal2PG("reference", pkval); 
-			ckbs.append(CIMKeyBinding(CIMName(kname), cv.toString(), CIMKeyBinding::REFERENCE));
+			ckbs.append(CIMKeyBinding(kname, cv.toString(), CIMKeyBinding::REFERENCE));
 		}
 		else if (pkval.isInstanceOf(pciDateTime))
 		{
 			cv = PyVal2PG("datetime", pkval);
-			ckbs.append(CIMKeyBinding(CIMName(kname), cv.toString(), CIMKeyBinding::STRING));
+			ckbs.append(CIMKeyBinding(kname, cv.toString(), CIMKeyBinding::STRING));
 		}
 		else
 		{
 			String msg("Py Ref Conversion: unhandled value for key: ");
-			msg.append(kname);
+			msg.append(kname.getString());
 			msg.append(" type: ");
 			msg.append(pkval.type().as_string());
 			THROW_CONV_EXC(msg);
@@ -1286,14 +1301,14 @@ PGPyConv::PyVal2PG(
 CIMClass
 PGPyConv::PyClass2PG(const Py::Object& pycls)
 {
-	String theName = Py::String(pycls.getAttr("classname")).as_peg_string();
+	Py::Object wko;
+	CIMName theName = _stringAttr2CIMName(pycls, "classname");
 	CIMClass theClass(theName);
-	Py::Object wko = pycls.getAttr("superclass");
-	if (!wko.isNone())
-	{
-		theClass.setSuperClassName(CIMName(Py::String(wko).as_peg_string()));
+	CIMName wkcn = _stringAttr2CIMName(pycls, "superclass");
+	if (!wkcn.isNull())
+	{	
+		theClass.setSuperClassName(wkcn);
 	}
-
 	Py::Mapping pymap = pycls.getAttr("properties");
 	_setProps(theClass, pymap);
 
@@ -1316,24 +1331,14 @@ CIMProperty
 PGPyConv::PyProperty2PG(const Py::Object& pyprop)
 {
 	Py::Object wko;
-	String theName = Py::String(pyprop.getAttr("name")).as_peg_string();
+	CIMName theName = _stringAttr2CIMName(pyprop, "name");
 	Boolean propagated = false;
 	if (pyprop.getAttr("propagated").isTrue())
 	{
 		propagated = true;
 	}
-	String classOrigin;
-	wko = pyprop.getAttr("class_origin");
-	if(wko.isString())
-	{
-		classOrigin = Py::String(wko).as_peg_string();
-	}
-	String refClass;
-	wko = pyprop.getAttr("reference_class");
-	if(wko.isString())
-	{
-		refClass = Py::String(wko).as_peg_string();
-	}
+	CIMName classOrigin = _stringAttr2CIMName(pyprop, "class_origin");
+	CIMName refClass = _stringAttr2CIMName(pyprop, "reference_class");
 	// Convert data type
 	String strtype = Py::String(pyprop.getAttr("type")).as_peg_string();
 	wko = pyprop.getAttr("embedded_object");
@@ -1358,7 +1363,6 @@ PGPyConv::PyProperty2PG(const Py::Object& pyprop)
 	{
 		arraySize = Uint32(Py::Int(wko));
 	}
-	
 	CIMProperty theProp(theName, theValue, arraySize, refClass,
 		classOrigin, propagated);
 
@@ -1373,7 +1377,7 @@ CIMParameter
 PGPyConv::PyCIMParam2PG(const Py::Object& pyparam)
 {
 	Py::Object wko;
-	String theName = Py::String(pyparam.getAttr("name")).as_peg_string();
+	CIMName theName = _stringAttr2CIMName(pyparam, "name");
 	// Convert data type
 	String strtype = Py::String(pyparam.getAttr("type")).as_peg_string();
 	CIMType dt = PyDataType2PG(strtype);
@@ -1388,13 +1392,7 @@ PGPyConv::PyCIMParam2PG(const Py::Object& pyparam)
 			raSize = Uint32(Py::Int(wko));
 		}
 	}
-	String refClass;
-	wko = pyparam.getAttr("reference_class");
-	if(wko.isString())
-	{
-		refClass = Py::String(wko).as_peg_string();
-	}
-
+	CIMName refClass = _stringAttr2CIMName(pyparam, "reference_class");
 	CIMParameter theParam(theName, dt, isArray, raSize, refClass);
 	// Set the qualifiers for the parameter
 	Py::Mapping pyqualDict(pyparam.getAttr("qualifiers"));
@@ -1408,7 +1406,7 @@ CIMQualifier
 PGPyConv::PyQual2PG(const Py::Object& pyqual)
 {
 	Py::Object wko;
-	String theName = Py::String(pyqual.getAttr("name")).as_peg_string();
+	CIMName theName = _stringAttr2CIMName(pyqual, "name");
 	String strtype = Py::String(pyqual.getAttr("type")).as_peg_string();
 	CIMValue theValue;
 	Py::Object qv = pyqual.getAttr("value");
@@ -1443,7 +1441,7 @@ CIMQualifierDecl
 PGPyConv::PyQualType2PG(const Py::Object& pyqualt)
 {
 	Py::Object wko;
-	String theName = Py::String(pyqualt.getAttr("name")).as_peg_string();
+	CIMName theName = _stringAttr2CIMName(pyqualt, "name");
 	String strtype = Py::String(pyqualt.getAttr("type")).as_peg_string();
 	CIMValue theValue;
 	wko = pyqualt.getAttr("value");
@@ -1525,15 +1523,9 @@ CIMMethod
 PGPyConv::PyMeth2PG(const Py::Object& pymeth)
 {
 	Py::Object wko;
-	String theName = Py::String(pymeth.getAttr("name")).as_peg_string();
-	String classOrigin;
-	wko = pymeth.getAttr("class_origin");
-	if(wko.isString())
-	{
-		classOrigin = Py::String(wko).as_peg_string();
-	}
+	CIMName theName = _stringAttr2CIMName(pymeth, "name");
+	CIMName classOrigin = _stringAttr2CIMName(pymeth, "class_origin");
 	Boolean propagated = pymeth.getAttr("propagated").isTrue();
-
 	String strtype = Py::String(pymeth.getAttr("return_type")).as_peg_string();
 	CIMType returnType = PyDataType2PG(strtype);
 	CIMMethod theMethod(theName, returnType, classOrigin, propagated);
