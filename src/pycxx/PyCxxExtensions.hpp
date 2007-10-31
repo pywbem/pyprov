@@ -301,7 +301,7 @@ protected:    // Tom Malcolmson reports that derived classes need access to thes
 		if(meth_def == NULL )
 		{
 			Pegasus::String error_msg("CXX - cannot invoke keyword method named ");
-			error_msg += name;
+			error_msg.append(name);
 			throw RuntimeError( error_msg );
 		}
 		
@@ -319,7 +319,7 @@ protected:    // Tom Malcolmson reports that derived classes need access to thes
 		if( meth_def == NULL )
 		{
 			Pegasus::String error_msg( "CXX - cannot invoke varargs method named " );
-			error_msg += name;
+			error_msg.append(name);
 			throw RuntimeError( error_msg );
 		}
 		

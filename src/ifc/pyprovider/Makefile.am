@@ -7,4 +7,6 @@ noinst_LTLIBRARIES = \
 
 libpegpyprovider_la_SOURCES = \
 	PG_PyConverter.cpp \
-	PG_PyConverter.hpp
+	PG_PyConverter.hpp \
+	PG_PyProviderModule.cpp \
+	PG_PyProviderModule.hpp
