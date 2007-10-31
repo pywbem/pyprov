@@ -16,18 +16,20 @@
 * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 *****************************************************************************/
 #include "PyCxxObjects.hpp"
-
-#include "Peg_PyConverter.hpp"
+#include "PG_PyConverter.hpp"
 
 #include <iostream>
-//#include <openwbem/OW_CIMProperty.hpp>
-//#include <openwbem/OW_CIMQualifier.hpp>
-//#include <openwbem/OW_Bool.hpp>
-//#include <openwbem/OW_DateTime.hpp>
-//#include <openwbem/OW_CIMDateTime.hpp>
-//#include <openwbem/OW_Format.hpp>
+#include <Pegasus/Common/CIMProperty.h>
+#include <Pegasus/Common/CIMQualifier.h>
+#include <Pegasus/Common/CIMDateTime.h>
 
-using namespace OpenWBEM; 
+// NOTE: Buffer.h and MofWriter.h were copies to /usr/include/Pegasus/Common
+// and MofWriter.h was tweaked a bit before building this file
+#include <Pegasus/Common/Buffer.h>
+#include <Pegasus/Common/MofWriter.h>
+
+using namespace PythonProvIFC;
+using namespace Pegasus; 
 using std::cout;
 using std::cerr;
 using std::endl;
@@ -38,66 +40,65 @@ makeTestInstance()
 {
     CIMInstance inst("MyClass");
 
-	CIMQualifier qual(CIMQualifier::CIM_QUAL_DESCRIPTION);
-	qual.setValue(CIMValue("This is a description for MyClass"));
-	inst.setQualifier(qual);
+	CIMQualifier qual("Description", 
+		CIMValue(String("This is a description for MyClass")));
+	inst.addQualifier(qual);
 
 	CIMProperty prop("one", CIMValue(String("ONE")));
-	qual = CIMQualifier(CIMQualifier::CIM_QUAL_KEY);
-	qual.setValue(CIMValue(Bool(true)));
-	prop.setQualifier(qual);
+	qual = CIMQualifier("Key",CIMValue(Boolean(true)));
+	prop.addQualifier(qual);
+    inst.addProperty(prop);
 
-    inst.setProperty(prop);
+    inst.addProperty(CIMProperty("two", CIMValue(Sint32(2))));
+    inst.addProperty(CIMProperty("minus_two", CIMValue(Sint16(-2))));
+    inst.addProperty(CIMProperty("float", CIMValue(Real32(-2.12345))));
+    inst.addProperty(CIMProperty("bool_true", CIMValue(Boolean(true))));
+    inst.addProperty(CIMProperty("bool_false", CIMValue(Boolean(false))));
+	inst.addProperty(CIMProperty("real64", CIMValue(Real64(-99883988883.9989989))));
 
-    inst.setProperty("two", CIMValue(Int32(2))); 
-    inst.setProperty("minus_two", CIMValue(Int16(-2))); 
-    inst.setProperty("float", CIMValue(Real32(-2.12345))); 
-    inst.setProperty("bool_true", CIMValue(Bool(true))); 
-    inst.setProperty("bool_false", CIMValue(Bool(false))); 
-	inst.setProperty("real64", CIMValue(Real64(-99883988883.9989989)));
 
-	CIMObjectPath cop("MyFakeClass", "root/cimv2");
-	cop.setKeyValue("Key1", CIMValue("ValueForKey1"));
-	cop.setKeyValue("Key2", CIMValue(UInt32(1234)));
-	cop.setKeyValue("Key3", CIMValue(Real32(1234.56)));
-	cop.setKeyValue("Key4", CIMValue(Bool(true)));
+	Array<CIMKeyBinding> kbs;
+	kbs.append(CIMKeyBinding("Key1", "ValueForKey1", CIMKeyBinding::STRING));
+	kbs.append(CIMKeyBinding("Key2", "1234", CIMKeyBinding::NUMERIC));
+	kbs.append(CIMKeyBinding("Key3", "1234.56", CIMKeyBinding::NUMERIC));
+	kbs.append(CIMKeyBinding("Key4", "TRUE", CIMKeyBinding::BOOLEAN));
+	CIMObjectPath cop("", "root/cimv2", "MyFakeClass", kbs);
+
 	// pywbem instanceNames are troublesome.  keyvals are expected to be 
 	// integers, not pywbem.Uint32
-	inst.setProperty("RefProp", CIMValue(cop));
+	inst.addProperty(CIMProperty("RefProp", CIMValue(cop)));
 
-    Array<Int32> intArray; 
-    intArray.push_back(Int32(-1)); 
-    intArray.push_back(Int32(0)); 
-    intArray.push_back(Int32(1)); 
-    intArray.push_back(Int32(2)); 
-    intArray.push_back(Int32(3)); 
-    inst.setProperty("intArray", CIMValue(intArray)); 
+    Array<Sint32> intArray; 
+    intArray.append(Sint32(-1)); 
+    intArray.append(Sint32(0)); 
+    intArray.append(Sint32(1)); 
+    intArray.append(Sint32(2)); 
+    intArray.append(Sint32(3)); 
+    inst.addProperty(CIMProperty("intArray", CIMValue(intArray)));
 
-    StringArray stringArray; 
-    stringArray.push_back("one"); 
-    stringArray.push_back("two"); 
-    stringArray.push_back("three"); 
-    inst.setProperty("stringArray", CIMValue(stringArray)); 
+    Array<String> stringArray; 
+    stringArray.append("one"); 
+    stringArray.append("two"); 
+    stringArray.append("three"); 
+    inst.addProperty(CIMProperty("stringArray", CIMValue(stringArray)));
 
-	BoolArray boolArray;
+	Array<Boolean> boolArray;
 	boolArray.append(true);
 	boolArray.append(true);
 	boolArray.append(false);
 	boolArray.append(false);
-    inst.setProperty("boolArray", CIMValue(boolArray)); 
+    inst.addProperty(CIMProperty("boolArray", CIMValue(boolArray)));
 
-	DateTime dt;
-	dt.setToCurrent();
-	CIMDateTime cdt(dt);
-	inst.setProperty("dateNow", CIMValue(cdt));
+	CIMDateTime cdt = CIMDateTime::getCurrentDateTime();
+	inst.addProperty(CIMProperty("dateNow", CIMValue(cdt)));
 
-	CIMDateTime idt(UInt64(123456789));
-	inst.setProperty("interval", CIMValue(idt));
+	CIMDateTime idt(Uint64(123456789), true);
+	inst.addProperty(CIMProperty("interval", CIMValue(idt)));
 
-	CIMDateTimeArray dtra;
+	Array<CIMDateTime> dtra;
 	dtra.append(cdt);
 	dtra.append(idt);
-	inst.setProperty("dateTimeArray", CIMValue(dtra));
+	inst.addProperty(CIMProperty("dateTimeArray", CIMValue(dtra)));
 	return inst;
 }
 
@@ -109,7 +110,7 @@ runTest(char** argv)
 	{
 		cout << "Importing module pywbem" << endl;
 		Py::Module pywbemMod("pywbem", true);
-		OWPyConv::setPyWbemMod(pywbemMod);
+		PGPyConv::setPyWbemMod(pywbemMod);
 		cout << "Imported module pywbem" << endl;
 
 		cout << "Importing script module: " << argv[1] << " ..." << endl;
@@ -122,11 +123,11 @@ runTest(char** argv)
 		cout << "Getting function: " << argv[2] << endl;
 		Py::Callable pyfunc = scriptMod.getAttr(argv[2]);
 
-		CIMInstance ci = makeTestInstance();	// Create bogus OW Instance
+		CIMInstance ci = makeTestInstance();	// Create bogus PG Instance
 
 		// Convert to a pywbem.CIMInstance
 		cout << "Converting instance to Python object" << endl;
-		Py::Object pci = OWPyConv::OWInst2Py(ci);
+		Py::Object pci = PGPyConv::PGInst2Py(ci);
 
 		// Now call script with pywbem.CIMInstance
 		Py::Tuple scriptArg(1);
@@ -135,10 +136,12 @@ runTest(char** argv)
 		Py::Object pyInst = pyfunc.apply(scriptArg);
 		cout << "Got the instance from Python!" << endl;
 
-		cout << "Converting instance back to an OW Instance..." << endl;
-		CIMInstance convci = OWPyConv::PyInst2OW(pyInst);
+		cout << "Converting instance back to an PG Instance..." << endl;
+		CIMInstance convci = PGPyConv::PyInst2PG(pyInst);
 		cout << "Converted Instance:" << endl;
-		cout << convci.toMOF() << endl;
+		Buffer bfr;
+		MofWriter::appendInstanceElement(bfr, convci);
+		cout << bfr.getData() << endl;
 	}
 	catch(Py::Exception& e)
 	{
