@@ -20,7 +20,6 @@
 
 #include "PyCxxObjects.hpp"
 #include "PyCxxExtensions.hpp"
-#include "OW_PyResultHandlers.hpp"
 #include "OW_PyCIMOMHandle.hpp"
 #include "OW_PyProviderEnvironment.hpp"
 #include "OW_PyLogger.hpp"

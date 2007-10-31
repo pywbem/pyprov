@@ -24,8 +24,6 @@ namespace PythonProvIFC
 PyProviderModule::PyProviderModule()
 	: Py::ExtensionModule<PyProviderModule>("pycimmb")
 {
-	PyInstanceResultHandler::doInit();
-	PyObjectPathResultHandler::doInit();
 	PyCIMOMHandle::doInit();
 	PyLogger::doInit();
 	PyProviderEnvironment::doInit();

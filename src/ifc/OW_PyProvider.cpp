@@ -19,7 +19,6 @@
 #include "OW_PyProvider.hpp"
 #include "OW_PyProvIFCCommon.hpp"
 #include "OW_PyProviderEnvironment.hpp"
-#include "OW_PyResultHandlers.hpp"
 #include "OW_PyConverter.hpp"
 #include <openwbem/OW_CIMValue.hpp>
 #include <openwbem/OW_CIMClass.hpp>

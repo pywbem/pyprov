@@ -10,8 +10,6 @@ libowpyprovider_la_SOURCES = \
 	OW_PyConverter.hpp \
 	OW_PyProviderModule.cpp \
 	OW_PyProviderModule.hpp \
-	OW_PyResultHandlers.cpp \
-	OW_PyResultHandlers.hpp \
 	OW_PyCIMOMHandle.cpp \
 	OW_PyCIMOMHandle.hpp \
 	OW_PyProviderEnvironment.cpp \
