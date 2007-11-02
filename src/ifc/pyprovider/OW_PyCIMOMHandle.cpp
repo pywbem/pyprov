@@ -1626,7 +1626,7 @@ PyCIMOMHandle::createInstance(
 	{
 		CIMObjectPath mcop;
 		PYCXX_ALLOW_THREADS
-		CIMObjectPath mcop = m_chdl->createInstance(ns, ci);
+		mcop = m_chdl->createInstance(ns, ci);
 		PYCXX_END_ALLOW_THREADS
 		pyref = OWPyConv::OWRef2Py(mcop);
 	}
