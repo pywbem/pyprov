@@ -431,36 +431,35 @@ Py::Object
 PyCIMOMHandle::exportIndication(
 	const Py::Tuple& args)
 {
-	CIMInstance ci(CIMNULL);
-	if (args.length() && !args[0].isNone())
-	{
-		ci = OWPyConv::PyInst2OW(args[0]);
-	}
-
-	if (!ci)
-	{
-		throwPyCIMException(CIMException::INVALID_PARAMETER,
-			"'indication_instance' must be given for exportIndication");
-	}
-
-	String ns;
-	if (args.length() > 1 && !args[1].isNone())
-	{
-		ns = Py::String(args[1]).as_ow_string();
-	}
-
-	if (ns.empty())
-	{
-		ns = m_defaultns;
-		if (ns.empty())
-		{
-			throwPyCIMException(CIMException::INVALID_PARAMETER,
-				"'namespace' is a required parameter");
-		}
-	}
-
 	try
 	{
+		CIMInstance ci(CIMNULL);
+		if (args.length() && !args[0].isNone())
+		{
+			ci = OWPyConv::PyInst2OW(args[0]);
+		}
+
+		if (!ci)
+		{
+			OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+				"'indication_instance' must be given for exportIndication");
+		}
+
+		String ns;
+		if (args.length() > 1 && !args[1].isNone())
+		{
+			ns = Py::String(args[1]).as_ow_string();
+		}
+
+		if (ns.empty())
+		{
+			ns = m_defaultns;
+			if (ns.empty())
+			{
+				OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+					"'namespace' is a required parameter");
+			}
+		}
 		PYCXX_ALLOW_THREADS
 		m_chdl->exportIndication(ci, ns);
 		PYCXX_END_ALLOW_THREADS
@@ -492,43 +491,42 @@ PyCIMOMHandle::invokeMethod(
 	const Py::Tuple& args,
 	const Py::Dict& kws)
 {
-	String methodName;
-	if (args.length() && !args[0].isNone())
-	{
-		methodName = Py::String(args[0]);
-	}
-
-	if (methodName.empty())
-	{
-		throwPyCIMException(CIMException::INVALID_PARAMETER,
-			"'MethodName' is a required parameter");
-	}
-
-	CIMObjectPath objectName(CIMNULL);
-	if (args.length() > 1 && !args[1].isNone())
-	{
-		objectName = OWPyConv::PyRef2OW(args[1]);
-	}
-
-	if (!objectName)
-	{
-		throwPyCIMException(CIMException::INVALID_PARAMETER,
-			"'ObjectName' is a required parameter");
-	}
-
-	String ns = objectName.getNameSpace();
-	if (ns.empty())
-	{
-		ns = m_defaultns;
-		if (ns.empty())
-		{
-			throwPyCIMException(CIMException::INVALID_PARAMETER,
-				"'ObjectName' does not have a namespace");
-		}
-	}
-
 	try
 	{
+		String methodName;
+		if (args.length() && !args[0].isNone())
+		{
+			methodName = Py::String(args[0]);
+		}
+
+		if (methodName.empty())
+		{
+			OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+				"'MethodName' is a required parameter");
+		}
+
+		CIMObjectPath objectName(CIMNULL);
+		if (args.length() > 1 && !args[1].isNone())
+		{
+			objectName = OWPyConv::PyRef2OW(args[1]);
+		}
+
+		if (!objectName)
+		{
+			OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+				"'ObjectName' is a required parameter");
+		}
+
+		String ns = objectName.getNameSpace();
+		if (ns.empty())
+		{
+			ns = m_defaultns;
+			if (ns.empty())
+			{
+				OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+					"'ObjectName' does not have a namespace");
+			}
+		}
 		String className = objectName.getClassName();
 		CIMClass cc;
 		PYCXX_ALLOW_THREADS
@@ -613,55 +611,56 @@ PyCIMOMHandle::enumClassNames(
 	const Py::Tuple& args,
 	const Py::Dict& kws)
 {
-	String ns;
-	if (args.length() > 0 && !args[0].isNone())
-	{
-		ns = Py::String(args[0]).as_ow_string();
-	}
-
-	if (ns.empty())
-	{
-		ns = m_defaultns;
-		if (ns.empty())
-		{
-			throwPyCIMException(CIMException::INVALID_PARAMETER,
-				"'namespace' is a required parameter");
-		}
-	}
-
-	String className;
-	Py::Object wko = getParam(kws, "ClassName");
-	if (!wko.isNone())
-	{
-		className = Py::String(wko).as_ow_string();
-	}
-
-	EDeepFlag flg = E_SHALLOW;
-	wko = getParam(kws, "DeepInheritance");
-	if (!wko.isNone())
-	{
-		if (wko.isTrue())
-		{
-			flg = E_DEEP;
-		}
-	}
-
-	Py::Object cb = getParam(kws, "Handler");
-	if (!cb.isNone())
-	{
-		if (!cb.isCallable())
-		{
-			throwPyCIMException(CIMException::INVALID_PARAMETER,
-				"'Handler' parameter must be a callable object");
-		}
-	}
-
-	PyStringResultHandler rhandler(cb);
 	try
 	{
+		String ns;
+		if (args.length() > 0 && !args[0].isNone())
+		{
+			ns = Py::String(args[0]).as_ow_string();
+		}
+
+		if (ns.empty())
+		{
+			ns = m_defaultns;
+			if (ns.empty())
+			{
+				OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+					"'namespace' is a required parameter");
+			}
+		}
+
+		String className;
+		Py::Object wko = getParam(kws, "ClassName");
+		if (!wko.isNone())
+		{
+			className = Py::String(wko).as_ow_string();
+		}
+
+		EDeepFlag flg = E_SHALLOW;
+		wko = getParam(kws, "DeepInheritance");
+		if (!wko.isNone())
+		{
+			if (wko.isTrue())
+			{
+				flg = E_DEEP;
+			}
+		}
+
+		Py::Object cb = getParam(kws, "Handler");
+		if (!cb.isNone())
+		{
+			if (!cb.isCallable())
+			{
+				OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+					"'Handler' parameter must be a callable object");
+			}
+		}
+
+		PyStringResultHandler rhandler(cb);
 		PYCXX_ALLOW_THREADS
 		m_chdl->enumClassNames(ns, className, rhandler, flg);
 		PYCXX_END_ALLOW_THREADS
+		return rhandler.getResult();
 	}
 	catch(const CIMException& e)
 	{
@@ -675,7 +674,7 @@ PyCIMOMHandle::enumClassNames(
 	{
 		throwPyCIMException(CIMException::FAILED, "Unknown exception");
 	}
-	return rhandler.getResult();
+	return Py::Nothing();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -684,86 +683,87 @@ PyCIMOMHandle::enumClass(
 	const Py::Tuple& args,
 	const Py::Dict& kws)
 {
-	String ns;
-	if (args.length() > 0 && !args[0].isNone())
-	{
-		ns = Py::String(args[0]).as_ow_string();
-	}
-
-	if (ns.empty())
-	{
-		ns = m_defaultns;
-		if (ns.empty())
-		{
-			throwPyCIMException(CIMException::INVALID_PARAMETER,
-				"'namespace' is a required parameter");
-		}
-	}
-
-	String className;
-	Py::Object wko = getParam(kws, "ClassName");
-	if (!wko.isNone())
-	{
-		className = Py::String(wko).as_ow_string();
-	}
-
-	EDeepFlag deepFlg = E_SHALLOW;
-	wko = getParam(kws, "DeepInheritance");
-	if (!wko.isNone())
-	{
-		if (wko.isTrue())
-		{
-			deepFlg = E_DEEP;
-		}
-	}
-
-	ELocalOnlyFlag localOnlyFlag = E_LOCAL_ONLY;
-	wko = getParam(kws, "LocalOnly");
-	if (!wko.isNone())
-	{
-		if (!wko.isTrue())
-		{
-			localOnlyFlag = E_NOT_LOCAL_ONLY;
-		}
-	}
-
-	EIncludeQualifiersFlag incQualsFlag = E_INCLUDE_QUALIFIERS;
-	wko = getParam(kws, "IncludeQualifiers");
-	if (!wko.isNone())
-	{
-		if (!wko.isTrue())
-		{
-			incQualsFlag = E_EXCLUDE_QUALIFIERS;
-		}
-	}
-
-	EIncludeClassOriginFlag classOriginFlag = E_EXCLUDE_CLASS_ORIGIN;
-	wko = getParam(kws, "IncludeClassOrigin");
-	if (!wko.isNone())
-	{
-		if (wko.isTrue())
-		{
-			classOriginFlag = E_INCLUDE_CLASS_ORIGIN;
-		}
-	}
-
-	Py::Object cb = getParam(kws, "Handler");
-	if (!cb.isNone())
-	{
-		if (!cb.isCallable())
-		{
-			throwPyCIMException(CIMException::INVALID_PARAMETER,
-				"'Handler' parameter must be a callable object");
-		}
-	}
-
-	PyClassResultHandler rhandler(cb);
 	try
 	{
+		String ns;
+		if (args.length() > 0 && !args[0].isNone())
+		{
+			ns = Py::String(args[0]).as_ow_string();
+		}
+
+		if (ns.empty())
+		{
+			ns = m_defaultns;
+			if (ns.empty())
+			{
+				OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+					"'namespace' is a required parameter");
+			}
+		}
+
+		String className;
+		Py::Object wko = getParam(kws, "ClassName");
+		if (!wko.isNone())
+		{
+			className = Py::String(wko).as_ow_string();
+		}
+
+		EDeepFlag deepFlg = E_SHALLOW;
+		wko = getParam(kws, "DeepInheritance");
+		if (!wko.isNone())
+		{
+			if (wko.isTrue())
+			{
+				deepFlg = E_DEEP;
+			}
+		}
+
+		ELocalOnlyFlag localOnlyFlag = E_LOCAL_ONLY;
+		wko = getParam(kws, "LocalOnly");
+		if (!wko.isNone())
+		{
+			if (!wko.isTrue())
+			{
+				localOnlyFlag = E_NOT_LOCAL_ONLY;
+			}
+		}
+
+		EIncludeQualifiersFlag incQualsFlag = E_INCLUDE_QUALIFIERS;
+		wko = getParam(kws, "IncludeQualifiers");
+		if (!wko.isNone())
+		{
+			if (!wko.isTrue())
+			{
+				incQualsFlag = E_EXCLUDE_QUALIFIERS;
+			}
+		}
+
+		EIncludeClassOriginFlag classOriginFlag = E_EXCLUDE_CLASS_ORIGIN;
+		wko = getParam(kws, "IncludeClassOrigin");
+		if (!wko.isNone())
+		{
+			if (wko.isTrue())
+			{
+				classOriginFlag = E_INCLUDE_CLASS_ORIGIN;
+			}
+		}
+
+		Py::Object cb = getParam(kws, "Handler");
+		if (!cb.isNone())
+		{
+			if (!cb.isCallable())
+			{
+				OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+					"'Handler' parameter must be a callable object");
+			}
+		}
+
+		PyClassResultHandler rhandler(cb);
 		PYCXX_ALLOW_THREADS
 		m_chdl->enumClass(ns, className, rhandler, deepFlg, localOnlyFlag,
 			incQualsFlag, classOriginFlag);
 		PYCXX_END_ALLOW_THREADS
+		return rhandler.getResult();
 	}
 	catch(const CIMException& e)
 	{
@@ -777,8 +777,7 @@ PyCIMOMHandle::enumClass(
 	{
 		throwPyCIMException(CIMException::FAILED, "Unknown exception");
 	}
-
-	return rhandler.getResult();
+	return Py::Nothing();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -787,86 +786,85 @@ PyCIMOMHandle::getClass(
 	const Py::Tuple& args,
 	const Py::Dict& kws)
 {
-	String className;
-	if (args.length() && !args[0].isNone())
-	{
-		className = Py::String(args[0]).as_ow_string();
-	}
-
-	if (className.empty())
-	{
-		throwPyCIMException(CIMException::INVALID_PARAMETER,
-			"'ClassName' is a required parameter");
-	}
-
-	String ns;
-	if (args.length() > 1 && !args[1].isNone())
-	{
-		ns = Py::String(args[1]).as_ow_string();
-	}
-
-	if (ns.empty())
-	{
-		ns = m_defaultns;
-		if (ns.empty())
-		{
-			throwPyCIMException(CIMException::INVALID_PARAMETER,
-				"'namespace' is a required parameter");
-		}
-	}
-
-	ELocalOnlyFlag localOnlyFlag = E_LOCAL_ONLY;
-	Py::Object wko = getParam(kws, "LocalOnly");
-	if (!wko.isNone())
-	{
-		if (!wko.isTrue())
-		{
-			localOnlyFlag = E_NOT_LOCAL_ONLY;
-		}
-	}
-
-	EIncludeQualifiersFlag incQualsFlag = E_INCLUDE_QUALIFIERS;
-	wko = getParam(kws, "IncludeQualifiers");
-	if (!wko.isNone())
-	{
-		if (!wko.isTrue())
-		{
-			incQualsFlag = E_EXCLUDE_QUALIFIERS;
-		}
-	}
-
-	EIncludeClassOriginFlag classOriginFlag = E_EXCLUDE_CLASS_ORIGIN;
-	wko = getParam(kws, "IncludeClassOrigin");
-	if (!wko.isNone())
-	{
-		if (wko.isTrue())
-		{
-			classOriginFlag = E_INCLUDE_CLASS_ORIGIN;
-		}
-	}
-
-	StringArray propList;
-	StringArray *pPropList = 0;
-	wko = getParam(kws, "PropertyList");
-	if (!wko.isNone())
-	{
-		Py::List pl(wko);
-		for (Py::List::size_type i = 0; i < pl.length(); i++)
-		{
-			propList.append(Py::String(pl[i]).as_ow_string());
-		}
-		pPropList = &propList;
-	}
-
-	Py::Object pycc;
 	try
 	{
+		String className;
+		if (args.length() && !args[0].isNone())
+		{
+			className = Py::String(args[0]).as_ow_string();
+		}
+
+		if (className.empty())
+		{
+			OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+				"'ClassName' is a required parameter");
+		}
+
+		String ns;
+		if (args.length() > 1 && !args[1].isNone())
+		{
+			ns = Py::String(args[1]).as_ow_string();
+		}
+
+		if (ns.empty())
+		{
+			ns = m_defaultns;
+			if (ns.empty())
+			{
+				OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+					"'namespace' is a required parameter");
+			}
+		}
+
+		ELocalOnlyFlag localOnlyFlag = E_LOCAL_ONLY;
+		Py::Object wko = getParam(kws, "LocalOnly");
+		if (!wko.isNone())
+		{
+			if (!wko.isTrue())
+			{
+				localOnlyFlag = E_NOT_LOCAL_ONLY;
+			}
+		}
+
+		EIncludeQualifiersFlag incQualsFlag = E_INCLUDE_QUALIFIERS;
+		wko = getParam(kws, "IncludeQualifiers");
+		if (!wko.isNone())
+		{
+			if (!wko.isTrue())
+			{
+				incQualsFlag = E_EXCLUDE_QUALIFIERS;
+			}
+		}
+
+		EIncludeClassOriginFlag classOriginFlag = E_EXCLUDE_CLASS_ORIGIN;
+		wko = getParam(kws, "IncludeClassOrigin");
+		if (!wko.isNone())
+		{
+			if (wko.isTrue())
+			{
+				classOriginFlag = E_INCLUDE_CLASS_ORIGIN;
+			}
+		}
+
+		StringArray propList;
+		StringArray *pPropList = 0;
+		wko = getParam(kws, "PropertyList");
+		if (!wko.isNone())
+		{
+			Py::List pl(wko);
+			for (Py::List::size_type i = 0; i < pl.length(); i++)
+			{
+				propList.append(Py::String(pl[i]).as_ow_string());
+			}
+			pPropList = &propList;
+		}
+
 		CIMClass cc;
 		PYCXX_ALLOW_THREADS
 		cc = m_chdl->getClass(ns, className, localOnlyFlag,
 			incQualsFlag, classOriginFlag, pPropList);
 		PYCXX_END_ALLOW_THREADS
-		pycc = OWPyConv::OWClass2Py(cc);
+		return OWPyConv::OWClass2Py(cc);
 	}
 	catch(const CIMException& e)
 	{
@@ -880,8 +878,7 @@ PyCIMOMHandle::getClass(
 	{
 		throwPyCIMException(CIMException::FAILED, "Unknown exception");
 	}
-
-	return pycc;
+	return Py::Nothing();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -890,36 +887,35 @@ PyCIMOMHandle::createClass(
 	const Py::Tuple& args,
 	const Py::Dict& kws)
 {
-	CIMClass cc(CIMNULL);
-	if (args.length() && !args[0].isNone())
-	{
-		cc = OWPyConv::PyClass2OW(args[0]);
-	}
-
-	if (!cc)
-	{
-		throwPyCIMException(CIMException::INVALID_PARAMETER,
-			"'NewClass' is a required parameter");
-	}
-
-	String ns;
-	if (args.length() > 1 && !args[1].isNone())
-	{
-		ns = Py::String(args[1]).as_ow_string();
-	}
-
-	if (ns.empty())
-	{
-		ns = m_defaultns;
-		if (ns.empty())
-		{
-			throwPyCIMException(CIMException::INVALID_PARAMETER,
-				"'namespace' is a required parameter");
-		}
-	}
-
 	try
 	{
+		CIMClass cc(CIMNULL);
+		if (args.length() && !args[0].isNone())
+		{
+			cc = OWPyConv::PyClass2OW(args[0]);
+		}
+
+		if (!cc)
+		{
+			OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+				"'NewClass' is a required parameter");
+		}
+
+		String ns;
+		if (args.length() > 1 && !args[1].isNone())
+		{
+			ns = Py::String(args[1]).as_ow_string();
+		}
+
+		if (ns.empty())
+		{
+			ns = m_defaultns;
+			if (ns.empty())
+			{
+				OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+					"'namespace' is a required parameter");
+			}
+		}
 		PYCXX_ALLOW_THREADS
 		m_chdl->createClass(ns, cc);
 		PYCXX_END_ALLOW_THREADS
@@ -946,36 +942,35 @@ PyCIMOMHandle::deleteClass(
 	const Py::Tuple& args,
 	const Py::Dict& kws)
 {
-	String className;
-	if (args.length() && !args[0].isNone())
-	{
-		className = Py::String(args[0]).as_ow_string();
-	}
-
-	if (className.empty())
-	{
-		throwPyCIMException(CIMException::INVALID_PARAMETER,
-			"'ClassName' is a required parameter");
-	}
-
-	String ns;
-	if (args.length() > 1 && !args[1].isNone())
-	{
-		ns = Py::String(args[1]).as_ow_string();
-	}
-
-	if (ns.empty())
-	{
-		ns = m_defaultns;
-		if (ns.empty())
-		{
-			throwPyCIMException(CIMException::INVALID_PARAMETER,
-				"'namespace' is a required parameter");
-		}
-	}
-
 	try
 	{
+		String className;
+		if (args.length() && !args[0].isNone())
+		{
+			className = Py::String(args[0]).as_ow_string();
+		}
+
+		if (className.empty())
+		{
+			OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+				"'ClassName' is a required parameter");
+		}
+
+		String ns;
+		if (args.length() > 1 && !args[1].isNone())
+		{
+			ns = Py::String(args[1]).as_ow_string();
+		}
+
+		if (ns.empty())
+		{
+			ns = m_defaultns;
+			if (ns.empty())
+			{
+				OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+					"'namespace' is a required parameter");
+			}
+		}
 		PYCXX_ALLOW_THREADS
 		m_chdl->deleteClass(ns, className);
 		PYCXX_END_ALLOW_THREADS
@@ -1002,36 +997,35 @@ PyCIMOMHandle::modifyClass(
 	const Py::Tuple& args,
 	const Py::Dict& kws)
 {
-	CIMClass cc(CIMNULL);
-	if (args.length() && !args[0].isNone())
-	{
-		cc = OWPyConv::PyClass2OW(args[0]);
-	}
-
-	if (!cc)
-	{
-		throwPyCIMException(CIMException::INVALID_PARAMETER,
-			"'ModifiedClass' is a required parameter");
-	}
-
-	String ns;
-	if (args.length() > 1 && !args[1].isNone())
-	{
-		ns = Py::String(args[1]).as_ow_string();
-	}
-
-	if (ns.empty())
-	{
-		ns = m_defaultns;
-		if (ns.empty())
-		{
-			throwPyCIMException(CIMException::INVALID_PARAMETER,
-				"'namespace' is a required parameter");
-		}
-	}
-
 	try
 	{
+		CIMClass cc(CIMNULL);
+		if (args.length() && !args[0].isNone())
+		{
+			cc = OWPyConv::PyClass2OW(args[0]);
+		}
+
+		if (!cc)
+		{
+			OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+				"'ModifiedClass' is a required parameter");
+		}
+
+		String ns;
+		if (args.length() > 1 && !args[1].isNone())
+		{
+			ns = Py::String(args[1]).as_ow_string();
+		}
+
+		if (ns.empty())
+		{
+			ns = m_defaultns;
+			if (ns.empty())
+			{
+				OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+					"'namespace' is a required parameter");
+			}
+		}
 		PYCXX_ALLOW_THREADS
 		m_chdl->modifyClass(ns, cc);
 		PYCXX_END_ALLOW_THREADS
@@ -1048,7 +1042,6 @@ PyCIMOMHandle::modifyClass(
 	{
 		throwPyCIMException(CIMException::FAILED, "Unknown exception");
 	}
-	
 	return Py::Nothing();
 }
 
@@ -1058,38 +1051,39 @@ PyCIMOMHandle::enumQualifiers(
 	const Py::Tuple& args,
 	const Py::Dict& kws)
 {
-	String ns;
-	if (args.length() > 0 && !args[0].isNone())
-	{
-		ns = Py::String(args[0]).as_ow_string();
-	}
-
-	if (ns.empty())
-	{
-		ns = m_defaultns;
-		if (ns.empty())
-		{
-			throwPyCIMException(CIMException::INVALID_PARAMETER,
-				"'namespace' is a required parameter");
-		}
-	}
-
-	Py::Object cb = getParam(kws, "Handler");
-	if (!cb.isNone())
-	{
-		if (!cb.isCallable())
-		{
-			throwPyCIMException(CIMException::INVALID_PARAMETER,
-				"'Handler' parameter must be a callable object");
-		}
-	}
-
-	PyQualResultHandler rhandler(cb);
 	try
 	{
+		String ns;
+		if (args.length() > 0 && !args[0].isNone())
+		{
+			ns = Py::String(args[0]).as_ow_string();
+		}
+
+		if (ns.empty())
+		{
+			ns = m_defaultns;
+			if (ns.empty())
+			{
+				OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+					"'namespace' is a required parameter");
+			}
+		}
+
+		Py::Object cb = getParam(kws, "Handler");
+		if (!cb.isNone())
+		{
+			if (!cb.isCallable())
+			{
+				OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+					"'Handler' parameter must be a callable object");
+			}
+		}
+
+		PyQualResultHandler rhandler(cb);
 		PYCXX_ALLOW_THREADS
 		m_chdl->enumQualifierTypes(ns, rhandler);
 		PYCXX_END_ALLOW_THREADS
+		return rhandler.getResult();
 	}
 	catch(const CIMException& e)
 	{
@@ -1103,8 +1097,7 @@ PyCIMOMHandle::enumQualifiers(
 	{
 		throwPyCIMException(CIMException::FAILED, "Unknown exception");
 	}
-
-	return rhandler.getResult();
+	return Py::Nothing();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1113,41 +1106,40 @@ PyCIMOMHandle::getQualifier(
 	const Py::Tuple& args,
 	const Py::Dict& kws)
 {
-	String qualName;
-	if (args.length() && !args[0].isNone())
-	{
-		qualName = Py::String(args[0]).as_ow_string();
-	}
-	if (qualName.empty())
-	{
-		throwPyCIMException(CIMException::INVALID_PARAMETER,
-			"'QualifierName' is a required parameter");
-	}
-
-	String ns;
-	if (args.length() > 1 && !args[1].isNone())
-	{
-		ns = Py::String(args[1]).as_ow_string();
-	}
-
-	if (ns.empty())
-	{
-		ns = m_defaultns;
-		if (ns.empty())
-		{
-			throwPyCIMException(CIMException::INVALID_PARAMETER,
-				"'namespace' is a required parameter");
-		}
-	}
-
-	Py::Object pyqual;
 	try
 	{
+		String qualName;
+		if (args.length() && !args[0].isNone())
+		{
+			qualName = Py::String(args[0]).as_ow_string();
+		}
+		if (qualName.empty())
+		{
+			OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+				"'QualifierName' is a required parameter");
+		}
+
+		String ns;
+		if (args.length() > 1 && !args[1].isNone())
+		{
+			ns = Py::String(args[1]).as_ow_string();
+		}
+
+		if (ns.empty())
+		{
+			ns = m_defaultns;
+			if (ns.empty())
+			{
+				OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+					"'namespace' is a required parameter");
+			}
+		}
+
 		CIMQualifierType cqt;
 		PYCXX_ALLOW_THREADS
 		cqt = m_chdl->getQualifierType(ns, qualName);
 		PYCXX_END_ALLOW_THREADS
-		pyqual = OWPyConv::OWQualType2Py(cqt);
+		return OWPyConv::OWQualType2Py(cqt);
 	}
 	catch(const CIMException& e)
 	{
@@ -1161,8 +1153,7 @@ PyCIMOMHandle::getQualifier(
 	{
 		throwPyCIMException(CIMException::FAILED, "Unknown exception");
 	}
-
-	return pyqual;
+	return Py::Nothing();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1171,36 +1162,35 @@ PyCIMOMHandle::setQualifier(
 	const Py::Tuple& args,
 	const Py::Dict& kws)
 {
-	CIMQualifier cq(CIMNULL);
-	if (args.length() && !args[0].isNone())
-	{
-		cq = OWPyConv::PyQual2OW(args[0]);
-	}
-
-	if (!cq)
-	{
-		throwPyCIMException(CIMException::INVALID_PARAMETER,
-			"'QualifierDeclaration' is a required parameter");
-	}
-
-	String ns;
-	if (args.length() > 1 && !args[1].isNone())
-	{
-		ns = Py::String(args[1]).as_ow_string();
-	}
-
-	if (ns.empty())
-	{
-		ns = m_defaultns;
-		if (ns.empty())
-		{
-			throwPyCIMException(CIMException::INVALID_PARAMETER,
-				"'namespace' is a required parameter");
-		}
-	}
-
 	try
 	{
+		CIMQualifier cq(CIMNULL);
+		if (args.length() && !args[0].isNone())
+		{
+			cq = OWPyConv::PyQual2OW(args[0]);
+		}
+
+		if (!cq)
+		{
+			OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+				"'QualifierDeclaration' is a required parameter");
+		}
+
+		String ns;
+		if (args.length() > 1 && !args[1].isNone())
+		{
+			ns = Py::String(args[1]).as_ow_string();
+		}
+
+		if (ns.empty())
+		{
+			ns = m_defaultns;
+			if (ns.empty())
+			{
+				OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+					"'namespace' is a required parameter");
+			}
+		}
 		CIMQualifierType cqt = cq.getDefaults();
 		cqt.setName(cq.getName());
 		CIMValue cv = cq.getValue();
@@ -1231,36 +1221,35 @@ PyCIMOMHandle::deleteQualifier(
 	const Py::Tuple& args,
 	const Py::Dict& kws)
 {
-	String qualName;
-	if (args.length() && !args[0].isNone())
-	{
-		qualName = Py::String(args[0]);
-	}
-
-	if (!qualName.empty())
-	{
-		throwPyCIMException(CIMException::INVALID_PARAMETER,
-			"'QualifierName' is a required parameter");
-	}
-
-	String ns;
-	if (args.length() > 1 && !args[1].isNone())
-	{
-		ns = Py::String(args[1]).as_ow_string();
-	}
-
-	if (ns.empty())
-	{
-		ns = m_defaultns;
-		if (ns.empty())
-		{
-			throwPyCIMException(CIMException::INVALID_PARAMETER,
-				"'namespace' is a required parameter");
-		}
-	}
-
 	try
 	{
+		String qualName;
+		if (args.length() && !args[0].isNone())
+		{
+			qualName = Py::String(args[0]);
+		}
+
+		if (!qualName.empty())
+		{
+			OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+				"'QualifierName' is a required parameter");
+		}
+
+		String ns;
+		if (args.length() > 1 && !args[1].isNone())
+		{
+			ns = Py::String(args[1]).as_ow_string();
+		}
+
+		if (ns.empty())
+		{
+			ns = m_defaultns;
+			if (ns.empty())
+			{
+				OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+					"'namespace' is a required parameter");
+			}
+		}
 		PYCXX_ALLOW_THREADS
 		m_chdl->deleteQualifierType(ns, qualName);
 		PYCXX_END_ALLOW_THREADS
@@ -1287,48 +1276,48 @@ PyCIMOMHandle::enumInstanceNames(
 	const Py::Tuple& args,
 	const Py::Dict& kws)
 {
-	String className;
-	if (args.length() && !args[0].isNone())
-	{
-		className = Py::String(args[0]).as_ow_string();
-	}
-	if (className.empty())
-	{
-		throwPyCIMException(CIMException::INVALID_PARAMETER,
-			"'ClassName' is a required parameter");
-	}
-	String ns;
-	if (args.length() > 1 && !args[1].isNone())
-	{
-		ns = Py::String(args[1]).as_ow_string();
-	}
-
-	if (ns.empty())
-	{
-		ns = m_defaultns;
-		if (ns.empty())
-		{
-			throwPyCIMException(CIMException::INVALID_PARAMETER,
-				"'namespace' is a required parameter");
-		}
-	}
-
-	Py::Object cb = getParam(kws, "Handler");
-	if (!cb.isNone())
-	{
-		if (!cb.isCallable())
-		{
-			throwPyCIMException(CIMException::INVALID_PARAMETER,
-				"'Handler' parameter must be a callable object");
-		}
-	}
-
-	PyOpResultHandler rhandler(ns, cb);
 	try
 	{
+		String className;
+		if (args.length() && !args[0].isNone())
+		{
+			className = Py::String(args[0]).as_ow_string();
+		}
+		if (className.empty())
+		{
+			OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+				"'ClassName' is a required parameter");
+		}
+		String ns;
+		if (args.length() > 1 && !args[1].isNone())
+		{
+			ns = Py::String(args[1]).as_ow_string();
+		}
+
+		if (ns.empty())
+		{
+			ns = m_defaultns;
+			if (ns.empty())
+			{
+				OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+					"'namespace' is a required parameter");
+			}
+		}
+
+		Py::Object cb = getParam(kws, "Handler");
+		if (!cb.isNone())
+		{
+			if (!cb.isCallable())
+			{
+				OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+					"'Handler' parameter must be a callable object");
+			}
+		}
+		PyOpResultHandler rhandler(ns, cb);
 		PYCXX_ALLOW_THREADS
 		m_chdl->enumInstanceNames(ns, className, rhandler);
 		PYCXX_END_ALLOW_THREADS
+		return rhandler.getResult();
 	}
 	catch(const CIMException& e)
 	{
@@ -1342,8 +1331,7 @@ PyCIMOMHandle::enumInstanceNames(
 	{
 		throwPyCIMException(CIMException::FAILED, "Unknown exception");
 	}
-
-	return rhandler.getResult();
+	return Py::Nothing();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1352,229 +1340,90 @@ PyCIMOMHandle::enumInstances(
 	const Py::Tuple& args,
 	const Py::Dict& kws)
 {
-	String className;
-	if (args.length() && !args[0].isNone())
-	{
-		className = Py::String(args[0]).as_ow_string();
-	}
-	if (className.empty())
-	{
-		throwPyCIMException(CIMException::INVALID_PARAMETER,
-			"'ClassName' is a required parameter");
-	}
-	String ns;
-	if (args.length() > 1 && !args[1].isNone())
-	{
-		ns = Py::String(args[1]).as_ow_string();
-	}
-
-	if (ns.empty())
-	{
-		ns = m_defaultns;
-		if (ns.empty())
-		{
-			throwPyCIMException(CIMException::INVALID_PARAMETER,
-				"'namespace' is a required parameter");
-		}
-	}
-
-	EDeepFlag deepFlg = E_SHALLOW;
-	Py::Object wko = getParam(kws, "DeepInheritance");
-	if (!wko.isNone() && wko.isTrue())
-	{
-		deepFlg = E_DEEP;
-	}
-
-	ELocalOnlyFlag localOnlyFlag = E_LOCAL_ONLY;
-	wko = getParam(kws, "LocalOnly");
-	if (!wko.isNone() && !wko.isTrue())
-	{
-		localOnlyFlag = E_NOT_LOCAL_ONLY;
-	}
-
-	EIncludeQualifiersFlag incQualsFlag = E_INCLUDE_QUALIFIERS;
-	wko = getParam(kws, "IncludeQualifiers");
-	if (!wko.isNone() && !wko.isTrue())
-	{
-		incQualsFlag = E_EXCLUDE_QUALIFIERS;
-	}
-
-	EIncludeClassOriginFlag classOriginFlag = E_EXCLUDE_CLASS_ORIGIN;
-	wko = getParam(kws, "IncludeClassOrigin");
-	if (!wko.isNone() && wko.isTrue())
-	{
-		classOriginFlag = E_INCLUDE_CLASS_ORIGIN;
-	}
-
-	StringArray propList;
-	StringArray *pPropList = 0;
-	wko = getParam(kws, "PropertyList");
-	if (!wko.isNone())
-	{
-		Py::List pl(wko);
-		for (Py::List::size_type i = 0; i < pl.length(); i++)
-		{
-			propList.append(Py::String(pl[i]).as_ow_string());
-		}
-		pPropList = &propList;
-	}
-
-	Py::Object cb = getParam(kws, "Handler");
-	if (!cb.isNone())
-	{
-		if (!cb.isCallable())
-		{
-			throwPyCIMException(CIMException::INVALID_PARAMETER,
-				"'Handler' parameter must be a callable object");
-		}
-	}
-
-	PyInstResultHandler rhandler(ns, cb);
 	try
 	{
+		String className;
+		if (args.length() && !args[0].isNone())
+		{
+			className = Py::String(args[0]).as_ow_string();
+		}
+		if (className.empty())
+		{
+			OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+				"'ClassName' is a required parameter");
+		}
+		String ns;
+		if (args.length() > 1 && !args[1].isNone())
+		{
+			ns = Py::String(args[1]).as_ow_string();
+		}
+
+		if (ns.empty())
+		{
+			ns = m_defaultns;
+			if (ns.empty())
+			{
+				OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+					"'namespace' is a required parameter");
+			}
+		}
+
+		EDeepFlag deepFlg = E_SHALLOW;
+		Py::Object wko = getParam(kws, "DeepInheritance");
+		if (!wko.isNone() && wko.isTrue())
+		{
+			deepFlg = E_DEEP;
+		}
+
+		ELocalOnlyFlag localOnlyFlag = E_LOCAL_ONLY;
+		wko = getParam(kws, "LocalOnly");
+		if (!wko.isNone() && !wko.isTrue())
+		{
+			localOnlyFlag = E_NOT_LOCAL_ONLY;
+		}
+
+		EIncludeQualifiersFlag incQualsFlag = E_INCLUDE_QUALIFIERS;
+		wko = getParam(kws, "IncludeQualifiers");
+		if (!wko.isNone() && !wko.isTrue())
+		{
+			incQualsFlag = E_EXCLUDE_QUALIFIERS;
+		}
+
+		EIncludeClassOriginFlag classOriginFlag = E_EXCLUDE_CLASS_ORIGIN;
+		wko = getParam(kws, "IncludeClassOrigin");
+		if (!wko.isNone() && wko.isTrue())
+		{
+			classOriginFlag = E_INCLUDE_CLASS_ORIGIN;
+		}
+
+		StringArray propList;
+		StringArray *pPropList = 0;
+		wko = getParam(kws, "PropertyList");
+		if (!wko.isNone())
+		{
+			Py::List pl(wko);
+			for (Py::List::size_type i = 0; i < pl.length(); i++)
+			{
+				propList.append(Py::String(pl[i]).as_ow_string());
+			}
+			pPropList = &propList;
+		}
+
+		Py::Object cb = getParam(kws, "Handler");
+		if (!cb.isNone())
+		{
+			if (!cb.isCallable())
+			{
+				OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+					"'Handler' parameter must be a callable object");
+			}
+		}
+		PyInstResultHandler rhandler(ns, cb);
 		PYCXX_ALLOW_THREADS
 		m_chdl->enumInstances(ns, className, rhandler, deepFlg, localOnlyFlag,
 			incQualsFlag, classOriginFlag, pPropList);
 		PYCXX_END_ALLOW_THREADS
-	}
-	catch(const CIMException& e)
-	{
-		throwPyCIMException(e);
-	}
-	catch(const Exception& e)
-	{
-		throwPyException(e);
-	}
-	catch(...)
-	{
-		throwPyCIMException(CIMException::FAILED, "Unknown exception");
-	}
-
-	return rhandler.getResult();
-}
-
-//////////////////////////////////////////////////////////////////////////////
-Py::Object
-PyCIMOMHandle::getInstance(
-	const Py::Tuple& args,
-	const Py::Dict& kws)
-{
-	CIMObjectPath instanceName(CIMNULL);
-	if (args.length() && !args[0].isNone())
-	{
-		instanceName = OWPyConv::PyRef2OW(Py::Object(args[0]));
-	}
-
-	if (!instanceName)
-	{
-		throwPyCIMException(CIMException::INVALID_PARAMETER,
-			"'InstanceName' is a required parameter");
-	}
-
-	String ns = instanceName.getNameSpace();
-	if (ns.empty())
-	{
-		ns = m_defaultns;
-		if (ns.empty())
-		{
-			throwPyCIMException(CIMException::INVALID_PARAMETER,
-				"'InstanceName' parameter does not have a namespace");
-		}
-	}
-
-	ELocalOnlyFlag localOnlyFlag = E_LOCAL_ONLY;
-	Py::Object wko = getParam(kws, "LocalOnly");
-	if (!wko.isNone() && !wko.isTrue())
-	{
-		localOnlyFlag = E_NOT_LOCAL_ONLY;
-	}
-
-	EIncludeQualifiersFlag incQualsFlag = E_INCLUDE_QUALIFIERS;
-	wko = getParam(kws, "IncludeQualifiers");
-	if (!wko.isNone() && !wko.isTrue())
-	{
-		incQualsFlag = E_EXCLUDE_QUALIFIERS;
-	}
-
-	EIncludeClassOriginFlag classOriginFlag = E_EXCLUDE_CLASS_ORIGIN;
-	wko = getParam(kws, "IncludeClassOrigin");
-	if (!wko.isNone() && wko.isTrue())
-	{
-		classOriginFlag = E_INCLUDE_CLASS_ORIGIN;
-	}
-
-	StringArray propList;
-	StringArray *pPropList = 0;
-	wko = getParam(kws, "PropertyList");
-	if (!wko.isNone())
-	{
-		Py::List pl(wko);
-		for (Py::List::size_type i = 0; i < pl.length(); i++)
-		{
-			propList.append(Py::String(pl[i]).as_ow_string());
-		}
-		pPropList = &propList;
-	}
-
-	Py::Object pyinst;	
-	try
-	{
-		CIMInstance ci;
-		PYCXX_ALLOW_THREADS
-		ci = m_chdl->getInstance(ns, instanceName, localOnlyFlag,
-			incQualsFlag, classOriginFlag, pPropList);
-		PYCXX_END_ALLOW_THREADS
-		pyinst = OWPyConv::OWInst2Py(ci, ns);
-	}
-	catch(const CIMException& e)
-	{
-		throwPyCIMException(e);
-	}
-	catch(const Exception& e)
-	{
-		throwPyException(e);
-	}
-	catch(...)
-	{
-		throwPyCIMException(CIMException::FAILED, "Unknown exception");
-	}
-
-	return pyinst;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-Py::Object
-PyCIMOMHandle::deleteInstance(
-	const Py::Tuple& args,
-	const Py::Dict& kws)
-{
-	CIMObjectPath instanceName(CIMNULL);
-	if (args.length() && !args[0].isNone())
-	{
-		instanceName = OWPyConv::PyRef2OW(Py::Object(args[0]));
-	}
-	if (!instanceName)
-	{
-		throwPyCIMException(CIMException::INVALID_PARAMETER,
-			"'InstanceName' is a required parameter");
-	}
-
-	String ns = instanceName.getNameSpace();
-	if (ns.empty())
-	{
-		ns = m_defaultns;
-		if (ns.empty())
-		{
-			throwPyCIMException(CIMException::INVALID_PARAMETER,
-				"'InstanceName' parameter does not have a namespace");
-		}
-	}
-
-	try
-	{
-		PYCXX_ALLOW_THREADS
-		m_chdl->deleteInstance(ns, instanceName);
-		PYCXX_END_ALLOW_THREADS
+		return rhandler.getResult();
 	}
 	catch(const CIMException& e)
 	{
@@ -1594,41 +1443,173 @@ PyCIMOMHandle::deleteInstance(
 
 //////////////////////////////////////////////////////////////////////////////
 Py::Object
+PyCIMOMHandle::getInstance(
+	const Py::Tuple& args,
+	const Py::Dict& kws)
+{
+	try
+	{
+		CIMObjectPath instanceName(CIMNULL);
+		if (args.length() && !args[0].isNone())
+		{
+			instanceName = OWPyConv::PyRef2OW(Py::Object(args[0]));
+		}
+
+		if (!instanceName)
+		{
+			OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+				"'InstanceName' is a required parameter");
+		}
+
+		String ns = instanceName.getNameSpace();
+		if (ns.empty())
+		{
+			ns = m_defaultns;
+			if (ns.empty())
+			{
+				OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+					"'InstanceName' parameter does not have a namespace");
+			}
+		}
+
+		ELocalOnlyFlag localOnlyFlag = E_LOCAL_ONLY;
+		Py::Object wko = getParam(kws, "LocalOnly");
+		if (!wko.isNone() && !wko.isTrue())
+		{
+			localOnlyFlag = E_NOT_LOCAL_ONLY;
+		}
+
+		EIncludeQualifiersFlag incQualsFlag = E_INCLUDE_QUALIFIERS;
+		wko = getParam(kws, "IncludeQualifiers");
+		if (!wko.isNone() && !wko.isTrue())
+		{
+			incQualsFlag = E_EXCLUDE_QUALIFIERS;
+		}
+
+		EIncludeClassOriginFlag classOriginFlag = E_EXCLUDE_CLASS_ORIGIN;
+		wko = getParam(kws, "IncludeClassOrigin");
+		if (!wko.isNone() && wko.isTrue())
+		{
+			classOriginFlag = E_INCLUDE_CLASS_ORIGIN;
+		}
+
+		StringArray propList;
+		StringArray *pPropList = 0;
+		wko = getParam(kws, "PropertyList");
+		if (!wko.isNone())
+		{
+			Py::List pl(wko);
+			for (Py::List::size_type i = 0; i < pl.length(); i++)
+			{
+				propList.append(Py::String(pl[i]).as_ow_string());
+			}
+			pPropList = &propList;
+		}
+		CIMInstance ci;
+		PYCXX_ALLOW_THREADS
+		ci = m_chdl->getInstance(ns, instanceName, localOnlyFlag,
+			incQualsFlag, classOriginFlag, pPropList);
+		PYCXX_END_ALLOW_THREADS
+		return OWPyConv::OWInst2Py(ci, ns);
+	}
+	catch(const CIMException& e)
+	{
+		throwPyCIMException(e);
+	}
+	catch(const Exception& e)
+	{
+		throwPyException(e);
+	}
+	catch(...)
+	{
+		throwPyCIMException(CIMException::FAILED, "Unknown exception");
+	}
+	return Py::Nothing();
+}
+
+//////////////////////////////////////////////////////////////////////////////
+Py::Object
+PyCIMOMHandle::deleteInstance(
+	const Py::Tuple& args,
+	const Py::Dict& kws)
+{
+	try
+	{
+		CIMObjectPath instanceName(CIMNULL);
+		if (args.length() && !args[0].isNone())
+		{
+			instanceName = OWPyConv::PyRef2OW(Py::Object(args[0]));
+		}
+		if (!instanceName)
+		{
+			OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+				"'InstanceName' is a required parameter");
+		}
+
+		String ns = instanceName.getNameSpace();
+		if (ns.empty())
+		{
+			ns = m_defaultns;
+			if (ns.empty())
+			{
+				OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+					"'InstanceName' parameter does not have a namespace");
+			}
+		}
+		PYCXX_ALLOW_THREADS
+		m_chdl->deleteInstance(ns, instanceName);
+		PYCXX_END_ALLOW_THREADS
+	}
+	catch(const CIMException& e)
+	{
+		throwPyCIMException(e);
+	}
+	catch(const Exception& e)
+	{
+		throwPyException(e);
+	}
+	catch(...)
+	{
+		throwPyCIMException(CIMException::FAILED, "Unknown exception");
+	}
+	return Py::Nothing();
+}
+
+//////////////////////////////////////////////////////////////////////////////
+Py::Object
 PyCIMOMHandle::createInstance(
 	const Py::Tuple& args,
 	const Py::Dict& kws)
 {
-	CIMInstance ci(CIMNULL);
-	if (args.length() && !args[0].isNone())
-	{
-		ci = OWPyConv::PyInst2OW(args[0]);
-	}
-
-	if (!ci)
-	{
-		throwPyCIMException(CIMException::INVALID_PARAMETER,
-			"'NewInstance' is a required parameter");
-	}
-
-	String ns = ci.getNameSpace();
-	if (ns.empty())
-	{
-		ns = m_defaultns;
-		if (ns.empty())
-		{
-			throwPyCIMException(CIMException::INVALID_PARAMETER,
-				"'NewInstance.path' does not contain a namespace");
-		}
-	}
-
-	Py::Object pyref;
 	try
 	{
+		CIMInstance ci(CIMNULL);
+		if (args.length() && !args[0].isNone())
+		{
+			ci = OWPyConv::PyInst2OW(args[0]);
+		}
+
+		if (!ci)
+		{
+			OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+				"'NewInstance' is a required parameter");
+		}
+
+		String ns = ci.getNameSpace();
+		if (ns.empty())
+		{
+			ns = m_defaultns;
+			if (ns.empty())
+			{
+				OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+					"'NewInstance.path' does not contain a namespace");
+			}
+		}
 		CIMObjectPath mcop;
 		PYCXX_ALLOW_THREADS
 		mcop = m_chdl->createInstance(ns, ci);
 		PYCXX_END_ALLOW_THREADS
-		pyref = OWPyConv::OWRef2Py(mcop);
+		return OWPyConv::OWRef2Py(mcop);
 	}
 	catch(const CIMException& e)
 	{
@@ -1643,7 +1624,7 @@ PyCIMOMHandle::createInstance(
 		throwPyCIMException(CIMException::FAILED, "Unknown exception");
 	}
 
-	return pyref;
+	return Py::Nothing();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1652,51 +1633,51 @@ PyCIMOMHandle::modifyInstance(
 	const Py::Tuple& args,
 	const Py::Dict& kws)
 {
-	CIMInstance ci(CIMNULL);
-	if (args.length() && !args[0].isNone())
-	{
-		ci = OWPyConv::PyInst2OW(args[0]);
-	}
-
-	if (!ci)
-	{
-		throwPyCIMException(CIMException::INVALID_PARAMETER,
-			"'ModifiedInstance' is a required parameter");
-	}
-
-	String ns = ci.getNameSpace();
-	if (ns.empty())
-	{
-		ns = m_defaultns;
-		if (ns.empty())
-		{
-			throwPyCIMException(CIMException::INVALID_PARAMETER,
-				"'ModifiedInstance.path' does not contain a namespace");
-		}
-	}
-
-	EIncludeQualifiersFlag incQualsFlag = E_INCLUDE_QUALIFIERS;
-	Py::Object wko = getParam(kws, "IncludeQualifiers");
-	if (!wko.isNone() && !wko.isTrue())
-	{
-		incQualsFlag = E_EXCLUDE_QUALIFIERS;
-	}
-
-	StringArray propList;
-	StringArray *pPropList = 0;
-	wko = getParam(kws, "PropertyList");
-	if (!wko.isNone())
-	{
-		Py::List pl(wko);
-		for (Py::List::size_type i = 0; i < pl.length(); i++)
-		{
-			propList.append(Py::String(pl[i]).as_ow_string());
-		}
-		pPropList = &propList;
-	}
-
 	try
 	{
+		CIMInstance ci(CIMNULL);
+		if (args.length() && !args[0].isNone())
+		{
+			ci = OWPyConv::PyInst2OW(args[0]);
+		}
+
+		if (!ci)
+		{
+			OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+				"'ModifiedInstance' is a required parameter");
+		}
+
+		String ns = ci.getNameSpace();
+		if (ns.empty())
+		{
+			ns = m_defaultns;
+			if (ns.empty())
+			{
+				OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+					"'ModifiedInstance.path' does not contain a namespace");
+			}
+		}
+
+		EIncludeQualifiersFlag incQualsFlag = E_INCLUDE_QUALIFIERS;
+		Py::Object wko = getParam(kws, "IncludeQualifiers");
+		if (!wko.isNone() && !wko.isTrue())
+		{
+			incQualsFlag = E_EXCLUDE_QUALIFIERS;
+		}
+
+		StringArray propList;
+		StringArray *pPropList = 0;
+		wko = getParam(kws, "PropertyList");
+		if (!wko.isNone())
+		{
+			Py::List pl(wko);
+			for (Py::List::size_type i = 0; i < pl.length(); i++)
+			{
+				propList.append(Py::String(pl[i]).as_ow_string());
+			}
+			pPropList = &propList;
+		}
+
 		PYCXX_ALLOW_THREADS
 		m_chdl->modifyInstance(ns, ci, incQualsFlag, pPropList);
 		PYCXX_END_ALLOW_THREADS
@@ -1723,96 +1704,97 @@ PyCIMOMHandle::associators(
 	const Py::Tuple& args,
 	const Py::Dict& kws)
 {
-	CIMObjectPath objectName(CIMNULL);
-	if (args.length() && !args[0].isNone())
-	{
-		objectName = OWPyConv::PyRef2OW(args[0]);
-	}
-	if (!objectName)
-	{
-		throwPyCIMException(CIMException::INVALID_PARAMETER,
-			"'ObjectName' is a required parameter");
-	}
-
-	String ns = objectName.getNameSpace();
-	if (ns.empty())
-	{
-		ns = m_defaultns;
-		if (ns.empty())
-		{
-			throwPyCIMException(CIMException::INVALID_PARAMETER,
-				"'ObjectName' parameter does not have a namespace");
-		}
-	}
-
-	String assocClass;
-	Py::Object wko = getParam(kws, "AssocClass");
-	if (!wko.isNone())
-	{
-		assocClass = Py::String(wko).as_ow_string();
-	}
-	String resultClass;
-	wko = getParam(kws, "ResultClass");
-	if (!wko.isNone())
-	{
-		resultClass = Py::String(wko).as_ow_string();
-	}
-	String role;
-	wko = getParam(kws, "Role");
-	if (!wko.isNone())
-	{
-		role = Py::String(wko).as_ow_string();
-	}
-	String resultRole;
-	wko = getParam(kws, "ResultRole");
-	if (!wko.isNone())
-	{
-		resultRole = Py::String(wko).as_ow_string();
-	}
-
-	EIncludeQualifiersFlag incQualsFlag = E_INCLUDE_QUALIFIERS;
-	wko = getParam(kws, "IncludeQualifiers");
-	if (!wko.isNone() && !wko.isTrue())
-	{
-		incQualsFlag = E_EXCLUDE_QUALIFIERS;
-	}
-
-	EIncludeClassOriginFlag classOriginFlag = E_EXCLUDE_CLASS_ORIGIN;
-	wko = getParam(kws, "IncludeClassOrigin");
-	if (!wko.isNone() && wko.isTrue())
-	{
-		classOriginFlag = E_INCLUDE_CLASS_ORIGIN;
-	}
-
-	StringArray propList;
-	StringArray *pPropList = 0;
-	wko = getParam(kws, "PropertyList");
-	if (!wko.isNone())
-	{
-		Py::List pl(wko);
-		for (Py::List::size_type i = 0; i < pl.length(); i++)
-		{
-			propList.append(Py::String(pl[i]).as_ow_string());
-		}
-		pPropList = &propList;
-	}
-	Py::Object cb = getParam(kws, "Handler");
-	if (!cb.isNone())
-	{
-		if (!cb.isCallable())
-		{
-			throwPyCIMException(CIMException::INVALID_PARAMETER,
-				"'Handler' parameter must be a callable object");
-		}
-	}
-
-	PyInstResultHandler rhandler(ns, cb);
 	try
 	{
+		CIMObjectPath objectName(CIMNULL);
+		if (args.length() && !args[0].isNone())
+		{
+			objectName = OWPyConv::PyRef2OW(args[0]);
+		}
+		if (!objectName)
+		{
+			OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+				"'ObjectName' is a required parameter");
+		}
+
+		String ns = objectName.getNameSpace();
+		if (ns.empty())
+		{
+			ns = m_defaultns;
+			if (ns.empty())
+			{
+				OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+					"'ObjectName' parameter does not have a namespace");
+			}
+		}
+
+		String assocClass;
+		Py::Object wko = getParam(kws, "AssocClass");
+		if (!wko.isNone())
+		{
+			assocClass = Py::String(wko).as_ow_string();
+		}
+		String resultClass;
+		wko = getParam(kws, "ResultClass");
+		if (!wko.isNone())
+		{
+			resultClass = Py::String(wko).as_ow_string();
+		}
+		String role;
+		wko = getParam(kws, "Role");
+		if (!wko.isNone())
+		{
+			role = Py::String(wko).as_ow_string();
+		}
+		String resultRole;
+		wko = getParam(kws, "ResultRole");
+		if (!wko.isNone())
+		{
+			resultRole = Py::String(wko).as_ow_string();
+		}
+
+		EIncludeQualifiersFlag incQualsFlag = E_INCLUDE_QUALIFIERS;
+		wko = getParam(kws, "IncludeQualifiers");
+		if (!wko.isNone() && !wko.isTrue())
+		{
+			incQualsFlag = E_EXCLUDE_QUALIFIERS;
+		}
+
+		EIncludeClassOriginFlag classOriginFlag = E_EXCLUDE_CLASS_ORIGIN;
+		wko = getParam(kws, "IncludeClassOrigin");
+		if (!wko.isNone() && wko.isTrue())
+		{
+			classOriginFlag = E_INCLUDE_CLASS_ORIGIN;
+		}
+
+		StringArray propList;
+		StringArray *pPropList = 0;
+		wko = getParam(kws, "PropertyList");
+		if (!wko.isNone())
+		{
+			Py::List pl(wko);
+			for (Py::List::size_type i = 0; i < pl.length(); i++)
+			{
+				propList.append(Py::String(pl[i]).as_ow_string());
+			}
+			pPropList = &propList;
+		}
+		Py::Object cb = getParam(kws, "Handler");
+		if (!cb.isNone())
+		{
+			if (!cb.isCallable())
+			{
+				OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+					"'Handler' parameter must be a callable object");
+			}
+		}
+
+		PyInstResultHandler rhandler(ns, cb);
 		PYCXX_ALLOW_THREADS
 		m_chdl->associators(ns, objectName, rhandler, assocClass, resultClass,
 			role, resultRole, incQualsFlag, classOriginFlag, pPropList);
 		PYCXX_END_ALLOW_THREADS
+		return rhandler.getResult();
 	}
 	catch(const CIMException& e)
 	{
@@ -1827,7 +1809,7 @@ PyCIMOMHandle::associators(
 		throwPyCIMException(CIMException::FAILED, "Unknown exception");
 	}
 
-	return rhandler.getResult();
+	return Py::Nothing();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1836,70 +1818,70 @@ PyCIMOMHandle::associatorNames(
 	const Py::Tuple& args,
 	const Py::Dict& kws)
 {
-	CIMObjectPath objectName(CIMNULL);
-	if (args.length() && !args[0].isNone())
-	{
-		objectName = OWPyConv::PyRef2OW(args[0]);
-	}
-	if (!objectName)
-	{
-		throwPyCIMException(CIMException::INVALID_PARAMETER,
-			"'ObjectName' is a required parameter");
-	}
-
-	String ns = objectName.getNameSpace();
-	if (ns.empty())
-	{
-		ns = m_defaultns;
-		if (ns.empty())
-		{
-			throwPyCIMException(CIMException::INVALID_PARAMETER,
-				"'ObjectName' parameter does not have a namespace");
-		}
-	}
-
-	String assocClass;
-	Py::Object wko = getParam(kws, "AssocClass");
-	if (!wko.isNone())
-	{
-		assocClass = Py::String(wko).as_ow_string();
-	}
-	String resultClass;
-	wko = getParam(kws, "ResultClass");
-	if (!wko.isNone())
-	{
-		resultClass = Py::String(wko).as_ow_string();
-	}
-	String role;
-	wko = getParam(kws, "Role");
-	if (!wko.isNone())
-	{
-		role = Py::String(wko).as_ow_string();
-	}
-	String resultRole;
-	wko = getParam(kws, "ResultRole");
-	if (!wko.isNone())
-	{
-		resultRole = Py::String(wko).as_ow_string();
-	}
-
-	Py::Object cb = getParam(kws, "Handler");
-	if (!cb.isNone())
-	{
-		if (!cb.isCallable())
-		{
-			throwPyCIMException(CIMException::INVALID_PARAMETER,
-				"'Handler' parameter must be a callable object");
-		}
-	}
-
-	PyOpResultHandler rhandler(ns, cb);
 	try
 	{
+		CIMObjectPath objectName(CIMNULL);
+		if (args.length() && !args[0].isNone())
+		{
+			objectName = OWPyConv::PyRef2OW(args[0]);
+		}
+		if (!objectName)
+		{
+			OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+				"'ObjectName' is a required parameter");
+		}
+
+		String ns = objectName.getNameSpace();
+		if (ns.empty())
+		{
+			ns = m_defaultns;
+			if (ns.empty())
+			{
+				OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+					"'ObjectName' parameter does not have a namespace");
+			}
+		}
+
+		String assocClass;
+		Py::Object wko = getParam(kws, "AssocClass");
+		if (!wko.isNone())
+		{
+			assocClass = Py::String(wko).as_ow_string();
+		}
+		String resultClass;
+		wko = getParam(kws, "ResultClass");
+		if (!wko.isNone())
+		{
+			resultClass = Py::String(wko).as_ow_string();
+		}
+		String role;
+		wko = getParam(kws, "Role");
+		if (!wko.isNone())
+		{
+			role = Py::String(wko).as_ow_string();
+		}
+		String resultRole;
+		wko = getParam(kws, "ResultRole");
+		if (!wko.isNone())
+		{
+			resultRole = Py::String(wko).as_ow_string();
+		}
+
+		Py::Object cb = getParam(kws, "Handler");
+		if (!cb.isNone())
+		{
+			if (!cb.isCallable())
+			{
+				OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+					"'Handler' parameter must be a callable object");
+			}
+		}
+		PyOpResultHandler rhandler(ns, cb);
 		PYCXX_ALLOW_THREADS
 		m_chdl->associatorNames(ns, objectName, rhandler, assocClass,
 				resultClass, role, resultRole);
 		PYCXX_END_ALLOW_THREADS
+		return rhandler.getResult();
 	}
 	catch(const CIMException& e)
 	{
@@ -1913,8 +1895,7 @@ PyCIMOMHandle::associatorNames(
 	{
 		throwPyCIMException(CIMException::FAILED, "Unknown exception");
 	}
-
-	return rhandler.getResult();
+	return Py::Nothing();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1923,84 +1904,85 @@ PyCIMOMHandle::references(
 	const Py::Tuple& args,
 	const Py::Dict& kws)
 {
-	CIMObjectPath objectName(CIMNULL);
-	if (args.length() && !args[0].isNone())
-	{
-		objectName = OWPyConv::PyRef2OW(args[0]);
-	}
-	if (!objectName)
-	{
-		throwPyCIMException(CIMException::INVALID_PARAMETER,
-			"'ObjectName' is a required parameter");
-	}
-
-	String ns = objectName.getNameSpace();
-	if (ns.empty())
-	{
-		ns = m_defaultns;
-		if (ns.empty())
-		{
-			throwPyCIMException(CIMException::INVALID_PARAMETER,
-				"'ObjectName' parameter does not have a namespace");
-		}
-	}
-
-	String resultClass;
-	Py::Object wko = getParam(kws, "ResultClass");
-	if (!wko.isNone())
-	{
-		resultClass = Py::String(wko).as_ow_string();
-	}
-	String role;
-	wko = getParam(kws, "Role");
-	if (!wko.isNone())
-	{
-		role = Py::String(wko).as_ow_string();
-	}
-
-	EIncludeQualifiersFlag incQualsFlag = E_INCLUDE_QUALIFIERS;
-	wko = getParam(kws, "IncludeQualifiers");
-	if (!wko.isNone() && !wko.isTrue())
-	{
-		incQualsFlag = E_EXCLUDE_QUALIFIERS;
-	}
-
-	EIncludeClassOriginFlag classOriginFlag = E_EXCLUDE_CLASS_ORIGIN;
-	wko = getParam(kws, "IncludeClassOrigin");
-	if (!wko.isNone() && wko.isTrue())
-	{
-		classOriginFlag = E_INCLUDE_CLASS_ORIGIN;
-	}
-
-	StringArray propList;
-	StringArray *pPropList = 0;
-	wko = getParam(kws, "PropertyList");
-	if (!wko.isNone())
-	{
-		Py::List pl(wko);
-		for (Py::List::size_type i = 0; i < pl.length(); i++)
-		{
-			propList.append(Py::String(pl[i]).as_ow_string());
-		}
-		pPropList = &propList;
-	}
-	Py::Object cb = getParam(kws, "Handler");
-	if (!cb.isNone())
-	{
-		if (!cb.isCallable())
-		{
-			throwPyCIMException(CIMException::INVALID_PARAMETER,
-				"'Handler' parameter must be a callable object");
-		}
-	}
-
-	PyInstResultHandler rhandler(ns, cb);
 	try
 	{
+		CIMObjectPath objectName(CIMNULL);
+		if (args.length() && !args[0].isNone())
+		{
+			objectName = OWPyConv::PyRef2OW(args[0]);
+		}
+		if (!objectName)
+		{
+			OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+				"'ObjectName' is a required parameter");
+		}
+
+		String ns = objectName.getNameSpace();
+		if (ns.empty())
+		{
+			ns = m_defaultns;
+			if (ns.empty())
+			{
+				OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+					"'ObjectName' parameter does not have a namespace");
+			}
+		}
+
+		String resultClass;
+		Py::Object wko = getParam(kws, "ResultClass");
+		if (!wko.isNone())
+		{
+			resultClass = Py::String(wko).as_ow_string();
+		}
+		String role;
+		wko = getParam(kws, "Role");
+		if (!wko.isNone())
+		{
+			role = Py::String(wko).as_ow_string();
+		}
+
+		EIncludeQualifiersFlag incQualsFlag = E_INCLUDE_QUALIFIERS;
+		wko = getParam(kws, "IncludeQualifiers");
+		if (!wko.isNone() && !wko.isTrue())
+		{
+			incQualsFlag = E_EXCLUDE_QUALIFIERS;
+		}
+
+		EIncludeClassOriginFlag classOriginFlag = E_EXCLUDE_CLASS_ORIGIN;
+		wko = getParam(kws, "IncludeClassOrigin");
+		if (!wko.isNone() && wko.isTrue())
+		{
+			classOriginFlag = E_INCLUDE_CLASS_ORIGIN;
+		}
+
+		StringArray propList;
+		StringArray *pPropList = 0;
+		wko = getParam(kws, "PropertyList");
+		if (!wko.isNone())
+		{
+			Py::List pl(wko);
+			for (Py::List::size_type i = 0; i < pl.length(); i++)
+			{
+				propList.append(Py::String(pl[i]).as_ow_string());
+			}
+			pPropList = &propList;
+		}
+		Py::Object cb = getParam(kws, "Handler");
+		if (!cb.isNone())
+		{
+			if (!cb.isCallable())
+			{
+				OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+					"'Handler' parameter must be a callable object");
+			}
+		}
+
+		PyInstResultHandler rhandler(ns, cb);
 		PYCXX_ALLOW_THREADS
 		m_chdl->references(ns, objectName, rhandler, resultClass, role, 
 			incQualsFlag, classOriginFlag, pPropList);
 		PYCXX_END_ALLOW_THREADS
+		return rhandler.getResult();
 	}
 	catch(const CIMException& e)
 	{
@@ -2014,8 +1996,7 @@ PyCIMOMHandle::references(
 	{
 		throwPyCIMException(CIMException::FAILED, "Unknown exception");
 	}
-
-	return rhandler.getResult();
+	return Py::Nothing();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2024,57 +2005,57 @@ PyCIMOMHandle::referenceNames(
 	const Py::Tuple& args,
 	const Py::Dict& kws)
 {
-	CIMObjectPath objectName(CIMNULL);
-	if (args.length() && !args[0].isNone())
-	{
-		objectName = OWPyConv::PyRef2OW(args[0]);
-	}
-	if (!objectName)
-	{
-		throwPyCIMException(CIMException::INVALID_PARAMETER,
-			"'ObjectName' is a required parameter");
-	}
-
-	String ns = objectName.getNameSpace();
-	if (ns.empty())
-	{
-		ns = m_defaultns;
-		if (ns.empty())
-		{
-			throwPyCIMException(CIMException::INVALID_PARAMETER,
-				"'ObjectName' parameter does not have a namespace");
-		}
-	}
-
-	String resultClass;
-	Py::Object wko = getParam(kws, "ResultClass");
-	if (!wko.isNone())
-	{
-		resultClass = Py::String(wko).as_ow_string();
-	}
-	String role;
-	wko = getParam(kws, "Role");
-	if (!wko.isNone())
-	{
-		role = Py::String(wko).as_ow_string();
-	}
-
-	Py::Object cb = getParam(kws, "Handler");
-	if (!cb.isNone())
-	{
-		if (!cb.isCallable())
-		{
-			throwPyCIMException(CIMException::INVALID_PARAMETER,
-				"'Handler' parameter must be a callable object");
-		}
-	}
-
-	PyOpResultHandler rhandler(ns, cb);
 	try
 	{
+		CIMObjectPath objectName(CIMNULL);
+		if (args.length() && !args[0].isNone())
+		{
+			objectName = OWPyConv::PyRef2OW(args[0]);
+		}
+		if (!objectName)
+		{
+			OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+				"'ObjectName' is a required parameter");
+		}
+
+		String ns = objectName.getNameSpace();
+		if (ns.empty())
+		{
+			ns = m_defaultns;
+			if (ns.empty())
+			{
+				OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+					"'ObjectName' parameter does not have a namespace");
+			}
+		}
+
+		String resultClass;
+		Py::Object wko = getParam(kws, "ResultClass");
+		if (!wko.isNone())
+		{
+			resultClass = Py::String(wko).as_ow_string();
+		}
+		String role;
+		wko = getParam(kws, "Role");
+		if (!wko.isNone())
+		{
+			role = Py::String(wko).as_ow_string();
+		}
+
+		Py::Object cb = getParam(kws, "Handler");
+		if (!cb.isNone())
+		{
+			if (!cb.isCallable())
+			{
+				OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
+					"'Handler' parameter must be a callable object");
+			}
+		}
+		PyOpResultHandler rhandler(ns, cb);
 		PYCXX_ALLOW_THREADS
 		m_chdl->referenceNames(ns, objectName, rhandler, resultClass, role);
 		PYCXX_END_ALLOW_THREADS
+		return rhandler.getResult();
 	}
 	catch(const CIMException& e)
 	{
@@ -2088,8 +2069,7 @@ PyCIMOMHandle::referenceNames(
 	{
 		throwPyCIMException(CIMException::FAILED, "Unknown exception");
 	}
-
-	return rhandler.getResult();
+	return Py::Nothing();
 }
 
 //////////////////////////////////////////////////////////////////////////////
