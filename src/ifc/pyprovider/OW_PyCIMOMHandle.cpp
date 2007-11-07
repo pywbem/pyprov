@@ -1164,13 +1164,13 @@ PyCIMOMHandle::setQualifier(
 {
 	try
 	{
-		CIMQualifier cq(CIMNULL);
+		CIMQualifierType cqt(CIMNULL);
 		if (args.length() && !args[0].isNone())
 		{
-			cq = OWPyConv::PyQual2OW(args[0]);
+			cqt = OWPyConv::PyQualType2OW(args[0]);
 		}
 
-		if (!cq)
+		if (!cqt)
 		{
 			OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
 				"'QualifierDeclaration' is a required parameter");
@@ -1191,10 +1191,6 @@ PyCIMOMHandle::setQualifier(
 					"'namespace' is a required parameter");
 			}
 		}
-		CIMQualifierType cqt = cq.getDefaults();
-		cqt.setName(cq.getName());
-		CIMValue cv = cq.getValue();
-		cqt.setDefaultValue(cv);
 		PYCXX_ALLOW_THREADS
 		m_chdl->setQualifierType(ns, cqt);
 		PYCXX_END_ALLOW_THREADS
@@ -1229,7 +1225,7 @@ PyCIMOMHandle::deleteQualifier(
 			qualName = Py::String(args[0]);
 		}
 
-		if (!qualName.empty())
+		if (qualName.empty())
 		{
 			OW_THROWCIMMSG(CIMException::INVALID_PARAMETER,
 				"'QualifierName' is a required parameter");
