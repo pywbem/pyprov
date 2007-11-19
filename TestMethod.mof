@@ -4,6 +4,9 @@ class TestMethod
 	[Key, Description("Unique identifier for this instance.")]
 	string id;
 
+	string p_str; 
+	sint32 p_sint32; 
+
 	sint8 genRand_sint8(
 	       [in] sint8 min,
 	       [in] sint8 max,
@@ -219,5 +222,22 @@ class TestMethod
 	       [in, required] CIM_Component REF myref,
 	       [in(false), out] boolean success
 	);
+
+	string getStrProp(); 
+
+	[ Description("Set the value of p_str.  Return the previous value of "
+                  "p_str.")]
+	string setStrProp(
+		  [in, required] string value
+	); 
+
+	sint32 getIntProp(); 
+
+	[ Description("Set the value of p_sint32.  Return the previous value of "
+                  "p_sint32.")]
+	sint32 setIntProp(
+			[in, required] sint32 value
+	); 
+	
 };
 
