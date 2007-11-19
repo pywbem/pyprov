@@ -214,15 +214,6 @@ class TestMethod
 	       [in, required] char16 cArr[]
 	);
 
-	boolean getInstanceOf(
-		  [in, required] string objPath,
-		  [in(false), out] CIM_Component REF inst
-	);
-	string getObjectPathOf(
-	       [in, required] CIM_Component REF myref,
-	       [in(false), out] boolean success
-	);
-
 	string getStrProp(); 
 
 	[ Description("Set the value of p_str.  Return the previous value of "
@@ -237,6 +228,26 @@ class TestMethod
                   "p_sint32.")]
 	sint32 setIntProp(
 			[in, required] sint32 value
+	); 
+
+    [ Description("Return the instance name of any instance of TestMethod") ]
+	sint32 getObjectPath(
+			[in(false), out] TestMethod REF path
+	); 
+
+    [ Description("Return instance names of all instances of TestMethod") ]
+	sint32 getObjectPaths(
+			[in(false), out] TestMethod REF paths[]
+	); 
+
+    [ Description("Delete the specified instance of TestMethod") ]
+	sint32 delObject(
+			[in, required] TestMethod REF path
+	); 
+
+    [ Description("Delete the specified instances of TestMethod") ]
+	sint32 delObjects(
+			[in, required] TestMethod REF paths[]
 	); 
 	
 };
