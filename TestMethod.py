@@ -86,20 +86,6 @@ class TestMethodProvider(pywbem.CIMProvider):
         except KeyError:
             raise pywbem.CIMError(pywbem.CIM_ERR_NOT_FOUND)
         
-    def cim_method_getobjectpathof(self, env, object_name, method,
-                                   param_myref):
-
-        logger = env.get_logger()
-        logger.log_debug('Entering %s.cim_method_getobjectpathof()' \
-                % self.__class__.__name__)
-
-        # TODO do something
-        raise pywbem.CIMError(pywbem.CIM_ERR_METHOD_NOT_AVAILABLE) # Remove to implemented
-        out_params = {}
-        #out_params['success'] = # TODO (type bool)
-        rval = None # TODO (type unicode)
-        return (rval, out_params)
-        
     def cim_method_mkunichar(self, env, object_name, method,
                              param_c):
 
@@ -148,20 +134,6 @@ class TestMethodProvider(pywbem.CIMProvider):
 
         out_params = {}
         rval = param_sep.join(param_strs)
-        return (rval, out_params)
-        
-    def cim_method_getinstanceof(self, env, object_name, method,
-                                 param_objpath):
-
-        logger = env.get_logger()
-        logger.log_debug('Entering %s.cim_method_getinstanceof()' \
-                % self.__class__.__name__)
-
-        # TODO do something
-        raise pywbem.CIMError(pywbem.CIM_ERR_METHOD_NOT_AVAILABLE) # Remove to implemented
-        out_params = {}
-        #out_params['inst'] = # TODO (type REF (pywbem.CIMInstanceName(classname='CIM_Component', ...))
-        rval = None # TODO (type bool)
         return (rval, out_params)
         
     def cim_method_mkunichararray(self, env, object_name, method,
