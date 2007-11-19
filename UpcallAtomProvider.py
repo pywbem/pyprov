@@ -369,12 +369,17 @@ class UpcallAtomProvider(pywbem.CIMProvider):
         #test_1_upcalls
         #Written to test associators of OMC_UnixProcess class
         # 
+        print "Upcall 1"
         try:
+            print "Upcall A"
             logger.log_debug("Getting AssociatorNames")
             ci_list = ch.EnumerateInstanceNames("OMC_UnixProcess")
+            print "Upcall A-1"
             if ci_list and len(ci_list) > 0:
+                print "Upcall A-2"
                 assoc_names = ch.AssociatorNames(ci_list[0],\
                         AssocClass="OMC_OSProcess") #AssocNames
+                print "Upcall A-3"
                 if assoc_names and len(assoc_names) > 0:
                     #OMC_UnixProcess has an association through OMC_OSProcess
                     #1. OMC_OperatingSystem
@@ -394,6 +399,7 @@ class UpcallAtomProvider(pywbem.CIMProvider):
                             raise "Associator Error: %s" %str(inst)
 
 #EnumerateQualifiers
+            print "Upcall B"
             cq_list = ch.EnumerateQualifiers()
             if not cq_list and len(cq_list) == 0:
                 raise "EnumerateQualifiers Failed"
@@ -403,6 +409,7 @@ class UpcallAtomProvider(pywbem.CIMProvider):
 #
 #CreateClass Method
 #
+            print "Upcall C"
             try:
                 cim_class = pywbem.CIMClass("Test")
                 ch.CreateClass(cim_class)
@@ -413,6 +420,7 @@ class UpcallAtomProvider(pywbem.CIMProvider):
 #
 #GetClass
 #
+            print "Upcall D"
             try:
                 _class = ch.GetClass("Test")
             except pywbem.CIMError,arg:
@@ -429,6 +437,7 @@ class UpcallAtomProvider(pywbem.CIMProvider):
 #                raise
 #DeleteClass Method
 #
+            print "Upcall E"
             try:
                 ch.DeleteClass("Test")
             except pywbem.CIMError,arg:
@@ -437,6 +446,7 @@ class UpcallAtomProvider(pywbem.CIMProvider):
 #
 #GetQualifier
 #
+            print "Upcall F"
             try:
                 q = ch.GetQualifier("Syntax")
                 copy_q = q.copy() 
@@ -451,13 +461,14 @@ class UpcallAtomProvider(pywbem.CIMProvider):
                 raise
 #DeleteQualifier
 # Not working
-# TODO
-            try:
-                ch.DeleteQualifier(q.name)
-            except pywbem.CIMError, arg:
-                logger.log_debug("**** CIMError: ch.DeleteQualifier ****")
-                #continue
-                #raise
+# TODO: But __NOT__ with a real qualifier - Use SetQualifier first !!!
+#            print "Upcall G"
+#            try:
+#                ch.DeleteQualifier(q.name)
+#            except pywbem.CIMError, arg:
+#                logger.log_debug("**** CIMError: ch.DeleteQualifier ****")
+#                #continue
+#                #raise
 
 #SetQualifier
 #            try:
@@ -468,7 +479,9 @@ class UpcallAtomProvider(pywbem.CIMProvider):
 #
 #
 #InvokeMethod
-#            
+#           
+            ''' 
+            print "Upcall H"
             try:
                 logger.log_debug("**** Calling EnumInstances ****")
                 list = ch.EnumerateInstanceNames("Novell_DCAMStatGatheringService")
@@ -496,6 +509,7 @@ class UpcallAtomProvider(pywbem.CIMProvider):
                 logger.log_debug("**** CIMError: ch.InvokeMethod ****")
 
 #ReferenceNames
+            print "Upcall I"
             try:
                 stat_list = ch.EnumerateInstanceNames("Novell_DCAMStatDef")
                 if stat_list and len(stat_list) > 0:
@@ -517,6 +531,7 @@ class UpcallAtomProvider(pywbem.CIMProvider):
                 logger.log_debug("**** CIMError: ch.ReferenceNames ****")
 
 #Reference
+            print "Upcall J"
             try:
                 stat_list = ch.EnumerateInstanceNames("Novell_DCAMStatDef")
                 if stat_list and len(stat_list) > 0:
@@ -536,6 +551,7 @@ class UpcallAtomProvider(pywbem.CIMProvider):
 
             except pywbem.CIMError, arg:
                 logger.log_debug("**** CIMError: ch.Reference ****")
+            '''
 
 
 
@@ -543,13 +559,17 @@ class UpcallAtomProvider(pywbem.CIMProvider):
 
             
         except pywbem.CIMError, arg:
+            print "Caught Python exception: ", str(arg)
             raise 
 
 
 ################################################################################
 #        #test_2_create_instance
+        print "Upcall 2"
         try:
             insts = _setup(ch, time, env)
+            print "created [", str(insts.size()), "] insts:"
+            print insts
             for inst in insts:
                 rval = _compare_values(inst, time, logger)
                 if not rval:
@@ -562,6 +582,7 @@ class UpcallAtomProvider(pywbem.CIMProvider):
         #test_3_enum_instances
         #Test enumeration of instances and then compare them with the local
         # storage dictionary
+        print "Upcall 3"
         insts = _setup(ch, time, env)
         paths = []
         ta_list = []
@@ -596,6 +617,7 @@ class UpcallAtomProvider(pywbem.CIMProvider):
 ################################################################################
         #test_4_enum_instance_names
         #Test enumeration of names
+        print "Upcall 4"
         insts = _setup(ch, time, env)
 
         try: 
@@ -627,6 +649,7 @@ class UpcallAtomProvider(pywbem.CIMProvider):
 ################################################################################
         #test_5_get_instance_with_property_list
 
+        print "Upcall 5"
         rinst= _create_test_instance(ch, 'Carbon', 6, time)
         if not rinst:
             raise '%s: CreateInstance Failed.' % str(msg)
@@ -649,6 +672,7 @@ class UpcallAtomProvider(pywbem.CIMProvider):
         #test_6_modify_instance
         #Create an instance of "Boron" and then modify it to Helium
         # Once modified, get_instance returns it and then check the values of it
+        print "Upcall 6"
         rinst = _create_test_instance(ch, 'Boron', 5, time)
         if not rinst:
             raise '%s: CreateInstance Failed.' % str(msg)
@@ -713,6 +737,7 @@ class UpcallAtomProvider(pywbem.CIMProvider):
         #test_7_delete
         #Testing the delete upcall for TestAtom
         insts = _setup(ch, time, env)
+        print "Upcall 7"
 
         del_instances = _get_instance_names(ch)
         for inst in del_instances:
