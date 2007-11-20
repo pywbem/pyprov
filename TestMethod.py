@@ -60,6 +60,7 @@ class TestMethodProvider(pywbem.CIMProvider):
         logger = env.get_logger()
         logger.log_debug('Entering %s.set_instance()' \
                 % self.__class__.__name__)
+
         if previous_instance is not None:
             if instance['id'] not in g_insts:
                 raise pywbem.CIMError(pywbem.CIM_ERR_NOT_FOUND)
@@ -157,7 +158,7 @@ class TestMethodProvider(pywbem.CIMProvider):
 
         rval = ''
         for i in param_carr:
-            rval += char(i)
+            rval += chr(i)
         out_params = {}
         return (rval, out_params)
 
