@@ -1,2 +1,0 @@
-SUBDIRS = pycxx ifc
-
