@@ -402,13 +402,6 @@ class UpcallAtomProvider(pywbem.CIMProvider):
                           and inst['CreationClassName'] != 'OMC_LinuxDataFile':
                             raise "Associator Error: %s" %str(inst)
 
-#EnumerateQualifiers
-            cq_list = ch.EnumerateQualifiers()
-            if not cq_list and len(cq_list) == 0:
-                raise "EnumerateQualifiers Failed"
-            else:
-                for i in cq_list:
-                    logger.log_debug("**** q=%s "%str(i))
 #
 #CreateClass Method
 #
@@ -430,24 +423,56 @@ class UpcallAtomProvider(pywbem.CIMProvider):
 #
 #ModifyClass
 #
-#            try:
-#                _class.name = "Test_Updated" 
-#                ch.ModifyClass(_class)
-#            except pywbem.CIMError,arg:
-#                logger.log_debug("**** CIMError: ch.ModifyClass ****")
-#                raise
-#DeleteClass Method
+            try:
+                _class.properties['NewBogusProperty'] = pywbem.CIMProperty('BogProp', None, 'uint64')
+                ch.ModifyClass(_class)
+                _class2 = ch.GetClass("Test")
+                if 'BogProp' not in _class2.properties:
+                    raise pywbem.CIMError(pywbem.CIM_ERR_FAILED,
+                        'BogProp missing from modified class')
+            except pywbem.CIMError,arg:
+                logger.log_debug("**** CIMError: ch.ModifyClass ****")
+                raise
+
+#
+#DeleteClass
 #
             try:
                 ch.DeleteClass("Test")
             except pywbem.CIMError,arg:
                 logger.log_debug("**** CIMError: ch.DeleteClass ****")
                 raise
+            try:
+                _class = ch.GetClass("Test")
+                raise pywbem.CIMError(pywbem.CIM_ERR_FAILED,
+                    '*** CIMError: DeleteClass GetClass returned '
+                    'class just deleted')
+            except pywbem.CIMError,arg:
+                if arg[0] != pywbem.CIM_ERR_NOT_FOUND:
+                    raise
+
+#
+#SetQualifier
+#
+            try:
+                # Just in case it is still there
+                ch.DeleteQualifier('Bogus')
+            except pywbem.CIMError, arg:
+                pass
+            try:
+                qdecl = pywbem.CIMQualifierDeclaration('Bogus', 'boolean',
+                    value=False, is_array=False, scopes={'class':True}, 
+                    overridable=False, tosubclass=True, toinstance=True)
+                ch.SetQualifier(qdecl)
+            except pywbem.CIMError, arg:
+                logger.log_debug("**** CIMError: ch.SetQualifier ****")
+                raise
+
 #
 #GetQualifier
 #
             try:
-                q = ch.GetQualifier("Syntax")
+                q = ch.GetQualifier('Bogus')
                 copy_q = q.copy() 
                 if type(q) != pywbem.cim_obj.CIMQualifierDeclaration:
                     raise "GetQualifier failed."
@@ -458,23 +483,38 @@ class UpcallAtomProvider(pywbem.CIMProvider):
             except pywbem.CIMError,arg:
                 logger.log_debug("**** CIMError: ch.GetQualifier ****")
                 raise
-#DeleteQualifier
-# Not working
-# TODO
-#            try:
-#                ch.DeleteQualifier(q.name)
-#            except pywbem.CIMError, arg:
-#                logger.log_debug("**** CIMError: ch.DeleteQualifier ****")
-                #continue
-                #raise
 
-#SetQualifier
-#            try:
-#                ch.SetQualifier(copy_q)
-#            except pywbem.CIMError, arg:
-#                logger.log_debug("**** CIMError: ch.SetQualifier ****")
-#                #raise
+#EnumerateQualifiers
+            cq_list = ch.EnumerateQualifiers()
+            if not cq_list:
+                raise "EnumerateQualifiers Failed"
+            else:
+                for cq in cq_list:
+                    if cq.name.lower() == 'bogus':
+                        break;
+                else:
+                    logger.log_debug('*** CIMError: EnumerateQualifiers did'
+                        'not return qualifier that was just created')
+                    raise pywbem.CIMError(pywbem.CIM_ERR_FAILED,
+                        '*** CIMError: EnumerateQualifiers did not return '
+                        'qualifier that was just created')
 #
+#DeleteQualifier
+#
+            try:
+                ch.DeleteQualifier('Bogus')
+            except pywbem.CIMError, arg:
+                logger.log_debug("**** CIMError: ch.DeleteQualifier ****")
+                raise
+            try:
+                q = ch.GetQualifier('Bogus')
+                raise pywbem.CIMError(pywbem.CIM_ERR_FAILED,
+                    '*** CIMError: DeleteQualifier. GetQualifier returned '
+                    'qualifier just deleted')
+            except pywbem.CIMError,arg:
+                if arg[0] != pywbem.CIM_ERR_NOT_FOUND:
+                    raise
+
 #
 #InvokeMethod
 #            
@@ -545,8 +585,6 @@ class UpcallAtomProvider(pywbem.CIMProvider):
 
             except pywbem.CIMError, arg:
                 logger.log_debug("**** CIMError: ch.Reference ****")
-
-
 
 #export_indication
 
