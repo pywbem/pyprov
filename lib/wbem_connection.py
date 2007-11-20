@@ -7,6 +7,7 @@ def getWBEMConnParserOptions(parser):
     parser.add_option('-n', '--namespace', default='root/cimv2', help='Specify the namespace the test runs against')
     parser.add_option('', '--user', default='anonymous', help='Specify the user name used when connection to the CIMOM')
     parser.add_option('', '--password', default='nothing', help='Specify the password for the user')
+    parser.add_option('', '--port', default='5989', help='Specify the port for the CIMOM')
 
 class wbem_connection:
     conn = ''
@@ -39,7 +40,7 @@ class wbem_connection:
         getWBEMConnParserOptions(parser)
         options, args = parser.parse_args()
         proto = options.secure and 'http' or 'https'
-        url = '%s://%s' % (proto, options.host)
+        url = '%s://%s:%s' % (proto, options.host, options.port)
         wconn = pywbem.WBEMConnection(url, (options.user, options.password),
                 default_namespace=options.namespace)
         return wconn
