@@ -47,52 +47,56 @@ def handle_indication(env, ns, handlerInstance, indicationInstance):
 ################################################################################
 def _compare_values(instance, time, logger):
     log = "Entering _compare_values: "
-    types = {'boolProp': 'boolean',
-             'dateProp': 'datetime',
-             'real32Prop':  'real32',
-             'real32Propa': 'real32',
-             'real64Prop':  'real64',
-             'real64Propa': 'real64',
-             'sint16Prop':  'sint16',
-             'sint16Propa': 'sint16',
-             'sint32Prop':  'sint32',
-             'sint32Propa': 'sint32',
-             'sint64Prop':  'sint64',
-             'sint64Propa': 'sint64',
+    types = {'boolprop': 'boolean',
+             'dateprop': 'datetime',
+             'real32prop':  'real32',
+             'real32propa': 'real32',
+             'real64prop':  'real64',
+             'real64propa': 'real64',
+             'sint16prop':  'sint16',
+             'sint16propa': 'sint16',
+             'sint32prop':  'sint32',
+             'sint32propa': 'sint32',
+             'sint64prop':  'sint64',
+             'sint64propa': 'sint64',
              'sint8prop':   'sint8',
              'sint8propa':  'sint8',
-             'stringProp':  'string',
-             'stringPropa': 'string',
-             'uint16Prop':  'uint16',
-             'uint16Propa': 'uint16',
-             'uint32Prop':  'uint32',
-             'uint32Propa': 'uint32',
-             'uint64Prop':  'uint64',
-             'uint64Propa': 'uint64',
-             'uint8Prop'  : 'uint8',
-             'uint8Propa' : 'uint8' }
+             'stringprop':  'string',
+             'stringpropa': 'string',
+             'uint16prop':  'uint16',
+             'uint16propa': 'uint16',
+             'uint32prop':  'uint32',
+             'uint32propa': 'uint32',
+             'uint64prop':  'uint64',
+             'uint64propa': 'uint64',
+             'uint8prop'  : 'uint8',
+             'uint8propa' : 'uint8' }
+
+    print '#### _compare_values called. Name:', instance['Name']
 
     if instance['Name'] in _atoms:
         #print instance['Name']
         atoms_value = _atoms.get(instance['Name'])
-        for prop,value in instance.items():
-            #print prop
+        for pname,value in instance.items():
+            prop = pname.lower()
+            print '### Checking prop:',prop
+            print '### types.get(prop)',str(types.get(prop))
             #Char and Char_array
-            if prop == 'char16Prop' or prop == 'char16Propa':
+            if prop == 'char16prop' or prop == 'char16propa':
                 pass
             #Date Property
-            elif prop == 'dateProp':
+            elif prop == 'dateprop':
                 if str(instance[prop]) != str(time):
                     logger.log_debug("DateProp NOT EQUAL")
                     return false 
             #Name or stringProp
-            elif prop == 'Name' or prop == 'stringProp':
-                if instance['Name'] not in _atoms or \
+            elif prop == 'name' or prop == 'stringprop':
+                if instance['name'] not in _atoms or \
                    instance['stringProp'] not in _atoms:
-                    logger.log_debug("Atom Name NOT FOUND: %s" & instance['Name'])
+                    logger.log_debug("Atom name NOT FOUND: %s" & instance['name'])
                     return false
             #boolProp
-            elif prop == 'boolProp':
+            elif prop == 'boolprop':
                 if instance[prop] !=  False:
                     logger.log_debug("False NOT EQUAL False")
                     return false
@@ -100,7 +104,7 @@ def _compare_values(instance, time, logger):
             elif (instance.properties[prop].type == types.get(prop)) and \
                   value == atoms_value and \
                   type(instance.properties[prop].value) != type([]):
-                if prop == 'uint8Prop':
+                if prop == 'uint8prop':
                     if pywbem.Uint8(atoms_value) != instance[prop]:
                         logger.log_debug("%s Error: %s" % (prop, instance[prop]))
                         return false
@@ -110,7 +114,7 @@ def _compare_values(instance, time, logger):
             #All list values
             elif type(instance.properties[prop].value) == type([]) and \
                  instance.properties[prop].type == types.get(prop):
-                if prop == 'stringPropa':
+                if prop == 'stringpropa':
                     if value[0] != 'proton' and value[1] != 'electron' \
                        and value[2] != 'neutron':
                         logger.log_debug("String Array NOT EQUAL")
@@ -127,8 +131,13 @@ def _compare_values(instance, time, logger):
                                         , value))
                             return false
             else:
+                print '!! instance.properties[prop].type:', str(instance.properties[prop].type)
+                print '!! types.get(prop):', str(types.get(prop))
+                print '!! type(instance.properties[prop].value):', str(type(instance.properties[prop].value))
+                print "!! prop:",prop
+                print "!! Test Atom %s NOT EQUAL %s" % (atoms_value, value)
                 logger.log_debug("%s NOT EQUAL %s" % (atoms_value, value))
-                return false
+                return False
     else:
         logger.log_debug("Instance of TestAtom not Found: %s" % (instance['Name']))
         return false
@@ -226,10 +235,10 @@ def _create_test_instance(ch, name_of_atom, number, time):
     new_instance['uint64Propa']  = [pywbem.Uint64(number), \
                                     pywbem.Uint64(number), \
                                     pywbem.Uint64(number)]
-    new_instance['uint8Prop']    = pywbem.Uint64(number)
-    new_instance['uint8Propa']   = [pywbem.Uint64(number), \
-                                    pywbem.Uint64(number), \
-                                    pywbem.Uint64(number)]
+    new_instance['uint8Prop']    = pywbem.Uint8(number)
+    new_instance['uint8Propa']   = [pywbem.Uint8(number), \
+                                    pywbem.Uint8(number), \
+                                    pywbem.Uint8(number)]
 
     try:
         msg = ''
@@ -452,10 +461,10 @@ class UpcallAtomProvider(pywbem.CIMProvider):
 #DeleteQualifier
 # Not working
 # TODO
-            try:
-                ch.DeleteQualifier(q.name)
-            except pywbem.CIMError, arg:
-                logger.log_debug("**** CIMError: ch.DeleteQualifier ****")
+#            try:
+#                ch.DeleteQualifier(q.name)
+#            except pywbem.CIMError, arg:
+#                logger.log_debug("**** CIMError: ch.DeleteQualifier ****")
                 #continue
                 #raise
 
@@ -580,6 +589,8 @@ class UpcallAtomProvider(pywbem.CIMProvider):
 
         for ci in insts:#Loop through instances
             for rci in ta_list:
+                print '==== rci.path:',str(rci.path)
+                print '==== ci.path:',str(ci.path)
                 if rci.path != ci.path:
                     continue
                 else:
