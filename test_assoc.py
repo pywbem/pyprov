@@ -18,7 +18,10 @@ from socket import getfqdn
 
 _globalVerbose = False
 
+   
 def isObjPathMatch( op1, op2 ):
+    op1.host = None
+    op2.host = None
     _local_op1_str = str(op1)
     _local_op2_str = str(op2)
     """
@@ -33,11 +36,14 @@ def isObjPathMatch( op1, op2 ):
     If you want to not accomodate this discrepancy, comment out the
     rest of the code up to but not including the return statement.
     """
+    '''
+    # removed in favor of ...host = None above
     hostname = '//%s' % getfqdn()
     if -1 == _local_op1_str.find(hostname, 0, len(hostname)):
         _local_op1_str = '%s/%s' % (hostname,str(op1))
     if -1 == _local_op2_str.find(hostname, 0, len(hostname)):
         _local_op2_str = '%s/%s' % (hostname,str(op2))
+    '''
     return _local_op1_str == _local_op2_str
     
 
@@ -54,7 +60,7 @@ class WBEMConn:
         if options:
             proto = 'http'
             if options.secure:
-                self.proto = 'https'
+                proto = 'https'
             url = '%s://%s' % (proto, options.host)
             self.conn = pywbem.WBEMConnection(
                     url,
@@ -79,7 +85,7 @@ class TestAssociations(unittest.TestCase):
         
     def tearDown(self):
         unittest.TestCase.tearDown(self)
-        
+    
     def test_a_users(self):
         """
         This test validates that the number of TestAssoc_User objects
@@ -142,7 +148,7 @@ class TestAssociations(unittest.TestCase):
         if 0 < len(sys_groups):
             self.fail('Not all system groups found in list of groups from CIMOM.')
         self._dbgPrint('All groups match.')
-        
+
     def test_b_usergroups(self):
         """
         This test fetches all TestAssoc_User objects from the CIMOM.  For each user object,
@@ -191,7 +197,7 @@ class TestAssociations(unittest.TestCase):
         cimom_groups = self._conn.EnumerateInstances('TestAssoc_Group', LocalOnly=False)
         for cg in cimom_groups:
             refs = self._conn.References(cg.path, ResultClass='TestAssoc_MemberOfGroup')
-            grinfo = grp.getgrgid(cg['GroupID'])
+            grinfo = grp.getgrgid(int(cg['GroupID']))
             for ref in refs:
                 usr = self._conn.GetInstance(ref['Dependent'], LocalOnly=False)
                 pwinfo = pwd.getpwuid(usr['UserID'])
@@ -339,7 +345,7 @@ class TestAssociations(unittest.TestCase):
                             'from user',
                             userobj['UserName'],
                             'doesn\'t return to user.'))
-            
+                
     def test_f_user_op_associators_traversal(self):
         """
         Same as test_d_user_op_references_traversal but calls Associators
@@ -366,7 +372,7 @@ class TestAssociations(unittest.TestCase):
                             'from user',
                             usr['UserName'],
                             'doesn\'t return to user.'))
-        
+    
     def test_f_user_op_associatornames_traversal(self):
         """
         Same as test_f_user_op_associators_traversal, but calls
@@ -513,7 +519,7 @@ class TestAssociations(unittest.TestCase):
                             'from group',
                             grpobj['GroupName'],
                             'doesn\'t return to group.'))
-            
+    
     def test_i_group_references_traversal(self):
         """
         Same as test_h_group_op_references_traversal but uses group
@@ -572,7 +578,7 @@ class TestAssociations(unittest.TestCase):
                             'from group',
                             grp['GroupName'],
                             'doesn\'t return to group.'))
-          
+       
     def test_j_group_op_associators_traversal(self):
         """
         Same as test_h_group_op_references_traversal but
@@ -685,7 +691,7 @@ class TestAssociations(unittest.TestCase):
                             'from group',
                             grp['GroupName'],
                             'doesn\'t return to group.'))
-        
+       
     def test_l_user_primarygroup_references_traversal(self):
         """
         This test fetches all TestAssoc_User objects, and for each one, it
@@ -998,8 +1004,6 @@ class TestAssociations(unittest.TestCase):
                     self.fail('Unmatched backreference object found.')
                 self._dbgPrint('All references accounted for.')
         
-        
-        
     def test_q_references_propertylist(self):
         """
         This test calls References from user and group objects
@@ -1167,7 +1171,6 @@ class TestAssociations(unittest.TestCase):
                 if not isValid:
                     self.fail('Found properties set that should not be.')
             self._dbgPrint('All associator properties successfully validated.')
-                    
         
 
 if __name__ == '__main__':
