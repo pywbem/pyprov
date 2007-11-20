@@ -1,0 +1,8 @@
+** Building the Python provider interface for Pegasus **
+
+Apply the patches corresponding to your version of Pegasus from the 
+patches/ folder. 
+
+Overlay the contents or src over the Pegasus source code at PEGASUS_ROOT. 
+Build Pegasus. 
+

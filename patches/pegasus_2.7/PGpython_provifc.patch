@@ -1,0 +1,52 @@
+diff -u ./Makefile.Release.orig ./Makefile.Release
+--- ./Makefile.Release.orig	2007-11-01 15:35:50.000000000 -0600
++++ ./Makefile.Release	2007-11-02 16:20:31.000000000 -0600
+@@ -122,6 +122,13 @@
+    libcmpiCppImpl
+ endif
+ 
++
++ifdef PEGASUS_ENABLE_PYTHON_PROVIDER_MANAGER
++PEGASUS_LIBRARIES += \
++	libPGPythonProviderManager
++endif
++
++
+ ifdef PEGASUS_USE_NET_SNMP
+    PEGASUS_LIBRARIES += \
+       libsnmpIndicationHandler
+@@ -144,6 +151,17 @@
+    libCMPIProviderManager
+ endif
+ 
++
++ifdef PEGASUS_ENABLE_PYTHON_PROVIDER_MANAGER
++PEGASUS_LIBRARY_LINKS += \
++	libPGPythonProviderManager
++endif
++
++
++
++
++
++
+ ifdef PEGASUS_USE_NET_SNMP
+ PEGASUS_LIBRARY_LINKS += \
+    libsnmpIndicationHandler
+diff -u ./src/Pegasus/Makefile.orig ./src/Pegasus/Makefile
+--- ./src/Pegasus/Makefile.orig	2007-08-14 11:16:17.000000000 -0600
++++ ./src/Pegasus/Makefile	2007-11-02 17:10:09.000000000 -0600
+@@ -125,6 +126,13 @@
+         ProviderManager2/JMPI
+ endif
+ 
++
++ifeq ($(PEGASUS_ENABLE_PYTHON_PROVIDER_MANAGER), true)
++    DIRS += \
++        ProviderManager2/Python
++endif
++
++
+ DIRS += \
+     ProviderManagerService \
+     ProviderManagerService/ProviderAgent

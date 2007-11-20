@@ -1,0 +1,160 @@
+--- ./mak/config-linux.mak.pegasus-python-provifc-manager.patch	2007-11-13 17:09:03.000000000 -0700
++++ ./mak/config-linux.mak	2007-11-13 17:09:03.000000000 -0700
+@@ -57,6 +57,12 @@
+ PEGASUS_ENABLE_CMPI_PROVIDER_MANAGER=true
+ endif
+ 
++# Enable Python provider manager
++#
++ifndef PEGASUS_ENABLE_PYTHON_PROVIDER_MANAGER
++PEGASUS_ENABLE_PYTHON_PROVIDER_MANAGER=true
++endif
++
+ #########################################################################
+ 
+ OS = linux
+--- ./mak/config.mak.pegasus-python-provifc-manager.patch	2007-09-12 15:30:58.000000000 -0600
++++ ./mak/config.mak	2007-11-13 17:09:03.000000000 -0700
+@@ -878,6 +878,18 @@
+     endif
+ endif
+ 
++ifdef PEGASUS_ENABLE_PYTHON_PROVIDER_MANAGER
++    ifeq ($(PEGASUS_ENABLE_PYTHON_PROVIDER_MANAGER), true)
++        DEFINES += -DPEGASUS_ENABLE_PYTHON_PROVIDER_MANAGER
++    else
++        ifneq ($(PEGASUS_ENABLE_PYTHON_PROVIDER_MANAGER), false)
++            $(error PEGASUS_ENABLE_PYTHON_PROVIDER_MANAGER \
++                 ($(PEGASUS_ENABLE_PYTHON_PROVIDER_MANAGER)) invalid, \
++                  must be true or false)
++        endif
++    endif
++endif
++
+ # Allow remote CMPI functionality to be enabled
+ ifdef PEGASUS_ENABLE_REMOTE_CMPI
+     DEFINES += -DPEGASUS_ENABLE_REMOTE_CMPI
+--- ./src/Pegasus/Config/FixedPropertyTableLinux.h.pegasus-python-provifc-manager.patch	2007-05-25 12:35:17.000000000 -0600
++++ ./src/Pegasus/Config/FixedPropertyTableLinux.h	2007-11-13 17:12:24.000000000 -0700
+@@ -48,6 +48,9 @@
+     {"enableAuthentication", "true"},
+     {"httpAuthType",        "Basic"},
+     {"enableBinaryRepository", "false"},
++#  if defined(PEGASUS_ENABLE_PYTHON_PROVIDER_MANAGER)
++    {"pythonProvDir",         "/usr/lib/pycim"},
++#  endif
+ #endif
+ #if defined(PEGASUS_USE_RELEASE_DIRS)
+ # if defined(PEGASUS_OVERRIDE_DEFAULT_RELEASE_DIRS)
+@@ -81,7 +84,7 @@
+ #  else
+     {"providerDir",         "/opt/tog-pegasus/providers/lib"},
+ #  endif
+-    {"messageDir",          "/opt/tog-pegasus/share/locale/ICU_Messages"},
++   {"messageDir",          "/opt/tog-pegasus/share/locale/ICU_Messages"},
+ # endif /* PEGASUS_OVERRIDE_DEFAULT_RELEASE_DIRS */
+ #endif /* defined(PEGASUS_USE_RELEASE_DIRS) */
+ #if !defined(PEGASUS_USE_RELEASE_CONFIG_OPTIONS) && \
+--- ./src/Pegasus/ControlProviders/ProviderRegistrationProvider/ProviderRegistrationProvider.cpp.pegasus-python-provifc-manager.patch	2007-07-31 13:13:43.000000000 -0600
++++ ./src/Pegasus/ControlProviders/ProviderRegistrationProvider/ProviderRegistrationProvider.cpp	2007-11-13 17:09:03.000000000 -0700
+@@ -397,7 +397,10 @@
+             && (ifcTypeString != "JMPI")
+             && (ifcTypeString != "JMPIExperimental")
+ #endif
+-                )
++#ifdef PEGASUS_ENABLE_PYTHON_PROVIDER_MANAGER
++            && ifcTypeString != "Python"
++#endif
++               )
+         {
+             throw PEGASUS_CIM_EXCEPTION_L(CIM_ERR_NOT_SUPPORTED,
+                 MessageLoaderParms(
+@@ -434,7 +437,11 @@
+            (ifcTypeString == "JMPIExperimental" &&
+             ifcVersionString != "0.0.1") ||
+ #endif
+-           (ifcTypeString == "C++Default" &&
++#ifdef PEGASUS_ENABLE_PYTHON_PROVIDER_MANAGER
++           (ifcTypeString == "Python" &&
++            ifcVersionString != "1.0.0") ||
++#endif
++          (ifcTypeString == "C++Default" &&
+             ifcVersionString != "2.1.0" &&
+             ifcVersionString != "2.2.0" &&
+             ifcVersionString != "2.3.0" &&
+--- ./src/Pegasus/ProviderManagerService/BasicProviderManagerRouter.cpp.pegasus-python-provifc-manager.patch	2007-09-14 13:02:36.000000000 -0600
++++ ./src/Pegasus/ProviderManagerService/BasicProviderManagerRouter.cpp	2007-11-13 17:09:03.000000000 -0700
+@@ -46,6 +46,7 @@
+ // ProviderManager library names.  Should these be defined elsewhere?
+ #define LIBRARY_NAME_CMPIPM    "CMPIProviderManager"
+ #define LIBRARY_NAME_JMPIPM    "JMPIProviderManager"
++#define LIBRARY_NAME_PYTHONPM  "PGPythonProviderManager"
+ 
+ PEGASUS_NAMESPACE_BEGIN
+ 
+@@ -445,7 +446,23 @@
+             return pmc->getProviderManager();
+         }
+ #endif
+-        // END TEMP SECTION
++
++#if defined(PEGASUS_ENABLE_PYTHON_PROVIDER_MANAGER)
++        if (interfaceType == "Python")
++        {
++            ProviderManagerContainer* pmc = new ProviderManagerContainer(
++                LIBRARY_NAME_PYTHONPM,
++                "Python",
++                "Python",
++                _indicationCallback,
++                _responseChunkCallback,
++                _subscriptionInitComplete);
++            _providerManagerTable.append(pmc);
++            return pmc->getProviderManager();
++        }
++#endif
++
++		// END TEMP SECTION
+     }
+ 
+     // Error: ProviderManager not found for the specified interface type
+--- ./src/Pegasus/Server/ProviderRegistrationManager/ProviderRegistrationManager.cpp.pegasus-python-provifc-manager.patch	2007-09-25 12:02:24.000000000 -0600
++++ ./src/Pegasus/Server/ProviderRegistrationManager/ProviderRegistrationManager.cpp	2007-11-13 17:09:03.000000000 -0700
+@@ -1956,7 +1956,11 @@
+                   || ((interfaceType == "JMPIExperimental") &&
+                       (interfaceVersion == "0.0.1"))
+ #endif
+-                 ) ||
++#ifdef PEGASUS_ENABLE_PYTHON_PROVIDER_MANAGER
++                  || ((interfaceType == "Python") &&
++                      (interfaceVersion == "1.0.0"))
++#endif
++                ) ||
+                 posLocation == PEG_NOT_FOUND || location.size() == 0
+ #ifdef PEGASUS_DISABLE_PROV_USERCTXT
+                 || (userContextSpecified &&
+--- ./env_var_Linux.status.pegasus-python-provifc-manager.patch	2007-11-13 17:09:03.000000000 -0700
++++ ./env_var_Linux.status	2007-11-13 17:09:03.000000000 -0700
+@@ -23,6 +23,7 @@
+ PEGASUS_DISABLE_OBJECT_NORMALIZATION=true
+ PEGASUS_DISABLE_PERFINST=yes
+ PEGASUS_ENABLE_CMPI_PROVIDER_MANAGER=true
++PEGASUS_ENABLE_PYTHON_PROVIDER_MANAGER=true
+ PEGASUS_ENABLE_USERGROUP_AUTHORIZATION=true
+ PEGASUS_HAS_SSL=yes
+ PEGASUS_USE_SSL_RANDOMFILE=false
+--- ./SetConfig_EnvVar.help.pegasus-python-provifc-manager.patch	2005-06-03 18:53:02.000000000 -0600
++++ ./SetConfig_EnvVar.help	2007-11-13 17:09:03.000000000 -0700
+@@ -69,6 +69,13 @@
+ 	Enable Java provider support,
+ 	Enable support for Java providers.}
+ 
++PEGASUS_ENABLE_PYTHON_PROVIDER_MANAGER {
++       Boolean,
++       --enable-python-providermgr,
++       Enable Python provider support,
++       Enable support for Python providers.}
++
++
+ PEGASUS_ENABLE_EXECQUERY {
+ 	Boolean,
+ 	--enable-execquery,
