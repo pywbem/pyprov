@@ -35,10 +35,11 @@ class wbem_connection:
         conn.default_namespace = self.namespace
 
 
-    def _WBEMConnFromOptions(self):
-        parser = OptionParser()
-        getWBEMConnParserOptions(parser)
-        options, args = parser.parse_args()
+    def _WBEMConnFromOptions(self, options=None):
+        if options is None:
+            parser = OptionParser()
+            getWBEMConnParserOptions(parser)
+            options, args = parser.parse_args()
         proto = options.secure and 'http' or 'https'
         url = '%s://%s:%s' % (proto, options.host, options.port)
         wconn = pywbem.WBEMConnection(url, (options.user, options.password),
