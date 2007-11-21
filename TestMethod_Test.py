@@ -42,7 +42,9 @@ class TestGmetadData(unittest.TestCase):
         rv, outs = self.conn.InvokeMethod('getStrProp', iname)
         self.assertEquals(rv, 'One')
 
-        self.conn.InvokeMethod('setStrProp', iname, value='won')
+        rv, outs = self.conn.InvokeMethod('setStrProp', iname, value='won')
+        self.assertFalse(outs)
+        self.assertEquals(rv, 'One')
         rv, outs = self.conn.InvokeMethod('getStrProp', iname)
         self.assertEquals(rv, 'won')
         inst = self.conn.GetInstance(iname)
@@ -52,7 +54,11 @@ class TestGmetadData(unittest.TestCase):
         self.assertEquals(rv, 1)
         self.assertTrue(isinstance(rv, pywbem.Sint32))
         self.assertEquals(inst['p_sint32'], 1)
-        self.conn.InvokeMethod('setIntProp', iname, value=pywbem.Sint32(2))
+        rv, outs = self.conn.InvokeMethod('setIntProp', iname, 
+                value=pywbem.Sint32(2))
+        self.assertTrue(isinstance(rv, pywbem.Sint32))
+        self.assertEquals(rv, 1)
+        self.assertFalse(outs)
         rv, outs = self.conn.InvokeMethod('getIntProp', iname)
         self.assertEquals(rv, 2)
         self.assertTrue(isinstance(rv, pywbem.Sint32))
