@@ -279,7 +279,7 @@ class TestMethodProvider(pywbem.CIMProvider):
         out_params = {}
         elems = [pywbem.CIMDateTime(s) for s in param_datestrs]
         out_params['nelems'] = pywbem.Sint32(len(elems))
-        out_params['elems'] = l
+        out_params['elems'] = elems
         rval = True
         return (rval, out_params)
         

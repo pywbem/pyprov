@@ -109,6 +109,47 @@ class TestGmetadData(unittest.TestCase):
                 cArr=l)
         self.assertEquals(rv, s)
 
+    def test_strCat(self):
+        ra = ['one','two','three','four']
+        rv, outs = self.conn.InvokeMethod('strCat', 'TestMethod', 
+                strs=ra, sep=',')
+        self.assertEquals(rv, ','.join(ra))
+        self.assertFalse(outs)
+
+
+    def test_getDate(self):
+        dt = pywbem.CIMDateTime.now()
+        rv, outs = self.conn.InvokeMethod('getDate', 'TestMethod', 
+                datestr=str(dt))
+        self.assertFalse(outs)
+        self.assertEquals(rv, dt)
+        self.assertEquals(str(rv), str(dt))
+        self.assertTrue(isinstance(rv, pywbem.CIMDateTime))
+
+    def test_getDates(self):
+        dt = pywbem.CIMDateTime.now()
+        s1 = str(dt)
+        ra = [s1]
+        dt = pywbem.CIMDateTime(pywbem.datetime.now() + \
+                pywbem.timedelta(seconds=10))
+        s2 = str(dt)
+        ra.append(s2)
+        dt = pywbem.CIMDateTime(pywbem.datetime.now() + \
+                pywbem.timedelta(seconds=10))
+        s3 = str(dt)
+        ra.append(s3)
+
+        rv, outs = self.conn.InvokeMethod('getDates', 'TestMethod', 
+                datestrs=ra)
+        self.assertTrue(rv)
+        self.assertTrue(isinstance(rv, bool))
+        self.assertEquals(outs['nelems'], len(ra))
+        self.assertTrue(isinstance(outs['nelems'], pywbem.Sint32))
+
+        for i in range(0, len(ra)):
+            self.assertTrue(isinstance(outs['elems'][i], pywbem.CIMDateTime))
+            self.assertEquals(str(outs['elems'][i]), ra[i])
+
 
 
 def get_unit_test():
