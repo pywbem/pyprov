@@ -150,7 +150,32 @@ class TestGmetadData(unittest.TestCase):
             self.assertTrue(isinstance(outs['elems'][i], pywbem.CIMDateTime))
             self.assertEquals(str(outs['elems'][i]), ra[i])
 
-
+    def test_minmedmax(self):
+        for tstr in ['Sint8', 'Uint8', 'Sint16', 'Uint16', 'Sint32', 'Uint32',
+                  'Sint64', 'Uint64', 'Real32', 'Real64']:
+            dt = getattr(pywbem, tstr)
+            method = 'minmedmax_%s' % tstr
+            numlist = [
+                dt(2),
+                dt(5),
+                dt(8),
+                dt(1),
+                dt(9),
+                dt(6),
+                dt(4),
+                dt(7),
+                dt(3),
+                ]
+            rv, outs = self.conn.InvokeMethod(method, 'TestMethod', 
+                    numlist=numlist)
+            self.assertTrue(rv)
+            self.assertTrue(isinstance(rv, bool))
+            self.assertTrue(isinstance(outs['min'], dt))
+            self.assertTrue(isinstance(outs['med'], dt))
+            self.assertTrue(isinstance(outs['max'], dt))
+            self.assertEquals(outs['min'], 1)
+            self.assertEquals(outs['max'], 9)
+            self.assertEquals(outs['med'], 5)
 
 def get_unit_test():
     return TestGmetadData
