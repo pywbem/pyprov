@@ -113,7 +113,11 @@ class TestGmetadData(unittest.TestCase):
         l = [pywbem.Sint8(ord(x)) for x in s]
         rv, outs = self.conn.InvokeMethod('mkUniStr_sint8', 'TestMethod', 
                 cArr=l)
+        self.assertFalse(outs)
         self.assertEquals(rv, s)
+        rv, outs = self.conn.InvokeMethod('mkUniStr_sint8', 'TestMethod', 
+                cArr=[])
+        self.assertEquals(rv, '')
 
     def test_strCat(self):
         ra = ['one','two','three','four']
