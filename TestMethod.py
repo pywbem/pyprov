@@ -357,7 +357,11 @@ class TestMethodProvider(pywbem.CIMProvider):
         l = []
         while cnt < param_nelems:
             cnt+= 1
-            l.append(dt(random.randint(param_lo, param_hi)))
+            try:
+                l.append(dt(random.randint(param_lo, param_hi)))
+            except ValueError:
+                # Range was probably zero
+                l.append(dt(param_lo))
         out_params = {}
         out_params['lo'] = param_lo
         out_params['hi'] = param_hi
@@ -447,7 +451,7 @@ class TestMethodProvider(pywbem.CIMProvider):
         return self.genrandlist_i(pywbem.Sint16, env, object_name, method, 
                                     param_nelems, param_lo, param_hi)
 
-    def genrandlist_r(self, dt, object_name, method, param_nelems, 
+    def genrandlist_r(self, dt, env, object_name, method, param_nelems, 
                             param_lo, param_hi):
         cnt = 0
         l = []
@@ -489,7 +493,9 @@ class TestMethodProvider(pywbem.CIMProvider):
                                   param_min):
         out_params = {}
         out_params['success'] = True
-        rval = dt(random.randint(param_min, param_max))
+	rval = param_min
+	if param_min < param_max:
+        	rval = dt(random.randint(param_min, param_max))
         return (rval, out_params)
 
     def cim_method_genrand_uint64(self, env, object_name, method,
