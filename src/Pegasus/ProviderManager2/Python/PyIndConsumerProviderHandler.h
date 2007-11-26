@@ -30,7 +30,7 @@ class IndicationConsumerProviderHandler
 public:
     static CIMResponseMessage* handleExportIndicationRequest(
 		CIMRequestMessage* message, 
-		PyProviderRep& provrep,
+		PyProviderRef& provref,
 		PythonProviderManager* pmgr);
 };
 

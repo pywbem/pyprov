@@ -28,7 +28,10 @@ namespace PythonProvIFC
 class MethodProviderHandler
 {
 public:
-    static CIMResponseMessage* handleInvokeMethodRequest(CIMRequestMessage* message, PyProviderRep& provrep, PythonProviderManager* pmgr);
+    static CIMResponseMessage* handleInvokeMethodRequest(
+		CIMRequestMessage* message,
+		PyProviderRef& provref,
+		PythonProviderManager* pmgr);
 };
 
 }	// end of namespace PythonProvIFC

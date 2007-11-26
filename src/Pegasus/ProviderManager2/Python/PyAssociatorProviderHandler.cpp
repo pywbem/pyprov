@@ -45,7 +45,7 @@ namespace PythonProvIFC
 CIMResponseMessage* 
 AssociatorProviderHandler::handleAssociatorsRequest(
 	CIMRequestMessage* message,
-	PyProviderRep& provrep,
+	PyProviderRef& provref,
 	PythonProviderManager* pmgr)
 {
 	Py::GILGuard gg;	// Acquire Python's GIL
@@ -77,7 +77,7 @@ AssociatorProviderHandler::handleAssociatorsRequest(
 	{
 		StatProviderTimeMeasurement providerTime(response.get());
 		handler.processing();
-		Py::Callable pyfunc = getFunction(provrep.m_pyprov, "associators");
+		Py::Callable pyfunc = getFunction(provref->m_pyprov, "associators");
 		Py::Tuple args(7);
 		args[0] = PyProviderEnvironment::newObject(request->operationContext); 	// Provider Environment
 		args[1] = PGPyConv::PGRef2Py(objectPath);
@@ -94,7 +94,7 @@ AssociatorProviderHandler::handleAssociatorsRequest(
 			PyErr_Clear();
 			THROWCIMMSG(CIM_ERR_FAILED,
 				Formatter::format("associators for provider $0 is NOT ",
-					"an iterable object", provrep.m_path));
+					"an iterable object", provref->m_path));
 		}
 		Py::Object iterable(ito, true);	// Let Py::Object manage the ref count
 		PyObject* item;
@@ -109,7 +109,7 @@ AssociatorProviderHandler::handleAssociatorsRequest(
 		}
 		handler.complete();
 	}
-	HANDLECATCH(handler, provrep, getInstance)
+	HANDLECATCH(handler, provref, getInstance)
     PEG_METHOD_EXIT();
     return response.release();
 }
@@ -118,7 +118,7 @@ AssociatorProviderHandler::handleAssociatorsRequest(
 CIMResponseMessage*
 AssociatorProviderHandler::handleAssociatorNamesRequest(
 	CIMRequestMessage* message,
-	PyProviderRep& provrep,
+	PyProviderRef& provref,
 	PythonProviderManager* pmgr)
 {
 	Py::GILGuard gg;	// Acquire Python's GIL
@@ -149,7 +149,7 @@ AssociatorProviderHandler::handleAssociatorNamesRequest(
 	{
 		StatProviderTimeMeasurement providerTime(response.get());
 		handler.processing();
-		Py::Callable pyfunc = getFunction(provrep.m_pyprov, "associatorNames");
+		Py::Callable pyfunc = getFunction(provref->m_pyprov, "associatorNames");
 		Py::Tuple args(6);
 		args[0] = PyProviderEnvironment::newObject(request->operationContext); 	// Provider Environment
 		args[1] = PGPyConv::PGRef2Py(objectPath);
@@ -164,7 +164,7 @@ AssociatorProviderHandler::handleAssociatorNamesRequest(
 			PyErr_Clear();
 			THROWCIMMSG(CIM_ERR_FAILED,
 				Formatter::format("associatorNames for provider $0 is NOT "
-					"an iterable object", provrep.m_path));
+					"an iterable object", provref->m_path));
 		}
 		Py::Object iterable(ito, true);	// Let Py::Object manage the ref count
 		PyObject* item;
@@ -179,7 +179,7 @@ AssociatorProviderHandler::handleAssociatorNamesRequest(
 		}
 		handler.complete();
 	}
-	HANDLECATCH(handler, provrep, getInstance)
+	HANDLECATCH(handler, provref, getInstance)
     PEG_METHOD_EXIT();
     return response.release();
 }
@@ -188,7 +188,7 @@ AssociatorProviderHandler::handleAssociatorNamesRequest(
 CIMResponseMessage*
 AssociatorProviderHandler::handleReferencesRequest(
 	CIMRequestMessage* message,
-	PyProviderRep& provrep,
+	PyProviderRef& provref,
 	PythonProviderManager* pmgr)
 {
 	Py::GILGuard gg;	// Acquire Python's GIL
@@ -219,7 +219,7 @@ AssociatorProviderHandler::handleReferencesRequest(
 	{
 		StatProviderTimeMeasurement providerTime(response.get());
 		handler.processing();
-		Py::Callable pyfunc = getFunction(provrep.m_pyprov, "references");
+		Py::Callable pyfunc = getFunction(provref->m_pyprov, "references");
 		Py::Tuple args(5);
 		args[0] = PyProviderEnvironment::newObject(request->operationContext); 	// Provider Environment
 		args[1] = PGPyConv::PGRef2Py(objectPath);
@@ -233,7 +233,7 @@ AssociatorProviderHandler::handleReferencesRequest(
 			PyErr_Clear();
 			THROWCIMMSG(CIM_ERR_FAILED,
 				Formatter::format("references for provider $0 is NOT "
-					"an iterable object", provrep.m_path));
+					"an iterable object", provref->m_path));
 		}
 		Py::Object iterable(ito, true);	// Let Py::Object manage the ref count
 		PyObject* item;
@@ -248,7 +248,7 @@ AssociatorProviderHandler::handleReferencesRequest(
 		}
 		handler.complete();
 	}
-	HANDLECATCH(handler, provrep, getInstance)
+	HANDLECATCH(handler, provref, getInstance)
     PEG_METHOD_EXIT();
     return response.release();
 }
@@ -257,7 +257,7 @@ AssociatorProviderHandler::handleReferencesRequest(
 CIMResponseMessage*
 AssociatorProviderHandler::handleReferenceNamesRequest(
 	CIMRequestMessage* message,
-	PyProviderRep& provrep,
+	PyProviderRef& provref,
 	PythonProviderManager* pmgr)
 {
     PEG_METHOD_ENTER(
@@ -287,7 +287,7 @@ AssociatorProviderHandler::handleReferenceNamesRequest(
 	{
 		StatProviderTimeMeasurement providerTime(response.get());
 		handler.processing();
-		Py::Callable pyfunc = getFunction(provrep.m_pyprov, "referenceNames");
+		Py::Callable pyfunc = getFunction(provref->m_pyprov, "referenceNames");
 		Py::Tuple args(4);
 		args[0] = PyProviderEnvironment::newObject(request->operationContext); 	// Provider Environment
 		args[1] = PGPyConv::PGRef2Py(objectPath);
@@ -300,7 +300,7 @@ AssociatorProviderHandler::handleReferenceNamesRequest(
 			PyErr_Clear();
 			THROWCIMMSG(CIM_ERR_FAILED,
 				Formatter::format("referenceNames for provider $0 is NOT "
-					"an iterable object", provrep.m_path));
+					"an iterable object", provref->m_path));
 		}
 		Py::Object iterable(ito, true);	// Let Py::Object manage the ref count
 		PyObject* item;
@@ -315,7 +315,7 @@ AssociatorProviderHandler::handleReferenceNamesRequest(
 		}
 		handler.complete();
 	}
-	HANDLECATCH(handler, provrep, getInstance)
+	HANDLECATCH(handler, provref, getInstance)
     PEG_METHOD_EXIT();
     return response.release();
 }

@@ -44,7 +44,7 @@ namespace PythonProvIFC
 CIMResponseMessage* 
 IndicationConsumerProviderHandler::handleExportIndicationRequest(
 	CIMRequestMessage* message, 
-	PyProviderRep& provrep,
+	PyProviderRef& provref,
 	PythonProviderManager* pmgr)
 {
     PEG_METHOD_ENTER(
@@ -67,14 +67,14 @@ IndicationConsumerProviderHandler::handleExportIndicationRequest(
 	try
 	{
 		StatProviderTimeMeasurement providerTime(response.get());
-		Py::Callable pyfunc = getFunction(provrep.m_pyprov, "handleIndication");
+		Py::Callable pyfunc = getFunction(provref->m_pyprov, "handleIndication");
 		Py::Tuple args(3);
 		args[0] = PyProviderEnvironment::newObject(request->operationContext); 	// Provider Environment
 		args[1] = Py::String(request->destinationPath);	
 		args[2] = PGPyConv::PGInst2Py(request->indicationInstance);
 		Py::Object pyv = pyfunc.apply(args);
 	}
-	HANDLECATCH(handler, provrep, getInstance)
+	HANDLECATCH(handler, provref, getInstance)
     PEG_METHOD_EXIT();
     return response.release();
 }

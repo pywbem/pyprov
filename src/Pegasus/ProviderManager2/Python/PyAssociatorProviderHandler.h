@@ -28,10 +28,25 @@ namespace PythonProvIFC
 class AssociatorProviderHandler
 {
 public:
-    static CIMResponseMessage* handleAssociatorsRequest(CIMRequestMessage* message, PyProviderRep& provrep, PythonProviderManager* pgmr);
-    static CIMResponseMessage* handleAssociatorNamesRequest(CIMRequestMessage* message, PyProviderRep& provrep, PythonProviderManager* pgmr);
-    static CIMResponseMessage* handleReferencesRequest(CIMRequestMessage* message, PyProviderRep& provrep, PythonProviderManager* pgmr);
-    static CIMResponseMessage* handleReferenceNamesRequest(CIMRequestMessage* message, PyProviderRep& provrep, PythonProviderManager* pgmr);
+    static CIMResponseMessage* handleAssociatorsRequest(
+		CIMRequestMessage* message, 
+		PyProviderRef& provref,
+		PythonProviderManager* pgmr);
+
+    static CIMResponseMessage* handleAssociatorNamesRequest(
+		CIMRequestMessage* message, 
+		PyProviderRef& provref,
+		PythonProviderManager* pgmr);
+
+    static CIMResponseMessage* handleReferencesRequest(
+		CIMRequestMessage* message,
+		PyProviderRef& provref,
+		PythonProviderManager* pgmr);
+
+    static CIMResponseMessage* handleReferenceNamesRequest(
+		CIMRequestMessage* message,
+		PyProviderRef& provref,
+		PythonProviderManager* pgmr);
 };
 
 }	// end of namespace PythonProvIFC

@@ -30,42 +30,42 @@ class InstanceProviderHandler
 public:
     static CIMResponseMessage* handleGetInstanceRequest(
 		CIMRequestMessage* message, 
-		PyProviderRep& provrep,
+		PyProviderRef& provref,
 		PythonProviderManager* pmgr);
 
     static CIMResponseMessage* handleEnumerateInstancesRequest(
 		CIMRequestMessage* message,
-		PyProviderRep& provrep,
+		PyProviderRef& provref,
 		PythonProviderManager* pmgr);
 
     static CIMResponseMessage* handleEnumerateInstanceNamesRequest(
 		CIMRequestMessage* message, 
-		PyProviderRep& provrep, 
+		PyProviderRef& provref, 
 		PythonProviderManager* pmgr);
 
     static CIMResponseMessage* handleCreateInstanceRequest(
 		CIMRequestMessage* message,
-		PyProviderRep& provrep, 
+		PyProviderRef& provref, 
 		PythonProviderManager* pmgr);
 
     static CIMResponseMessage* handleModifyInstanceRequest(
 		CIMRequestMessage* message,
-		PyProviderRep& provrep,
+		PyProviderRef& provref,
 		PythonProviderManager* pmgr);
 
     static CIMResponseMessage* handleDeleteInstanceRequest(
 		CIMRequestMessage* message,
-		PyProviderRep& provrep, 
+		PyProviderRef& provref, 
 		PythonProviderManager* pmgr);
 
 	static CIMResponseMessage* handleGetPropertyRequest(
 		CIMRequestMessage* message,
-		PyProviderRep& provrep, 
+		PyProviderRef& provref, 
 		PythonProviderManager* pmgr);
 
 	static CIMResponseMessage* handleSetPropertyRequest(
 		CIMRequestMessage* message,
-		PyProviderRep& provrep, 
+		PyProviderRef& provref, 
 		PythonProviderManager* pmgr);
 };
 

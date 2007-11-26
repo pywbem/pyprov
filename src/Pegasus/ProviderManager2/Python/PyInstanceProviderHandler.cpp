@@ -45,7 +45,7 @@ namespace PythonProvIFC
 CIMResponseMessage* 
 InstanceProviderHandler::handleGetInstanceRequest(
 	CIMRequestMessage* message, 
-	PyProviderRep& provrep, 
+	PyProviderRef& provref, 
 	PythonProviderManager* pmgr)
 {
     PEG_METHOD_ENTER(
@@ -81,7 +81,7 @@ InstanceProviderHandler::handleGetInstanceRequest(
 	{
 		StatProviderTimeMeasurement providerTime(response.get());
 		handler.processing();
-		Py::Callable pyfunc = getFunction(provrep.m_pyprov, "getInstance");
+		Py::Callable pyfunc = getFunction(provref->m_pyprov, "getInstance");
 		Py::Tuple args(4);
 		args[0] = PyProviderEnvironment::newObject(request->operationContext); 	// Provider Environment
 		args[1] = PGPyConv::PGRef2Py(objectPath);
@@ -92,13 +92,13 @@ InstanceProviderHandler::handleGetInstanceRequest(
 		{
 			THROWCIMMSG(CIM_ERR_FAILED,
 				Formatter::format("Error: Python provider $0 returned NONE "
-					"on getInstance", provrep.m_path));
+					"on getInstance", provref->m_path));
 		}
 		handler.deliver(PGPyConv::PyInst2PG(pyci,
 			request->nameSpace.getString()));
 		handler.complete();
 	}
-	HANDLECATCH(handler, provrep, getInstance)
+	HANDLECATCH(handler, provref, getInstance)
     PEG_METHOD_EXIT();
     return response.release();
 }
@@ -107,7 +107,7 @@ InstanceProviderHandler::handleGetInstanceRequest(
 CIMResponseMessage* 
 InstanceProviderHandler::handleEnumerateInstancesRequest(
 	CIMRequestMessage* message,
-	PyProviderRep& provrep, 
+	PyProviderRef& provref, 
 	PythonProviderManager* pmgr)
 {
     PEG_METHOD_ENTER(
@@ -135,7 +135,7 @@ InstanceProviderHandler::handleEnumerateInstancesRequest(
 	Py::GILGuard gg;	// Acquire Python's GIL
 	try
 	{
-		Py::Object pyProv = provrep.m_pyprov;
+		Py::Object pyProv = provref->m_pyprov;
 		Py::Callable pyfunc = getFunction(pyProv, "enumInstances");
 		Py::Tuple args(5);
 		args[0] = PyProviderEnvironment::newObject(request->operationContext); 	// Provider Environment
@@ -155,7 +155,7 @@ InstanceProviderHandler::handleEnumerateInstancesRequest(
 			PyErr_Clear();
 			THROWCIMMSG(CIM_ERR_FAILED,
 				Formatter::format("enumInstances for provider $0 is NOT "
-					"an iterable object", provrep.m_path));
+					"an iterable object", provref->m_path));
 		}
 		Py::Object iterable(ito, true);	// Let Py::Object manage the ref count
 		PyObject* item;
@@ -171,7 +171,7 @@ InstanceProviderHandler::handleEnumerateInstancesRequest(
 		}
 		handler.complete();
 	}
-	HANDLECATCH(handler, provrep, enumInstances)
+	HANDLECATCH(handler, provref, enumInstances)
 	PEG_METHOD_EXIT();
 	return response.release();
 }
@@ -180,7 +180,7 @@ InstanceProviderHandler::handleEnumerateInstancesRequest(
 CIMResponseMessage* 
 InstanceProviderHandler::handleEnumerateInstanceNamesRequest(
 	CIMRequestMessage* message, 
-	PyProviderRep& provrep, 
+	PyProviderRef& provref, 
 	PythonProviderManager* pmgr)
 {
 	PEG_METHOD_ENTER(
@@ -210,7 +210,7 @@ InstanceProviderHandler::handleEnumerateInstanceNamesRequest(
 		StatProviderTimeMeasurement providerTime(response.get());
 		handler.processing();
 
-		Py::Object pyProv = provrep.m_pyprov;
+		Py::Object pyProv = provref->m_pyprov;
 		Py::Callable pyfunc = getFunction(pyProv, "enumInstanceNames");
 		Py::Tuple args(3);
 		args[0] = PyProviderEnvironment::newObject(request->operationContext); 	// Provider Environment
@@ -224,7 +224,7 @@ InstanceProviderHandler::handleEnumerateInstanceNamesRequest(
 			PyErr_Clear();
 			THROWCIMMSG(CIM_ERR_FAILED,
 				Formatter::format("enumInstanceNames for provider $0 is NOT "
-					"an iterable object", provrep.m_path));
+					"an iterable object", provref->m_path));
 		}
 		Py::Object iterable(ito, true);	// Let Py::Object manage the ref count
 		PyObject* item;
@@ -240,7 +240,7 @@ InstanceProviderHandler::handleEnumerateInstanceNamesRequest(
 		}
 		handler.complete();
 	}
-	HANDLECATCH(handler, provrep, enumInstanceNames)
+	HANDLECATCH(handler, provref, enumInstanceNames)
     PEG_METHOD_EXIT();
     return response.release();
 }
@@ -249,7 +249,7 @@ InstanceProviderHandler::handleEnumerateInstanceNamesRequest(
 CIMResponseMessage* 
 InstanceProviderHandler::handleCreateInstanceRequest(
 	CIMRequestMessage* message, 
-	PyProviderRep& provrep, 
+	PyProviderRef& provref, 
 	PythonProviderManager* pmgr)
 {
     PEG_METHOD_ENTER(
@@ -283,7 +283,7 @@ InstanceProviderHandler::handleCreateInstanceRequest(
 	{
 		StatProviderTimeMeasurement providerTime(response.get());
 		handler.processing();
-		Py::Object pyProv = provrep.m_pyprov;
+		Py::Object pyProv = provref->m_pyprov;
 		Py::Callable pyfunc = getFunction(pyProv, "createInstance");
 		Py::Tuple args(2);
 		args[0] = PyProviderEnvironment::newObject(request->operationContext); 	// Provider Environment
@@ -293,12 +293,12 @@ InstanceProviderHandler::handleCreateInstanceRequest(
 		{
 			THROWCIMMSG(CIM_ERR_FAILED,
 				Formatter::format("Error: Python provider: $0 returned NONE "
-				"on createInstance", provrep.m_path));
+				"on createInstance", provref->m_path));
 		}
 		handler.deliver(PGPyConv::PyRef2PG(pycop));
 		handler.complete();
 	}
-	HANDLECATCH(handler, provrep, createInstance)
+	HANDLECATCH(handler, provref, createInstance)
     PEG_METHOD_EXIT();
     return response.release();
 }
@@ -307,7 +307,7 @@ InstanceProviderHandler::handleCreateInstanceRequest(
 CIMResponseMessage* 
 InstanceProviderHandler::handleModifyInstanceRequest(
 	CIMRequestMessage* message, 
-	PyProviderRep& provrep, 
+	PyProviderRef& provref, 
 	PythonProviderManager* pmgr)
 {
     PEG_METHOD_ENTER(
@@ -346,7 +346,7 @@ InstanceProviderHandler::handleModifyInstanceRequest(
 	{
 		StatProviderTimeMeasurement providerTime(response.get());
 		handler.processing();
-		Py::Object pyProv = provrep.m_pyprov;
+		Py::Object pyProv = provref->m_pyprov;
 		Py::Callable pyfunc = getFunction(pyProv, "modifyInstance");
 
 		Py::Tuple args(5);
@@ -359,7 +359,7 @@ InstanceProviderHandler::handleModifyInstanceRequest(
 		pyfunc.apply(args);
 		handler.complete();
 	}
-	HANDLECATCH(handler, provrep, modifyInstance)
+	HANDLECATCH(handler, provref, modifyInstance)
     PEG_METHOD_EXIT();
     return response.release();
 }
@@ -368,7 +368,7 @@ InstanceProviderHandler::handleModifyInstanceRequest(
 CIMResponseMessage* 
 InstanceProviderHandler::handleDeleteInstanceRequest(
 	CIMRequestMessage* message, 
-	PyProviderRep& provrep, 
+	PyProviderRef& provref, 
 	PythonProviderManager* pmgr)
 {
     PEG_METHOD_ENTER(
@@ -393,7 +393,7 @@ InstanceProviderHandler::handleDeleteInstanceRequest(
 	{
 		StatProviderTimeMeasurement providerTime(response.get());
 		handler.processing();
-		Py::Object pyProv = provrep.m_pyprov;
+		Py::Object pyProv = provref->m_pyprov;
 		Py::Callable pyfunc = getFunction(pyProv, "deleteInstance");
 		Py::Tuple args(2);
 		String ns = request->nameSpace.getString();
@@ -402,7 +402,7 @@ InstanceProviderHandler::handleDeleteInstanceRequest(
 		pyfunc.apply(args);
 		handler.complete();
 	}
-	HANDLECATCH(handler, provrep, deleteInstance)
+	HANDLECATCH(handler, provref, deleteInstance)
     PEG_METHOD_EXIT();
     return response.release();
 }
@@ -411,7 +411,7 @@ InstanceProviderHandler::handleDeleteInstanceRequest(
 CIMResponseMessage*
 InstanceProviderHandler::handleGetPropertyRequest(
 	CIMRequestMessage* message,
-	PyProviderRep& provrep, 
+	PyProviderRef& provref, 
 	PythonProviderManager* pmgr)
 {
     PEG_METHOD_ENTER(
@@ -449,7 +449,7 @@ InstanceProviderHandler::handleGetPropertyRequest(
 	{
 		StatProviderTimeMeasurement providerTime(response.get());
 		handler.processing();
-		Py::Callable pyfunc = getFunction(provrep.m_pyprov, "getInstance");
+		Py::Callable pyfunc = getFunction(provref->m_pyprov, "getInstance");
 		Py::Tuple args(4);
 		args[0] = PyProviderEnvironment::newObject(request->operationContext); 	// Provider Environment
 		args[1] = PGPyConv::PGRef2Py(objectPath);
@@ -460,7 +460,7 @@ InstanceProviderHandler::handleGetPropertyRequest(
 		{
 			THROWCIMMSG(CIM_ERR_FAILED,
 				Formatter::format("Error: Python provider $0 returned NONE "
-					"on getInstance", provrep.m_path));
+					"on getInstance", provref->m_path));
 		}
 		CIMInstance ci = PGPyConv::PyInst2PG(pyci, request->nameSpace.getString());
 		gg.release();
@@ -469,14 +469,14 @@ InstanceProviderHandler::handleGetPropertyRequest(
 		{
 			THROWCIMMSG(CIM_ERR_NO_SUCH_PROPERTY,
 				Formatter::format("Error: Python provider $0 did not return "
-					"property $1", provrep.m_path,
+					"property $1", provref->m_path,
 					request->propertyName.getString()));
 		}
 		CIMProperty prop = ci.getProperty(ndx);
 		handler.deliver(prop.getValue());
 		handler.complete();
 	}
-	HANDLECATCH(handler, provrep, getInstance)
+	HANDLECATCH(handler, provref, getInstance)
     PEG_METHOD_EXIT();
     return response.release();
 }
@@ -485,7 +485,7 @@ InstanceProviderHandler::handleGetPropertyRequest(
 CIMResponseMessage*
 InstanceProviderHandler::handleSetPropertyRequest(
 	CIMRequestMessage* message,
-	PyProviderRep& provrep, 
+	PyProviderRef& provref, 
 	PythonProviderManager* pmgr)
 {
     PEG_METHOD_ENTER(
@@ -533,7 +533,7 @@ InstanceProviderHandler::handleSetPropertyRequest(
 	{
 		StatProviderTimeMeasurement providerTime(response.get());
 		handler.processing();
-		Py::Object pyProv = provrep.m_pyprov;
+		Py::Object pyProv = provref->m_pyprov;
 		Py::Callable pyfunc = getFunction(pyProv, "modifyInstance");
 
 		Py::Tuple args(5);
@@ -548,7 +548,7 @@ InstanceProviderHandler::handleSetPropertyRequest(
 		pyfunc.apply(args);
 		handler.complete();
 	}
-	HANDLECATCH(handler, provrep, setProperty)
+	HANDLECATCH(handler, provref, setProperty)
     PEG_METHOD_EXIT();
     return response.release();
 }

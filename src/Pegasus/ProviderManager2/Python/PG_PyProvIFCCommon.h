@@ -86,43 +86,43 @@ LogPyException(
 	int lineno);
 
 
-#define HANDLECATCH(handler, provrep, operation) \
+#define HANDLECATCH(handler, provref, operation) \
 	catch(Py::Exception& e) \
 	{ \
         Logger::put(Logger::ERROR_LOG, PYSYSTEM_ID, Logger::SEVERE, \
 			"Caught python exception invoking "#operation" on provider " \
-			"$0", provrep.m_path); \
-		processPyException(e, __LINE__, provrep.m_path, &handler); \
+			"$0", provref->m_path); \
+		processPyException(e, __LINE__, provref->m_path, &handler); \
 	} \
 	catch(const PyConversionException& e) \
 	{ \
 		String msg = Formatter::format( \
-			"Caught python conversion exception calling"#operation" on " \
-			"provider $0. Exception Msg: $1", provrep.m_path, e.getMessage()); \
+			"Caught python conversion exception calling "#operation" on " \
+			"provider $0. Exception Msg: $1", provref->m_path, e.getMessage()); \
         Logger::put(Logger::ERROR_LOG, PYSYSTEM_ID, Logger::SEVERE, msg); \
 		handler.setCIMException(CIMException(CIM_ERR_FAILED, msg)); \
 	} \
 	catch(const Exception& e) \
 	{ \
 		String msg = Formatter::format( \
-			"Caught Exception calling"#operation" on " \
-			"provider $0. Exception Msg: $1", provrep.m_path, e.getMessage()); \
+			"Caught Exception calling "#operation" on " \
+			"provider $0. Exception Msg: $1", provref->m_path, e.getMessage()); \
         Logger::put(Logger::ERROR_LOG, PYSYSTEM_ID, Logger::SEVERE, msg); \
 		handler.setStatus(CIM_ERR_FAILED, e.getMessage()); \
 	} \
 	catch(const std::exception& e) \
 	{ \
 		String msg = Formatter::format( \
-			"Caught std::exception calling"#operation" on " \
-			"provider $0. Exception: $1", provrep.m_path, e.what()); \
+			"Caught std::exception calling "#operation" on " \
+			"provider $0. Exception: $1", provref->m_path, e.what()); \
         Logger::put(Logger::ERROR_LOG, PYSYSTEM_ID, Logger::SEVERE, msg); \
 		handler.setStatus(CIM_ERR_FAILED, e.what()); \
 	} \
 	catch(...) \
 	{ \
 		String msg = Formatter::format( \
-			"Caught unknown exception calling"#operation" on " \
-			"provider $0.", provrep.m_path); \
+			"Caught unknown exception calling "#operation" on " \
+			"provider $0.", provref->m_path); \
         Logger::put(Logger::ERROR_LOG, PYSYSTEM_ID, Logger::SEVERE, msg); \
 		handler.setStatus(CIM_ERR_FAILED, "Unknown exception"); \
 	} \

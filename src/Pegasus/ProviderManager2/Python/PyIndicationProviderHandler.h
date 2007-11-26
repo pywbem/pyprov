@@ -28,15 +28,20 @@ namespace PythonProvIFC
 class IndicationProviderHandler
 {
 public:
-    static CIMResponseMessage* handleCreateSubscriptionRequest(CIMRequestMessage* message, 
-															   PyProviderRep& provrep, 
-															   PythonProviderManager* pmgr);
-	static CIMResponseMessage* handleModifySubscriptionRequest(CIMRequestMessage* message, 
-															   PyProviderRep& provrep, 
-															   PythonProviderManager* pmgr);
-	static CIMResponseMessage* handleDeleteSubscriptionRequest(CIMRequestMessage* message, 
-															   PyProviderRep& provrep, 
-															   PythonProviderManager* pmgr);
+    static CIMResponseMessage* handleCreateSubscriptionRequest(
+		CIMRequestMessage* message, 
+		PyProviderRef& provref, 
+		PythonProviderManager* pmgr);
+
+	static CIMResponseMessage* handleModifySubscriptionRequest(
+		CIMRequestMessage* message, 
+		PyProviderRef& provref, 
+		PythonProviderManager* pmgr);
+
+	static CIMResponseMessage* handleDeleteSubscriptionRequest(
+		CIMRequestMessage* message, 
+		PyProviderRef& provref, 
+		PythonProviderManager* pmgr);
 };
 
 }	// end of namespace PythonProvIFC

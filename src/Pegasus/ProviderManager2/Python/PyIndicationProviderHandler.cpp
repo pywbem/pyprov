@@ -42,9 +42,10 @@ namespace PythonProvIFC
 {
 
 CIMResponseMessage* 
-IndicationProviderHandler::handleCreateSubscriptionRequest(CIMRequestMessage* message, 
-														   PyProviderRep& provrep, 
-														   PythonProviderManager* pmgr)
+IndicationProviderHandler::handleCreateSubscriptionRequest(
+	CIMRequestMessage* message, 
+	PyProviderRef& provref, 
+	PythonProviderManager* pmgr)
 {
 	cout << "**** handleCreateSubscriptionRequest called..." << endl;
 
@@ -81,35 +82,48 @@ IndicationProviderHandler::handleCreateSubscriptionRequest(CIMRequestMessage* me
 		StatProviderTimeMeasurement providerTime(response.get());
 		//handler.processing();
 
-		Py::Object pyProv = provrep.m_pyprov;
-		Py::Callable pyfunc = getFunction(pyProv, "activate_filter");
+		Py::Object pyProv = provref->m_pyprov;
+cerr << "!!!! Calling getFunction" << endl;
+		Py::Callable pyfunc = getFunction(pyProv, "activateFilter");
+cerr << "!!!! getFunction returned" << endl;
 		Py::Tuple args(6);
+cerr << "!!!! TRACE 1" << endl;
 		args[0] = PyProviderEnvironment::newObject(request->operationContext); 	// Provider Environment
+cerr << "!!!! TRACE 2" << endl;
 		args[1] = Py::String(request->query);
+cerr << "!!!! TRACE 3" << endl;
 		// TODO: What to do with event type... I don't get that from Pegasus request
-		args[2] = Py::String();//request->eventType);
+		args[2] = Py::String("");//request->eventType);
+cerr << "!!!! TRACE 4" << endl;
 		args[3] = Py::String(request->nameSpace.getString());
+cerr << "!!!! TRACE 5" << endl;
 		Py::List pyclasses;
 		for (unsigned long i = 0; i < request->classNames.size(); i++)
 		{
 			pyclasses.append(Py::String(request->classNames[i].getString()));
 		}
+cerr << "!!!! TRACE 6" << endl;
 		args[4] = pyclasses;
-		provrep.m_activationCount++;
-		args[5] = Py::Bool(provrep.m_activationCount == 1);// whether first activation or not
+cerr << "!!!! TRACE 7" << endl;
+		provref->m_activationCount++;
+cerr << "!!!! TRACE 8" << endl;
+		args[5] = Py::Bool(provref->m_activationCount == 1);// whether first activation or not
+cerr << "!!!! Calling activate_filter" << endl;
 		pyfunc.apply(args);
+cerr << "!!!! activate_filter returned" << endl;
 
 		//handler.complete();
 	}
-	HANDLECATCH(handler, provrep, createSubscription)
+	HANDLECATCH(handler, provref, createSubscription)
 	PEG_METHOD_EXIT();
+	cout << "**** handleCreateSubscriptionRequest returning" << endl;
 	return response.release();
 }
 
 /*
 CIMResponseMessage* 
 IndicationProviderHandler::handleModifySubscriptionRequest(CIMRequestMessage* message, 
-														   PyProviderRep& provrep, 
+														   PyProviderRef& provref, 
 														   PythonProviderManager* pmgr)
 {
 	PEG_METHOD_ENTER(
@@ -138,7 +152,7 @@ IndicationProviderHandler::handleModifySubscriptionRequest(CIMRequestMessage* me
 
 		handler.complete();
 	}
-	HANDLECATCH(handler, provrep, modifySubscription)
+	HANDLECATCH(handler, provref, modifySubscription)
 	PEG_METHOD_EXIT();
 	return response.release();
 }
@@ -146,7 +160,7 @@ IndicationProviderHandler::handleModifySubscriptionRequest(CIMRequestMessage* me
 
 CIMResponseMessage* 
 IndicationProviderHandler::handleDeleteSubscriptionRequest(CIMRequestMessage* message, 
-														   PyProviderRep& provrep, 
+														   PyProviderRef& provref, 
 														   PythonProviderManager* pmgr)
 {
 	PEG_METHOD_ENTER(
@@ -171,8 +185,8 @@ IndicationProviderHandler::handleDeleteSubscriptionRequest(CIMRequestMessage* me
 		StatProviderTimeMeasurement providerTime(response.get());
 		//handler.processing();
 
-		Py::Object pyProv = provrep.m_pyprov;
-		Py::Callable pyfunc = getFunction(pyProv, "deactivate_filter");
+		Py::Object pyProv = provref->m_pyprov;
+		Py::Callable pyfunc = getFunction(pyProv, "deactivateFilter");
 		Py::Tuple args(6);
 		args[0] = PyProviderEnvironment::newObject(request->operationContext); 	// Provider Environment
 		args[1] = Py::String();//request->query);
@@ -185,13 +199,13 @@ IndicationProviderHandler::handleDeleteSubscriptionRequest(CIMRequestMessage* me
 			pyclasses.append(Py::String(request->classNames[i].getString()));
 		}
 		args[4] = pyclasses;
-		provrep.m_activationCount--;
-		args[5] = Py::Bool(provrep.m_activationCount == 0);// whether last activation or not
+		provref->m_activationCount--;
+		args[5] = Py::Bool(provref->m_activationCount == 0);// whether last activation or not
 		pyfunc.apply(args);
 
 		//handler.complete();
 	}
-	HANDLECATCH(handler, provrep, deleteSubscription)
+	HANDLECATCH(handler, provref, deleteSubscription)
 	PEG_METHOD_EXIT();
 	return response.release();
 }

@@ -30,6 +30,7 @@
 #include <Pegasus/ProviderManager2/Python/Linkage.h>
 #include <Pegasus/Provider/CIMOMHandleQueryContext.h>
 
+#include "Reference.h"
 #include "PyCxxObjects.h"
 #include "PG_PyExtensions.h"
 
@@ -54,6 +55,7 @@ struct PyProviderRep
 		, m_lastAccessTime(time_t(0))
 		, m_fileModTime(time_t(0))
 		, m_activationCount(0)
+		, m_pIndicationResponseHandler(0)
 	{
 	}
 
@@ -65,6 +67,7 @@ struct PyProviderRep
 		, m_lastAccessTime(time_t(0))
 		, m_fileModTime(time_t(0))
 		, m_activationCount(0)
+		, m_pIndicationResponseHandler(0)
 	{
 	}
 
@@ -75,6 +78,7 @@ struct PyProviderRep
 		, m_lastAccessTime(arg.m_lastAccessTime)
 		, m_fileModTime(arg.m_fileModTime)
 		, m_activationCount(arg.m_activationCount)
+		, m_pIndicationResponseHandler(arg.m_pIndicationResponseHandler)
 	{
 	}
 
@@ -86,12 +90,15 @@ struct PyProviderRep
 		m_lastAccessTime = arg.m_lastAccessTime;
 		m_fileModTime = arg.m_fileModTime;
 		m_activationCount = arg.m_activationCount;
+		m_pIndicationResponseHandler = arg.m_pIndicationResponseHandler;
 		return *this;
 	}
 
 	~PyProviderRep()
 	{
 		m_pyprov.release();
+		if (m_pIndicationResponseHandler)
+			delete m_pIndicationResponseHandler;
 	}
 
 	String m_path;
@@ -100,9 +107,11 @@ struct PyProviderRep
 	time_t m_lastAccessTime;
 	time_t m_fileModTime;
 	int m_activationCount;
+	EnableIndicationsResponseHandler *m_pIndicationResponseHandler;
 };
 
-typedef std::map<String, PyProviderRep> ProviderMap;
+typedef Reference<PyProviderRep> PyProviderRef;
+typedef std::map<String, PyProviderRef> ProviderMap;
 
 class PEGASUS_PYTHONPM_LINKAGE PythonProviderManager : public ProviderManager
 {
@@ -161,23 +170,23 @@ public:
 
 protected:
 
-    CIMResponseMessage* _handleUnsupportedRequest(CIMRequestMessage * message, PyProviderRep& provrep);
-    CIMResponseMessage* _handleExecQueryRequest(CIMRequestMessage * message, PyProviderRep& provrep);
+    CIMResponseMessage* _handleUnsupportedRequest(CIMRequestMessage * message, PyProviderRef& provref);
+    CIMResponseMessage* _handleExecQueryRequest(CIMRequestMessage * message, PyProviderRef& provref);
 
-    CIMResponseMessage* _handleCreateSubscriptionRequest(CIMRequestMessage * message, PyProviderRep& provrep);
-//    CIMResponseMessage* handleModifySubscriptionRequest(const Message * message, PyProviderRep& provrep);
-    CIMResponseMessage* _handleDeleteSubscriptionRequest(CIMRequestMessage * message, PyProviderRep& provrep);
+    CIMResponseMessage* _handleCreateSubscriptionRequest(CIMRequestMessage * message, PyProviderRef& provref);
+//    CIMResponseMessage* handleModifySubscriptionRequest(const Message * message, PyProviderRef& provref);
+    CIMResponseMessage* _handleDeleteSubscriptionRequest(CIMRequestMessage * message, PyProviderRef& provref);
 
-    CIMResponseMessage* _handleExportIndicationRequest(CIMRequestMessage * message, PyProviderRep& provrep);
+    CIMResponseMessage* _handleExportIndicationRequest(CIMRequestMessage * message, PyProviderRef& provref);
 
-    CIMResponseMessage* _handleDisableModuleRequest(CIMRequestMessage * message, PyProviderRep& provrep);
-    CIMResponseMessage* _handleEnableModuleRequest(CIMRequestMessage * message, PyProviderRep& provrep);
-    CIMResponseMessage* _handleStopAllProvidersRequest(CIMRequestMessage * message, PyProviderRep& provrep);
+    CIMResponseMessage* _handleDisableModuleRequest(CIMRequestMessage * message, PyProviderRef& provref);
+    CIMResponseMessage* _handleEnableModuleRequest(CIMRequestMessage * message, PyProviderRef& provref);
+    CIMResponseMessage* _handleStopAllProvidersRequest(CIMRequestMessage * message, PyProviderRef& provref);
 //  Note: The PG_Provider AutoStart property is not yet supported
 #if 0
-    CIMResponseMessage* _handleInitializeProviderRequest(const Message * message, PyProviderRep& provrep);
+    CIMResponseMessage* _handleInitializeProviderRequest(const Message * message, PyProviderRef& provref);
 #endif
-    CIMResponseMessage* _handleSubscriptionInitCompleteRequest (CIMRequestMessage * message, PyProviderRep& provrep);
+    CIMResponseMessage* _handleSubscriptionInitCompleteRequest (CIMRequestMessage * message, PyProviderRef& provref);
 
     ProviderName _resolveProviderName(const ProviderIdContainer & providerId);
 
@@ -190,14 +199,14 @@ private:
 	Py::Object _loadProvider(const String& provPath,
 		const OperationContext& opctx);
 
-	void _shutdownProvider(const PyProviderRep& provrep,
+	void _shutdownProvider(const PyProviderRef& provref,
 		const OperationContext& opctx);
 
-	PyProviderRep _path2PyProviderRep(const String& provPath,
+	PyProviderRef _path2PyProviderRef(const String& provPath,
 		const OperationContext& opctx);
 
-	void _incActivationCount(PyProviderRep& provrep);
-	void _decActivationCount(PyProviderRep& provrep);
+	void _incActivationCount(PyProviderRef& provref);
+	void _decActivationCount(PyProviderRef& provref);
 
 	Py::Module m_pywbemMod;
 	Py::Object m_cimexobj;

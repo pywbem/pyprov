@@ -42,7 +42,10 @@ namespace PythonProvIFC
 {
 
 CIMResponseMessage* 
-MethodProviderHandler::handleInvokeMethodRequest(CIMRequestMessage* message, PyProviderRep& provrep, PythonProviderManager* pmgr)
+MethodProviderHandler::handleInvokeMethodRequest(
+	CIMRequestMessage* message,
+	PyProviderRef& provref,
+	PythonProviderManager* pmgr)
 {
     PEG_METHOD_ENTER(
         TRC_PROVIDERMANAGER,
@@ -81,11 +84,11 @@ MethodProviderHandler::handleInvokeMethodRequest(CIMRequestMessage* message, PyP
 		{
 			THROWCIMMSG(CIM_ERR_METHOD_NOT_AVAILABLE,
 				Formatter::format("Python provider $0 called with invalid "
-					"method: $1", provrep.m_path,
+					"method: $1", provref->m_path,
 					request->methodName.getString()));
 		}
 		CIMMethod method = cc.getMethod(i);
-		Py::Callable pyfunc = getFunction(provrep.m_pyprov, "invokeMethod");
+		Py::Callable pyfunc = getFunction(provref->m_pyprov, "invokeMethod");
 		Py::Tuple args(4);
 		args[0] = PyProviderEnvironment::newObject(request->operationContext); 	// Provider Environment
 		args[1] = PGPyConv::PGRef2Py(objectPath);
@@ -113,7 +116,7 @@ MethodProviderHandler::handleInvokeMethodRequest(CIMRequestMessage* message, PyP
 			THROWCIMMSG(CIM_ERR_FAILED,
 				Formatter::format("Python provider $0 did not return a valid "
 					"value for invokeMethod on $1. Should be a tuple",
-						provrep.m_path, request->methodName.getString()));
+						provref->m_path, request->methodName.getString()));
 		}
 		// The tuple we are excpecting here is of the following format
 		// Tuple[0] = subTuple(2): subTuple[0]: dataType name. subTuple[1]:data
@@ -124,7 +127,7 @@ MethodProviderHandler::handleInvokeMethodRequest(CIMRequestMessage* message, PyP
 		{
 			THROWCIMMSG(CIM_ERR_FAILED, Formatter::format("Python provider $0 "
 				"did not return tuple of length 2 on invokeMethod on $1",
-					provrep.m_path, request->methodName.getString()));
+					provref->m_path, request->methodName.getString()));
 		}
 		// Get the return value
 		Py::Tuple vt(rt[0]);
@@ -159,7 +162,7 @@ MethodProviderHandler::handleInvokeMethodRequest(CIMRequestMessage* message, PyP
 		handler.deliver(rv);
 		handler.complete();
 	}
-	HANDLECATCH(handler, provrep, getInstance)
+	HANDLECATCH(handler, provref, getInstance)
     PEG_METHOD_EXIT();
     return response.release();
 }
