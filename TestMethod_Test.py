@@ -391,14 +391,13 @@ class TestMethods(unittest.TestCase):
 
         self.conn.CreateInstance(inst)
 
-        '''  # OpenWBEM is broken!  uncomment this for Pegasus. 
+        '''  # OpenWBEM is broken!  uncomment this for Pegasus.  '''
         rv, outs = self.conn.InvokeMethod('delObjects', 'TestMethod', 
                 paths=to_delete)
         
         inames = self.conn.EnumerateInstanceNames('TestMethod')
         self.assertEquals(len(inames), 1)
         self.assertEquals(inames[0]['id'], 'three')
-        '''
 
     def test_mkUniStr_sint8(self):
         s = 'Scrum Rocks!'
