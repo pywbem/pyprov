@@ -29,6 +29,8 @@
 #include <Pegasus/Common/CIMParamValue.h>
 #include <Pegasus/Client/CIMClient.h>
 
+#include "PythonProviderManager.h"
+
 #include <iostream>
 using std::cout;
 using std::cerr;

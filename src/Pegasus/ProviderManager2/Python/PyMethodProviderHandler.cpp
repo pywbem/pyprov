@@ -90,7 +90,7 @@ MethodProviderHandler::handleInvokeMethodRequest(
 		CIMMethod method = cc.getMethod(i);
 		Py::Callable pyfunc = getFunction(provref->m_pyprov, "invokeMethod");
 		Py::Tuple args(4);
-		args[0] = PyProviderEnvironment::newObject(request->operationContext); 	// Provider Environment
+		args[0] = PyProviderEnvironment::newObject(request->operationContext, pmgr);
 		args[1] = PGPyConv::PGRef2Py(objectPath);
 		args[2] = PGPyConv::PGMeth2Py(method);
 		// Build input parameter dictionary

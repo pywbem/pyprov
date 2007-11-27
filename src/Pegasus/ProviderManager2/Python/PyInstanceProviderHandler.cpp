@@ -83,7 +83,7 @@ InstanceProviderHandler::handleGetInstanceRequest(
 		handler.processing();
 		Py::Callable pyfunc = getFunction(provref->m_pyprov, "getInstance");
 		Py::Tuple args(4);
-		args[0] = PyProviderEnvironment::newObject(request->operationContext); 	// Provider Environment
+		args[0] = PyProviderEnvironment::newObject(request->operationContext, pmgr);
 		args[1] = PGPyConv::PGRef2Py(objectPath);
 		args[2] = getPyPropertyList(request->propertyList);
 		args[3] = PGPyConv::PGClass2Py(cc);
@@ -138,7 +138,7 @@ InstanceProviderHandler::handleEnumerateInstancesRequest(
 		Py::Object pyProv = provref->m_pyprov;
 		Py::Callable pyfunc = getFunction(pyProv, "enumInstances");
 		Py::Tuple args(5);
-		args[0] = PyProviderEnvironment::newObject(request->operationContext); 	// Provider Environment
+		args[0] = PyProviderEnvironment::newObject(request->operationContext, pmgr);
 		args[1] = Py::String(request->nameSpace.getString());							// Namespace
 		args[2] = getPyPropertyList(request->propertyList);
 		args[3] = PGPyConv::PGClass2Py(cc);
@@ -213,7 +213,7 @@ InstanceProviderHandler::handleEnumerateInstanceNamesRequest(
 		Py::Object pyProv = provref->m_pyprov;
 		Py::Callable pyfunc = getFunction(pyProv, "enumInstanceNames");
 		Py::Tuple args(3);
-		args[0] = PyProviderEnvironment::newObject(request->operationContext); 	// Provider Environment
+		args[0] = PyProviderEnvironment::newObject(request->operationContext, pmgr);
 		args[1] = Py::String(request->nameSpace.getString());							// Namespace
 		args[2] = PGPyConv::PGClass2Py(cc);
 
@@ -286,7 +286,7 @@ InstanceProviderHandler::handleCreateInstanceRequest(
 		Py::Object pyProv = provref->m_pyprov;
 		Py::Callable pyfunc = getFunction(pyProv, "createInstance");
 		Py::Tuple args(2);
-		args[0] = PyProviderEnvironment::newObject(request->operationContext); 	// Provider Environment
+		args[0] = PyProviderEnvironment::newObject(request->operationContext, pmgr);
 		args[1] = PGPyConv::PGInst2Py(request->newInstance, request->nameSpace.getString());
 		Py::Object pycop = pyfunc.apply(args);
 		if (pycop.isNone())
@@ -351,7 +351,7 @@ InstanceProviderHandler::handleModifyInstanceRequest(
 
 		Py::Tuple args(5);
 		String ns = request->nameSpace.getString();
-		args[0] = PyProviderEnvironment::newObject(request->operationContext); 	// Provider Environment
+		args[0] = PyProviderEnvironment::newObject(request->operationContext, pmgr);
 		args[1] = PGPyConv::PGInst2Py(request->modifiedInstance, ns);
 		args[2] = PGPyConv::PGInst2Py(prevInstance, ns);
 		args[3] = getPyPropertyList(request->propertyList);
@@ -397,7 +397,7 @@ InstanceProviderHandler::handleDeleteInstanceRequest(
 		Py::Callable pyfunc = getFunction(pyProv, "deleteInstance");
 		Py::Tuple args(2);
 		String ns = request->nameSpace.getString();
-		args[0] = PyProviderEnvironment::newObject(request->operationContext); 	// Provider Environment
+		args[0] = PyProviderEnvironment::newObject(request->operationContext, pmgr);
 		args[1] = PGPyConv::PGRef2Py(request->instanceName);
 		pyfunc.apply(args);
 		handler.complete();
@@ -451,7 +451,7 @@ InstanceProviderHandler::handleGetPropertyRequest(
 		handler.processing();
 		Py::Callable pyfunc = getFunction(provref->m_pyprov, "getInstance");
 		Py::Tuple args(4);
-		args[0] = PyProviderEnvironment::newObject(request->operationContext); 	// Provider Environment
+		args[0] = PyProviderEnvironment::newObject(request->operationContext, pmgr);
 		args[1] = PGPyConv::PGRef2Py(objectPath);
 		args[2] = Py::None();
 		args[3] = PGPyConv::PGClass2Py(cc);
@@ -538,7 +538,7 @@ InstanceProviderHandler::handleSetPropertyRequest(
 
 		Py::Tuple args(5);
 		String ns = request->nameSpace.getString();
-		args[0] = PyProviderEnvironment::newObject(request->operationContext); 	// Provider Environment
+		args[0] = PyProviderEnvironment::newObject(request->operationContext, pmgr);
 		args[1] = PGPyConv::PGInst2Py(instance, ns);
 		args[2] = PGPyConv::PGInst2Py(prevInstance, ns);
 		Py::List pList;

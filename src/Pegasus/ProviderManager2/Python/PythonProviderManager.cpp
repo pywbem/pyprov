@@ -275,7 +275,7 @@ PythonProviderManager::_loadProvider(
 		Py::Object cim_provider = m_pywbemMod.getAttr("cim_provider"); 
 		Py::Callable ctor = cim_provider.getAttr("ProviderProxy");
 		Py::Tuple args(2);
-		args[0] = PyProviderEnvironment::newObject(opctx); 	// Provider Environment
+		args[0] = PyProviderEnvironment::newObject(opctx, this); 	// Provider Environment
 		args[1] = Py::String(provPath);
 		// Construct a CIMProvider python object
 		Py::Object pyprov = ctor.apply(args);
@@ -307,7 +307,7 @@ PythonProviderManager::_shutdownProvider(
 cerr << "******* about to call 'shutdown' (for reload?  or for shutdown?) *****" << endl;
 		Py::Callable pyfunc = getFunction(provref->m_pyprov, "shutdown");
 		Py::Tuple args(1);
-		args[0] = PyProviderEnvironment::newObject(opctx); 	// Provider Environment
+		args[0] = PyProviderEnvironment::newObject(opctx, this); 	// Provider Environment
 	    pyfunc.apply(args);
 cerr << "******* Done with 'shutdown' and cleanup *****" << endl;
 	}

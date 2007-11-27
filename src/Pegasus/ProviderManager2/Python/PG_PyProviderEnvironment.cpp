@@ -16,6 +16,7 @@
 * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 *****************************************************************************/
 #include "PG_PyExtensions.h"
+#include "PythonProviderManager.h"
 
 using namespace Pegasus;
 
@@ -24,9 +25,11 @@ namespace PythonProvIFC
 
 //////////////////////////////////////////////////////////////////////////////
 PyProviderEnvironment::PyProviderEnvironment(
-	const OperationContext& opctx)
+		const OperationContext& opctx,
+		PythonProviderManager* pmgr)
 	: Py::PythonExtension<PyProviderEnvironment>()
 	, m_opctx(opctx)
+	, m_pmgr(pmgr)
 {
 }
 
@@ -182,12 +185,13 @@ PyProviderEnvironment::doInit()
 
 //////////////////////////////////////////////////////////////////////////////
 // STATIC
-Py::Object
+Py::Object 
 PyProviderEnvironment::newObject(
 	const OperationContext& opctx,
+	PythonProviderManager* pmgr,
 	PyProviderEnvironment **penv)
 {
-	PyProviderEnvironment* ph = new PyProviderEnvironment(opctx);
+	PyProviderEnvironment* ph = new PyProviderEnvironment(opctx, pmgr);
 	if (penv)
 	{
 		*penv = ph;

@@ -27,12 +27,14 @@ using namespace Pegasus;
 namespace PythonProvIFC
 {
 
+class PythonProviderManager;
+
 //////////////////////////////////////////////////////////////////////////////
 class PyProviderEnvironment
 	: public Py::PythonExtension<PyProviderEnvironment>
 {
 public:
-	PyProviderEnvironment(const OperationContext& opctx);
+	PyProviderEnvironment(const OperationContext& opctx, PythonProviderManager* pmgr);
 	~PyProviderEnvironment();
 
 	Py::Object getCIMOMHandle(const Py::Tuple& args);
@@ -51,12 +53,15 @@ public:
 	virtual Py::Object getattr(const char *name);
 
 	static void doInit();
-	static Py::Object newObject(const OperationContext& opctx,
+	static Py::Object newObject(
+		const OperationContext& opctx,
+		PythonProviderManager* pmgr,
 		PyProviderEnvironment **penv=0);
 
 private:
 
 	OperationContext m_opctx;
+	PythonProviderManager* m_pmgr;
 };
 
 }	// End of namespace PythonProvIFC
