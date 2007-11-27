@@ -1,4 +1,4 @@
-ROOT = /usr/src/packages/BUILD/pegasus
+ROOT = ../../../..
 
 DIR = Pegasus/ProviderManager2/Python
 
