@@ -420,10 +420,14 @@ _processCIMObjectPathResults(
 }	// End of unnamed namespace
 
 //////////////////////////////////////////////////////////////////////////////
-PyCIMOMHandle::PyCIMOMHandle()
+PyCIMOMHandle::PyCIMOMHandle(
+		PythonProviderManager* pmgr,
+		const String& provPath)
 	: Py::PythonExtension<PyCIMOMHandle>()
 	, m_chdl()
 	, m_defaultns()
+	, m_pmgr(pmgr)
+	, m_provPath(provPath)
 {
 }
 
@@ -449,7 +453,52 @@ Py::Object
 PyCIMOMHandle::exportIndication(
 	const Py::Tuple& args)
 {
-	// TODO
+	try
+	{
+		CIMInstance ci;
+		if (args.length() && !args[0].isNone())
+		{
+			ci = PGPyConv::PyInst2PG(args[0]);
+		}
+
+		if (ci.isUninitialized())
+		{
+			PY_THROW_CIMMSG(CIM_ERR_INVALID_PARAMETER,
+				"'indication_instance' must be given for exportIndication");
+		}
+
+		String ns;
+		if (args.length() > 1 && !args[1].isNone())
+		{
+			ns = Py::String(args[1]).as_peg_string();
+		}
+
+		if (!ns.size())
+		{
+			ns = m_defaultns;
+			if (!ns.size())
+			{
+				PY_THROW_CIMMSG(CIM_ERR_INVALID_PARAMETER,
+					"'namespace' is a required parameter");
+			}
+		}
+		PYCXX_ALLOW_THREADS
+		m_pmgr->generateIndication(m_provPath, ci);
+		PYCXX_END_ALLOW_THREADS
+	}
+	catch(const CIMException& e)
+	{
+		_throwPyCIMException(e);
+	}
+	catch(const Exception& e)
+	{
+		_throwPyException(e);
+	}
+	catch(...)
+	{
+		_throwPyCIMException(CIM_ERR_FAILED, "Unknown exception");
+	}
+
 	return Py::Nothing();
 }
 
@@ -2152,9 +2201,12 @@ PyCIMOMHandle::doInit()
 //////////////////////////////////////////////////////////////////////////////
 // STATIC
 Py::Object
-PyCIMOMHandle::newObject(PyCIMOMHandle **pchdl)
+PyCIMOMHandle::newObject(
+	PythonProviderManager* pmgr,
+	const String& provPath,
+	PyCIMOMHandle **pchdl)
 {
-	PyCIMOMHandle* ph = new PyCIMOMHandle();
+	PyCIMOMHandle* ph = new PyCIMOMHandle(pmgr, provPath);
 	if (pchdl)
 	{
 		*pchdl = ph;

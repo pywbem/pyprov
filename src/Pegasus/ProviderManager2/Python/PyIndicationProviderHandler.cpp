@@ -82,7 +82,8 @@ IndicationProviderHandler::handleCreateSubscriptionRequest(
 		Py::Object pyProv = provref->m_pyprov;
 		Py::Callable pyfunc = getFunction(pyProv, "activateFilter");
 		Py::Tuple args(6);
-		args[0] = PyProviderEnvironment::newObject(request->operationContext, pmgr);
+		args[0] = PyProviderEnvironment::newObject(request->operationContext,
+			pmgr, provref->m_path);
 		args[1] = Py::String(request->query);
 		// TODO: What to do with event type... I don't get that from Pegasus request
 		args[2] = Py::String("");//request->eventType);
@@ -170,7 +171,8 @@ IndicationProviderHandler::handleDeleteSubscriptionRequest(CIMRequestMessage* me
 		Py::Object pyProv = provref->m_pyprov;
 		Py::Callable pyfunc = getFunction(pyProv, "deactivateFilter");
 		Py::Tuple args(6);
-		args[0] = PyProviderEnvironment::newObject(request->operationContext, pmgr);
+		args[0] = PyProviderEnvironment::newObject(request->operationContext,
+			pmgr, provref->m_path);
 		args[1] = Py::String();//request->query);
 		// TODO: What to do with event type... I don't get that from Pegasus request
 		args[2] = Py::String();//request->eventType);

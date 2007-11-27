@@ -79,7 +79,8 @@ AssociatorProviderHandler::handleAssociatorsRequest(
 		handler.processing();
 		Py::Callable pyfunc = getFunction(provref->m_pyprov, "associators");
 		Py::Tuple args(7);
-		args[0] = PyProviderEnvironment::newObject(request->operationContext, pmgr);
+		args[0] = PyProviderEnvironment::newObject(request->operationContext,
+			pmgr, provref->m_path);
 		args[1] = PGPyConv::PGRef2Py(objectPath);
 		args[2] = Py::String(request->assocClass.getString());
 		args[3] = Py::String(request->resultClass.getString());
@@ -151,7 +152,8 @@ AssociatorProviderHandler::handleAssociatorNamesRequest(
 		handler.processing();
 		Py::Callable pyfunc = getFunction(provref->m_pyprov, "associatorNames");
 		Py::Tuple args(6);
-		args[0] = PyProviderEnvironment::newObject(request->operationContext, pmgr);
+		args[0] = PyProviderEnvironment::newObject(request->operationContext,
+			pmgr, provref->m_path);
 		args[1] = PGPyConv::PGRef2Py(objectPath);
 		args[2] = Py::String(request->assocClass.getString());
 		args[3] = Py::String(request->resultClass.getString());
@@ -221,7 +223,8 @@ AssociatorProviderHandler::handleReferencesRequest(
 		handler.processing();
 		Py::Callable pyfunc = getFunction(provref->m_pyprov, "references");
 		Py::Tuple args(5);
-		args[0] = PyProviderEnvironment::newObject(request->operationContext, pmgr);
+		args[0] = PyProviderEnvironment::newObject(request->operationContext,
+			pmgr, provref->m_path);
 		args[1] = PGPyConv::PGRef2Py(objectPath);
 		args[2] = Py::String(request->resultClass.getString());
 		args[3] = Py::String(request->role);
@@ -289,7 +292,8 @@ AssociatorProviderHandler::handleReferenceNamesRequest(
 		handler.processing();
 		Py::Callable pyfunc = getFunction(provref->m_pyprov, "referenceNames");
 		Py::Tuple args(4);
-		args[0] = PyProviderEnvironment::newObject(request->operationContext, pmgr);
+		args[0] = PyProviderEnvironment::newObject(request->operationContext,
+			pmgr, provref->m_path);
 		args[1] = PGPyConv::PGRef2Py(objectPath);
 		args[2] = Py::String(request->resultClass.getString());
 		args[3] = Py::String(request->role);

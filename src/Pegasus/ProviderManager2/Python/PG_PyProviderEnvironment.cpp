@@ -26,10 +26,12 @@ namespace PythonProvIFC
 //////////////////////////////////////////////////////////////////////////////
 PyProviderEnvironment::PyProviderEnvironment(
 		const OperationContext& opctx,
-		PythonProviderManager* pmgr)
+		PythonProviderManager* pmgr,
+		const String& provPath)
 	: Py::PythonExtension<PyProviderEnvironment>()
 	, m_opctx(opctx)
 	, m_pmgr(pmgr)
+	, m_provPath(provPath)
 {
 }
 
@@ -43,7 +45,7 @@ Py::Object
 PyProviderEnvironment::getCIMOMHandle(
 	const Py::Tuple& args)
 {
-	return PyCIMOMHandle::newObject();
+	return PyCIMOMHandle::newObject(m_pmgr, m_provPath);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -189,9 +191,10 @@ Py::Object
 PyProviderEnvironment::newObject(
 	const OperationContext& opctx,
 	PythonProviderManager* pmgr,
+	const String& provPath,
 	PyProviderEnvironment **penv)
 {
-	PyProviderEnvironment* ph = new PyProviderEnvironment(opctx, pmgr);
+	PyProviderEnvironment* ph = new PyProviderEnvironment(opctx, pmgr, provPath);
 	if (penv)
 	{
 		*penv = ph;

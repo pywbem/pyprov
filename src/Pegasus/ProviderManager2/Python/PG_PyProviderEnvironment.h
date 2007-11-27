@@ -34,7 +34,11 @@ class PyProviderEnvironment
 	: public Py::PythonExtension<PyProviderEnvironment>
 {
 public:
-	PyProviderEnvironment(const OperationContext& opctx, PythonProviderManager* pmgr);
+	PyProviderEnvironment(
+		const OperationContext& opctx,
+		PythonProviderManager* pmgr,
+		const String& provPath);
+
 	~PyProviderEnvironment();
 
 	Py::Object getCIMOMHandle(const Py::Tuple& args);
@@ -53,15 +57,18 @@ public:
 	virtual Py::Object getattr(const char *name);
 
 	static void doInit();
+
 	static Py::Object newObject(
 		const OperationContext& opctx,
 		PythonProviderManager* pmgr,
+		const String& provPath,
 		PyProviderEnvironment **penv=0);
 
 private:
 
 	OperationContext m_opctx;
 	PythonProviderManager* m_pmgr;
+	String m_provPath;
 };
 
 }	// End of namespace PythonProvIFC

@@ -27,12 +27,14 @@ using namespace Pegasus;
 namespace PythonProvIFC
 {
 
+class PythonProviderManager;
+
 //////////////////////////////////////////////////////////////////////////////
 class PyCIMOMHandle
 	: public Py::PythonExtension<PyCIMOMHandle>
 {
 public:
-	PyCIMOMHandle();
+	PyCIMOMHandle(PythonProviderManager* pmgr, const String& provPath);
 	~PyCIMOMHandle();
 
 	Py::Object setDefaultNs(const Py::Tuple& args);
@@ -73,12 +75,17 @@ public:
 	virtual Py::Object getattr(const char *name);
 
 	static void doInit();
-	static Py::Object newObject(PyCIMOMHandle **pchdl=0);
+	static Py::Object newObject(
+		PythonProviderManager* pmgr,
+		const String& provPath,
+		PyCIMOMHandle **pchdl=0);
 
 private:
 
 	CIMOMHandle m_chdl;
 	String m_defaultns;
+	PythonProviderManager* m_pmgr;
+	String m_provPath;
 };
 
 }	// End of namespace PythonProvIFC
