@@ -59,3 +59,4 @@ SOURCES = \
 	PG_PyConverter.cpp
 
 include $(ROOT)/mak/dynamic-library.mak
+

@@ -55,6 +55,7 @@ struct PyProviderRep
 		, m_lastAccessTime(time_t(0))
 		, m_fileModTime(time_t(0))
 		, m_activationCount(0)
+		, m_provInstance()
 		, m_pIndicationResponseHandler(0)
 	{
 	}
@@ -67,6 +68,7 @@ struct PyProviderRep
 		, m_lastAccessTime(time_t(0))
 		, m_fileModTime(time_t(0))
 		, m_activationCount(0)
+		, m_provInstance()
 		, m_pIndicationResponseHandler(0)
 	{
 	}
@@ -78,6 +80,7 @@ struct PyProviderRep
 		, m_lastAccessTime(arg.m_lastAccessTime)
 		, m_fileModTime(arg.m_fileModTime)
 		, m_activationCount(arg.m_activationCount)
+		, m_provInstance(arg.m_provInstance)
 		, m_pIndicationResponseHandler(arg.m_pIndicationResponseHandler)
 	{
 	}
@@ -90,6 +93,7 @@ struct PyProviderRep
 		m_lastAccessTime = arg.m_lastAccessTime;
 		m_fileModTime = arg.m_fileModTime;
 		m_activationCount = arg.m_activationCount;
+		m_provInstance = arg.m_provInstance;
 		m_pIndicationResponseHandler = arg.m_pIndicationResponseHandler;
 		return *this;
 	}
@@ -107,6 +111,7 @@ struct PyProviderRep
 	time_t m_lastAccessTime;
 	time_t m_fileModTime;
 	int m_activationCount;
+	CIMInstance m_provInstance;
 	EnableIndicationsResponseHandler *m_pIndicationResponseHandler;
 };
 

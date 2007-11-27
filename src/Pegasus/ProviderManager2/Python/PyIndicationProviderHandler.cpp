@@ -72,7 +72,6 @@ IndicationProviderHandler::handleCreateSubscriptionRequest(
 	PEGASUS_ASSERT(response.get() != 0);
 
 	// create a handler for this request
-
 	OperationResponseHandler handler(
 		request, response.get(), pmgr->_responseChunkCallback);
 
@@ -80,39 +79,22 @@ IndicationProviderHandler::handleCreateSubscriptionRequest(
 	try
 	{
 		StatProviderTimeMeasurement providerTime(response.get());
-		//handler.processing();
-
 		Py::Object pyProv = provref->m_pyprov;
-cerr << "!!!! Calling getFunction" << endl;
 		Py::Callable pyfunc = getFunction(pyProv, "activateFilter");
-cerr << "!!!! getFunction returned" << endl;
 		Py::Tuple args(6);
-cerr << "!!!! TRACE 1" << endl;
 		args[0] = PyProviderEnvironment::newObject(request->operationContext); 	// Provider Environment
-cerr << "!!!! TRACE 2" << endl;
 		args[1] = Py::String(request->query);
-cerr << "!!!! TRACE 3" << endl;
 		// TODO: What to do with event type... I don't get that from Pegasus request
 		args[2] = Py::String("");//request->eventType);
-cerr << "!!!! TRACE 4" << endl;
 		args[3] = Py::String(request->nameSpace.getString());
-cerr << "!!!! TRACE 5" << endl;
 		Py::List pyclasses;
-		for (unsigned long i = 0; i < request->classNames.size(); i++)
+		for (Uint32 i = 0; i < request->classNames.size(); i++)
 		{
 			pyclasses.append(Py::String(request->classNames[i].getString()));
 		}
-cerr << "!!!! TRACE 6" << endl;
 		args[4] = pyclasses;
-cerr << "!!!! TRACE 7" << endl;
-		provref->m_activationCount++;
-cerr << "!!!! TRACE 8" << endl;
 		args[5] = Py::Bool(provref->m_activationCount == 1);// whether first activation or not
-cerr << "!!!! Calling activate_filter" << endl;
 		pyfunc.apply(args);
-cerr << "!!!! activate_filter returned" << endl;
-
-		//handler.complete();
 	}
 	HANDLECATCH(handler, provref, createSubscription)
 	PEG_METHOD_EXIT();
