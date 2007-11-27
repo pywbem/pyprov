@@ -18,9 +18,10 @@ Group:          System/Management
 Summary:        Python Provider Interface for OpenWBEM
 License:        GNU Lesser General Public License (LGPL)
 URL:            http://pywbem.sf.net/
-Source0:	openwbem-python-providerifc-1.0.0.tar.gz
-PreReq:		/usr/bin/loadmof.sh
+Source0:        openwbem-python-providerifc-1.0.0.tar.gz
+PreReq:         /usr/bin/loadmof.sh
 Requires:       python-pywbem openwbem
+Provides:       pyprovifc = 1.0.0
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 
 %description

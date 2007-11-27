@@ -7,6 +7,6 @@ instance of OpenWBEM_PyProviderRegistration
 	NamespaceNames = {"root/cimv2"};
 	ClassName = "PyIndFoo";
 	ProviderTypes = {1,4,8};	// Instance, LifeCycle Indication, Polled
-	ModulePath = "/home/jcarey/proj/las/pyprovifc/test/LifeCycleIndication.py";
+	ModulePath = "/home/bart/code/pywbem/pyprovifc/openwbem/trunk/test/LifeCycleIndication.py";
 };
 

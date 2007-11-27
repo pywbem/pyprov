@@ -17,7 +17,7 @@
 *****************************************************************************/
 #include "PyCxxObjects.hpp"
 
-#include "OWPyConverter.hpp"
+#include "OW_PyConverter.hpp"
 
 #include <iostream>
 #include <openwbem/OW_CIMProperty.hpp>
@@ -28,6 +28,7 @@
 #include <openwbem/OW_Format.hpp>
 
 using namespace OpenWBEM; 
+using namespace PythonProvIFC;
 using std::cout;
 using std::cerr;
 using std::endl;
@@ -158,7 +159,7 @@ main(int argc, char *argv[])
 
     if (argc != 3)
     {
-		cerr << "Usage: " << argv[0] << "<.py script> <func name>" << endl;
+		cerr << "Usage: " << argv[0] << " <.py script> <func name>" << endl;
 		return 1; 
     }
 
