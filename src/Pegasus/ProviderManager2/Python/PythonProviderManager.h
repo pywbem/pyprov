@@ -141,57 +141,30 @@ public:
 
     virtual Boolean supportsRemoteNameSpaces()
     {
+		// TODO: What does this mean?
         return true;
     }
 
-    struct indProvRecord
-    {
-        indProvRecord() : enabled(false), count(1), handler(NULL)
-        {
-        }
-        Boolean enabled;
-        int count;
-#ifdef PEGASUS_ENABLE_REMOTE_PYTHON
-        String remoteInfo; 
-#endif
-        EnableIndicationsResponseHandler* handler;
-    };
-
-    struct indSelectRecord
-    {
-        indSelectRecord() : eSelx(NULL), count(1)
-        {
-        }
-        Python_SelectExp *eSelx;
-        CIMOMHandleQueryContext *qContext;
-        int count;
-    };
-
-    typedef HashTable<String,indProvRecord*, \
-        EqualFunc<String>,HashFunc<String> > IndProvTab;
-
-    typedef HashTable<CIMObjectPath,indSelectRecord*, \
-        EqualFunc<CIMObjectPath>,HashFunc<CIMObjectPath> > IndSelectTab;
+	void generateIndication(const String& provPath,
+		const CIMInstance& indicationInstance);
 
 protected:
 
     CIMResponseMessage* _handleUnsupportedRequest(CIMRequestMessage * message, PyProviderRef& provref);
     CIMResponseMessage* _handleExecQueryRequest(CIMRequestMessage * message, PyProviderRef& provref);
-
-    CIMResponseMessage* _handleCreateSubscriptionRequest(CIMRequestMessage * message, PyProviderRef& provref);
-//    CIMResponseMessage* handleModifySubscriptionRequest(const Message * message, PyProviderRef& provref);
     CIMResponseMessage* _handleDeleteSubscriptionRequest(CIMRequestMessage * message, PyProviderRef& provref);
-
     CIMResponseMessage* _handleExportIndicationRequest(CIMRequestMessage * message, PyProviderRef& provref);
-
     CIMResponseMessage* _handleDisableModuleRequest(CIMRequestMessage * message, PyProviderRef& provref);
     CIMResponseMessage* _handleEnableModuleRequest(CIMRequestMessage * message, PyProviderRef& provref);
     CIMResponseMessage* _handleStopAllProvidersRequest(CIMRequestMessage * message, PyProviderRef& provref);
+	CIMResponseMessage* _handleModifySubscriptionRequest(CIMRequestMessage* message, PyProviderRef& provref);
+    CIMResponseMessage* _handleSubscriptionInitCompleteRequest (CIMRequestMessage * message, PyProviderRef& provref);
+
 //  Note: The PG_Provider AutoStart property is not yet supported
 #if 0
     CIMResponseMessage* _handleInitializeProviderRequest(const Message * message, PyProviderRef& provref);
 #endif
-    CIMResponseMessage* _handleSubscriptionInitCompleteRequest (CIMRequestMessage * message, PyProviderRef& provref);
+
 
     ProviderName _resolveProviderName(const ProviderIdContainer & providerId);
 
@@ -203,15 +176,12 @@ private:
 
 	Py::Object _loadProvider(const String& provPath,
 		const OperationContext& opctx);
-
 	void _shutdownProvider(const PyProviderRef& provref,
 		const OperationContext& opctx);
-
 	PyProviderRef _path2PyProviderRef(const String& provPath,
 		const OperationContext& opctx);
-
-	void _incActivationCount(PyProviderRef& provref);
-	void _decActivationCount(PyProviderRef& provref);
+	void _incActivationCount(CIMRequestMessage* message, PyProviderRef& provref);
+	void _decActivationCount(CIMRequestMessage* message, PyProviderRef& provref);
 
 	Py::Module m_pywbemMod;
 	Py::Object m_cimexobj;

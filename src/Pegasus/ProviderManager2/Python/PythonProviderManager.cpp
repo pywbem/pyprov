@@ -248,7 +248,6 @@ PythonProviderManager::PythonProviderManager()
         "-- Python Provider Manager activated");
 
 	_initPython();
-
     PEG_METHOD_EXIT();
 }
 
@@ -333,34 +332,6 @@ cerr << "******* Got unknown exception unloading provider *****" << endl;
 			provref->m_path);
 		String msg = "Python Unload Error: Unknown error";
 cerr << msg << endl;
-	}
-}
-
-///////////////////////////////////////////////////////////////////////////////
-void
-PythonProviderManager::_incActivationCount(
-	PyProviderRef& provref)
-{
-	AutoMutex am(g_provGuard);
-	ProviderMap::iterator it = m_provs.find(provref->m_path);
-	if (it != m_provs.end())
-	{
-		it->second->m_activationCount++;
-		provref->m_activationCount = it->second->m_activationCount;
-	}
-}
-
-///////////////////////////////////////////////////////////////////////////////
-void
-PythonProviderManager::_decActivationCount(
-	PyProviderRef& provref)
-{
-	AutoMutex am(g_provGuard);
-	ProviderMap::iterator it = m_provs.find(provref->m_path);
-	if (it != m_provs.end())
-	{
-		it->second->m_activationCount--;
-		provref->m_activationCount = it->second->m_activationCount;
 	}
 }
 
@@ -513,33 +484,38 @@ PythonProviderManager::processMessage(Message * message)
 			response = AssociatorProviderHandler::handleReferenceNamesRequest(request, provRef, this);
 			break;
 
-		case CIM_EXEC_QUERY_REQUEST_MESSAGE:
-			cerr << "CIM_EXEC_QUERY_REQUEST_MESSAGE" << endl;
-			// TODO
-			response = _handleExecQueryRequest(request, provRef);
-			break;
-
 		case CIM_CREATE_SUBSCRIPTION_REQUEST_MESSAGE:
 			cerr << "CIM_CREATE_SUBSCRIPTION_REQUEST_MESSAGE" << endl;
-			_incActivationCount(provRef);
+			_incActivationCount(request, provRef);
 			response = IndicationProviderHandler::handleCreateSubscriptionRequest(request, provRef, this);
 			break;
 
 		case CIM_DELETE_SUBSCRIPTION_REQUEST_MESSAGE:
 			cerr << "CIM_DELETE_SUBSCRIPTION_REQUEST_MESSAGE" << endl;
-			_decActivationCount(provRef);
+			_decActivationCount(request, provRef);
 			response = IndicationProviderHandler::handleDeleteSubscriptionRequest(request, provRef, this);
 			break;
 
 		case CIM_MODIFY_SUBSCRIPTION_REQUEST_MESSAGE:
 			cerr << "CIM_MODIFY_SUBSCRIPTION_REQUEST_MESSAGE" << endl;
-			//response = IndicationProviderHandler::handleModifySubscriptionRequest(request, provRef, this);
+			response = _handleModifySubscriptionRequest (request, provRef);
+			break;
+
+		case CIM_SUBSCRIPTION_INIT_COMPLETE_REQUEST_MESSAGE:
+			cerr << "CIM_SUBSCRIPTION_INIT_COMPLETE_REQUEST_MESSAGE" << endl;
+			response = _handleSubscriptionInitCompleteRequest (request, provRef);
 			break;
 
 		case CIM_EXPORT_INDICATION_REQUEST_MESSAGE:
 			cerr << "CIM_EXPORT_INDICATION_REQUEST_MESSAGE" << endl;
 			response = IndicationConsumerProviderHandler::handleExportIndicationRequest(
 				request, provRef, this);
+			break;
+
+		case CIM_EXEC_QUERY_REQUEST_MESSAGE:
+			cerr << "CIM_EXEC_QUERY_REQUEST_MESSAGE" << endl;
+			// TODO
+			response = _handleExecQueryRequest(request, provRef);
 			break;
 
 		case CIM_DISABLE_MODULE_REQUEST_MESSAGE:
@@ -566,12 +542,6 @@ PythonProviderManager::processMessage(Message * message)
 			response = _handleInitializeProviderRequest(request, provRef);
 			break;
 #endif
-		case CIM_SUBSCRIPTION_INIT_COMPLETE_REQUEST_MESSAGE:
-			cerr << "CIM_SUBSCRIPTION_INIT_COMPLETE_REQUEST_MESSAGE" << endl;
-			// TODO
-			response = _handleSubscriptionInitCompleteRequest (request, provRef);
-			break;
-
 		default:
 			cerr << "!!!!! UNKNOWN MESSAGE" << endl;
 			response = _handleUnsupportedRequest(request, provRef);
@@ -580,6 +550,77 @@ PythonProviderManager::processMessage(Message * message)
     PEG_METHOD_EXIT();
 	cerr << "processMessage returning response" << endl;
     return(response);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void
+PythonProviderManager::_incActivationCount(
+	CIMRequestMessage* message,
+	PyProviderRef& provref)
+{
+	AutoMutex am(g_provGuard);
+	provref->m_activationCount++;
+	if (provref->m_pIndicationResponseHandler)
+	{
+		return;
+	}
+
+	CIMCreateSubscriptionRequestMessage* request =
+		dynamic_cast<CIMCreateSubscriptionRequestMessage*>(message);
+	PEGASUS_ASSERT(request != 0);
+
+	//  Save the provider instance from the request
+    ProviderIdContainer pidc = (ProviderIdContainer)
+        request->operationContext.get(ProviderIdContainer::NAME);
+	provref->m_provInstance = pidc.getProvider();
+	provref->m_pIndicationResponseHandler = 
+		new EnableIndicationsResponseHandler(
+			0,    // request
+			0,    // response
+			provref->m_provInstance,
+			_indicationCallback,
+			_responseChunkCallback);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void
+PythonProviderManager::_decActivationCount(
+	CIMRequestMessage* message,
+	PyProviderRef& provref)
+{
+	AutoMutex am(g_provGuard);
+	ProviderMap::iterator it = m_provs.find(provref->m_path);
+	if (it != m_provs.end())
+	{
+		it->second->m_activationCount--;
+		provref->m_activationCount = it->second->m_activationCount;
+	}
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void
+PythonProviderManager::generateIndication(
+	const String& provPath,
+	const CIMInstance& indicationInstance)
+{
+	AutoMutex am(g_provGuard);
+	if (!_subscriptionInitComplete)
+	{
+		return;
+	}
+	ProviderMap::iterator it = m_provs.find(provPath);
+	if (it == m_provs.end())
+	{
+		return;
+	}
+	PyProviderRef pref = it->second;
+	if (!(pref->m_pIndicationResponseHandler))
+	{
+		return;
+	}
+
+	pref->m_pIndicationResponseHandler->deliver(
+		CIMIndication(indicationInstance));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -596,8 +637,8 @@ void PythonProviderManager::unloadIdleProviders()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-CIMResponseMessage * PythonProviderManager::_handleExecQueryRequest(
-	CIMRequestMessage * message,
+CIMResponseMessage* PythonProviderManager::_handleExecQueryRequest(
+	CIMRequestMessage* message,
 	PyProviderRef& provref)
 {
 	Py::GILGuard gg;	// Acquire Python's GIL
@@ -618,50 +659,9 @@ CIMResponseMessage * PythonProviderManager::_handleExecQueryRequest(
     return response;
 }
 
-CIMResponseMessage * PythonProviderManager::_handleCreateSubscriptionRequest(
-    CIMRequestMessage * message,
-	PyProviderRef& provref)
-{
-	Py::GILGuard gg;	// Acquire Python's GIL
-
-    PEG_METHOD_ENTER(
-        TRC_PROVIDERMANAGER,
-        "PythonProviderManager::_handleCreateSubscriptionRequest()");
-    CIMRequestMessage* request =
-        dynamic_cast<CIMRequestMessage *>(message);
-    PEGASUS_ASSERT(request != 0 );
-
-    CIMResponseMessage* response = request->buildResponse();
-    response->cimException =
-        PEGASUS_CIM_EXCEPTION(CIM_ERR_NOT_SUPPORTED,
-				"CreateSubscription not yet implemented");
-    PEG_METHOD_EXIT();
-    return response;
-}
-
-CIMResponseMessage * PythonProviderManager::_handleDeleteSubscriptionRequest(
-    CIMRequestMessage * message,
-	PyProviderRef& provref)
-{
-	Py::GILGuard gg;	// Acquire Python's GIL
-
-    PEG_METHOD_ENTER(
-        TRC_PROVIDERMANAGER,
-        "PythonProviderManager::_handleDeleteSubscriptionRequest()");
-    CIMRequestMessage* request =
-        dynamic_cast<CIMRequestMessage *>(message);
-    PEGASUS_ASSERT(request != 0 );
-
-    CIMResponseMessage* response = request->buildResponse();
-    response->cimException =
-        PEGASUS_CIM_EXCEPTION(CIM_ERR_NOT_SUPPORTED,
-				"DeleteScription not yet implemented");
-    PEG_METHOD_EXIT();
-    return response;
-}
-
-CIMResponseMessage * PythonProviderManager::_handleDisableModuleRequest(
-    CIMRequestMessage * message,
+///////////////////////////////////////////////////////////////////////////////
+CIMResponseMessage* PythonProviderManager::_handleDisableModuleRequest(
+    CIMRequestMessage* message,
 	PyProviderRef& provref)
 {
 	Py::GILGuard gg;	// Acquire Python's GIL
@@ -681,8 +681,9 @@ CIMResponseMessage * PythonProviderManager::_handleDisableModuleRequest(
     return response;
 }
 
-CIMResponseMessage * PythonProviderManager::_handleEnableModuleRequest(
-    CIMRequestMessage * message,
+///////////////////////////////////////////////////////////////////////////////
+CIMResponseMessage* PythonProviderManager::_handleEnableModuleRequest(
+    CIMRequestMessage* message,
 	PyProviderRef& provref)
 {
 	Py::GILGuard gg;	// Acquire Python's GIL
@@ -702,8 +703,9 @@ CIMResponseMessage * PythonProviderManager::_handleEnableModuleRequest(
     return response;
 }
 
-CIMResponseMessage * PythonProviderManager::_handleStopAllProvidersRequest(
-    CIMRequestMessage * message,
+///////////////////////////////////////////////////////////////////////////////
+CIMResponseMessage* PythonProviderManager::_handleStopAllProvidersRequest(
+    CIMRequestMessage* message,
 	PyProviderRef& provref)
 {
 	Py::GILGuard gg;	// Acquire Python's GIL
@@ -724,8 +726,9 @@ CIMResponseMessage * PythonProviderManager::_handleStopAllProvidersRequest(
 }
 
 #if 0
-CIMResponseMessage * PythonProviderManager::_handleInitializeProviderRequest(
-    CIMRequestMessage * message,
+///////////////////////////////////////////////////////////////////////////////
+CIMResponseMessage* PythonProviderManager::_handleInitializeProviderRequest(
+    CIMRequestMessage* message,
 	PyProviderRef& provref)
 {
 	Py::GILGuard gg;	// Acquire Python's GIL
@@ -746,33 +749,55 @@ CIMResponseMessage * PythonProviderManager::_handleInitializeProviderRequest(
 }
 #endif
 
-CIMResponseMessage * PythonProviderManager::_handleSubscriptionInitCompleteRequest(
-    CIMRequestMessage * message,
+///////////////////////////////////////////////////////////////////////////////
+CIMResponseMessage* PythonProviderManager::_handleModifySubscriptionRequest(
+    CIMRequestMessage* message,
 	PyProviderRef& provref)
 {
-	Py::GILGuard gg;	// Acquire Python's GIL
+    PEG_METHOD_ENTER(
+        TRC_PROVIDERMANAGER,
+        "PythonProviderManager::_handleModifySubscriptionRequest()");
+	CIMModifySubscriptionRequestMessage* request =
+		dynamic_cast<CIMModifySubscriptionRequestMessage*>(message);
+    PEGASUS_ASSERT(request != 0);
 
+    AutoPtr<CIMModifySubscriptionResponseMessage> response(
+        dynamic_cast<CIMModifySubscriptionResponseMessage*>(
+            request->buildResponse()));
+    PEGASUS_ASSERT(response.get() != 0);
+
+	// Ignore?
+
+	return response.release();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+CIMResponseMessage* PythonProviderManager::_handleSubscriptionInitCompleteRequest(
+    CIMRequestMessage* message,
+	PyProviderRef& provref)
+{
     PEG_METHOD_ENTER(
         TRC_PROVIDERMANAGER,
         "PythonProviderManager::_handleSubscriptionInitCompleteRequest()");
-    CIMRequestMessage* request =
-        dynamic_cast<CIMRequestMessage *>(message);
-    PEGASUS_ASSERT(request != 0 );
 
-    CIMResponseMessage* response = request->buildResponse();
-    response->cimException =
-        PEGASUS_CIM_EXCEPTION(CIM_ERR_NOT_SUPPORTED,
-				"SubscriptionInitComplete not yet implemented");
+    CIMSubscriptionInitCompleteRequestMessage* request =
+        dynamic_cast<CIMSubscriptionInitCompleteRequestMessage*>(message);
+    PEGASUS_ASSERT(request != 0);
+
+	CIMSubscriptionInitCompleteResponseMessage* response =
+		dynamic_cast<CIMSubscriptionInitCompleteResponseMessage*>(
+			request->buildResponse());
+	PEGASUS_ASSERT(response != 0);
+	_subscriptionInitComplete = true;
     PEG_METHOD_EXIT();
     return response;
 }
 
-CIMResponseMessage * PythonProviderManager::_handleUnsupportedRequest(
-    CIMRequestMessage * message,
+///////////////////////////////////////////////////////////////////////////////
+CIMResponseMessage* PythonProviderManager::_handleUnsupportedRequest(
+    CIMRequestMessage* message,
 	PyProviderRef& provref)
 {
-	Py::GILGuard gg;	// Acquire Python's GIL
-
     PEG_METHOD_ENTER(
         TRC_PROVIDERMANAGER,
         "PythonProviderManager::_handleUnsupportedRequest()");
@@ -788,6 +813,7 @@ CIMResponseMessage * PythonProviderManager::_handleUnsupportedRequest(
     return response;
 }
 
+///////////////////////////////////////////////////////////////////////////////
 String PythonProviderManager::_resolvePhysicalName(String physicalName)
 {
 	String defProvDir = "/usr/lib/pycim";
@@ -814,6 +840,7 @@ String PythonProviderManager::_resolvePhysicalName(String physicalName)
 	return fullPath;
 }
 
+///////////////////////////////////////////////////////////////////////////////
 ProviderName PythonProviderManager::_resolveProviderName(
     const ProviderIdContainer & providerId)
 {
@@ -935,6 +962,7 @@ void PythonProviderManager::_initPython()
 
 }	// End of namespace PythonProvIFC
 
+///////////////////////////////////////////////////////////////////////////////
 extern "C" PEGASUS_EXPORT ProviderManager * PegasusCreateProviderManager(
     const Pegasus::String & providerManagerName)
 {
