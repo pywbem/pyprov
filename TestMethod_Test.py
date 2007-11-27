@@ -13,6 +13,7 @@ import os
 import shutil
 import random
 
+real_tolerance = 0.01
 
 #This test requires the usage of elementtree
 
@@ -188,10 +189,12 @@ class TestMethods(unittest.TestCase):
         if expectedReturnValue is not None:
             if isRealType:
                 self._dbgPrint('Verifying return value (%f) equal to expected return value %f...' % (rv, expectedReturnValue))
+                if abs(expectedReturnValue - rv) > real_tolerance:
+                    self.fail('Return value not as expected for invocation of method %s' % methodName)
             else:
                 self._dbgPrint('Verifying return value (%d) equal to expected return value %d...' % (rv, expectedReturnValue))
-            if expectedReturnValue != rv:
-                self.fail('Return value not as expected for invocation of method %s' % methodName)
+                if expectedReturnValue != rv:
+                    self.fail('Return value not as expected for invocation of method %s' % methodName)
             self._dbgPrint('Return value is as expected.')
         if minReturnValue is not None:
             if isRealType:
@@ -229,17 +232,15 @@ class TestMethods(unittest.TestCase):
         self._dbgPrint('Invocation of %s returned successfully.' % methodName)
         if isRealType:
             self._dbgPrint('Validating lo (%f) and hi (%f) outparams...' % (min, max))
+            if abs(oparams['lo'] - min) > real_tolerance:
+                self.fail('Returned low range value (%f) not equal to specified value (%f).' % (oparams['lo'], min))
+            if abs(oparams['hi'] - max) > real_tolerance:
+                self.fail('Returned high range value (%f) not equal to specified value (%f).' % (oparams['hi'], max))
         else:
             self._dbgPrint('Validating lo (%d) and hi (%d) outparams...' % (min, max))
-        if oparams['lo'] != min:
-            if isRealType:
-                self.fail('Returned low range value (%f) not equal to specified value (%f).' % (oparams['lo'], min))
-            else:
+            if oparams['lo'] != min:
                 self.fail('Returned low range value (%d) not equal to specified value (%d).' % (oparams['lo'], min))
-        if oparams['hi'] != max:
-            if isRealType:
-                self.fail('Returned high range value (%f) not equal to specified value (%f).' % (oparams['hi'], max))
-            else:
+            if oparams['hi'] != max:
                 self.fail('Returned high range value (%d) not equal to specified value (%d).' % (oparams['hi'], max))
         self._dbgPrint('Lo and hi outparams validated successfully.')
         self._dbgPrint('Validating random list values...')
