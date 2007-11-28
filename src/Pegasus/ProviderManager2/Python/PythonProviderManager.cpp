@@ -57,6 +57,14 @@ namespace
 Py::Object g_cimexobj;
 Mutex g_provGuard;
 
+void TRACE(const char* fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
+}
+
 }	// End of unnamed namespace
 
 //////////////////////////////////////////////////////////////////////////////
@@ -330,7 +338,6 @@ PythonProviderManager::_shutdownProvider(
 	Py::GILGuard gg;	// Acquire python's GIL
 	try
 	{
-cerr << "******* about to call 'shutdown' (for reload?  or for shutdown?) *****" << endl;
 		Py::Callable pyfunc = getFunction(provref->m_pyprov, "shutdown");
 		if (!pyfunc.isCallable())
 		{
@@ -339,29 +346,23 @@ cerr << "******* about to call 'shutdown' (for reload?  or for shutdown?) *****"
 		Py::Tuple args(1);
 		args[0] = PyProviderEnvironment::newObject(opctx, this, provref->m_path);
 	    pyfunc.apply(args);
-cerr << "******* Done with 'shutdown' and cleanup *****" << endl;
 	}
 	catch(Py::Exception& e)
 	{
-cerr << "******* Got exception unloading provider *****" << endl;
 		Logger::put(Logger::ERROR_LOG, PYSYSTEM_ID, Logger::SEVERE,
 			"ProviderManager.Python.PythonProviderManager",
 			"Caught python exception invoking 'shutdown' provider $0.",
 			provref->m_path);
 		String tb = processPyException(e, __LINE__, provref->m_path);
 		String msg = "Python Unload Error: " + tb;
-//cerr << (const char *)msg.getCString() << endl;
-cerr << msg << endl;
 	}
 	catch(...)
 	{
-cerr << "******* Got unknown exception unloading provider *****" << endl;
 		Logger::put(Logger::ERROR_LOG, PYSYSTEM_ID, Logger::SEVERE,
 			"ProviderManager.Python.PythonProviderManager",
 			"Caught unknown exception invoking 'shutdown' provider $0.",
 			provref->m_path);
 		String msg = "Python Unload Error: Unknown error";
-cerr << msg << endl;
 	}
 }
 
@@ -372,8 +373,6 @@ PythonProviderManager::_path2PyProviderRef(
 	const OperationContext& opctx)
 {
 	AutoMutex am(g_provGuard);
-
-cerr << "*** in _path2PyProviderRef" << endl;
 	ProviderMap::iterator it = m_provs.find(provPath);
 	if (it != m_provs.end())
 	{
@@ -382,7 +381,6 @@ cerr << "*** in _path2PyProviderRef" << endl;
         if ((curModTime <= it->second->m_fileModTime)
             || (it->second->m_canUnload == false) )
         {
-cerr << "*** _path2PyProviderRef Found EXISTING returning" << endl;
             // not modified, or can't reload... return it
             return it->second;
         }
@@ -411,12 +409,10 @@ cerr << "*** _path2PyProviderRef Found EXISTING returning" << endl;
 		entry->m_fileModTime = getModTime(provPath);
 		entry->m_lastAccessTime = ::time(NULL);
 		m_provs[provPath] = entry;
-cerr << "*** _path2PyProviderRef Created NEW returning" << endl;
 		return entry;
 	}
 	catch(Py::Exception& e)
 	{
-cerr << "*** _path2PyProviderRef caught Py::exception" << endl;
 		Logger::put(Logger::ERROR_LOG, PYSYSTEM_ID, Logger::SEVERE,
 			"ProviderManager.Python.PythonProviderManager",
 			"Caught exception loading provider $0.",
@@ -458,116 +454,116 @@ PythonProviderManager::processMessage(Message * message)
 	switch (request->getType())
 	{
 		case CIM_GET_INSTANCE_REQUEST_MESSAGE:
-			cerr << "CIM_GET_INSTANCE_REQUEST_MESSAGE" << endl;
+			cerr << "[CIM_GET_INSTANCE_REQUEST_MESSAGE]" << endl;
 			response = InstanceProviderHandler::handleGetInstanceRequest(request, provRef, this);
 			break;
 
 		case CIM_ENUMERATE_INSTANCES_REQUEST_MESSAGE:
-			cerr << "CIM_ENUMERATE_INSTANCES_REQUEST_MESSAGE" << endl;
+			cerr << "[CIM_ENUMERATE_INSTANCES_REQUEST_MESSAGE]" << endl;
 			response = InstanceProviderHandler::handleEnumerateInstancesRequest(request, provRef, this);
 			break;
 
 		case CIM_ENUMERATE_INSTANCE_NAMES_REQUEST_MESSAGE:
-			cerr << "CIM_ENUMERATE_INSTANCE_NAMES_REQUEST_MESSAGE" << endl;
+			cerr << "[CIM_ENUMERATE_INSTANCE_NAMES_REQUEST_MESSAGE]" << endl;
 			response = InstanceProviderHandler::handleEnumerateInstanceNamesRequest(request, provRef, this);
 			break;
 
 		case CIM_CREATE_INSTANCE_REQUEST_MESSAGE:
-			cerr << "CIM_CREATE_INSTANCE_REQUEST_MESSAGE" << endl;
+			cerr << "[CIM_CREATE_INSTANCE_REQUEST_MESSAGE]" << endl;
 			response = InstanceProviderHandler::handleCreateInstanceRequest(request, provRef, this);
 			break;
 
 		case CIM_MODIFY_INSTANCE_REQUEST_MESSAGE:
-			cerr << "CIM_MODIFY_INSTANCE_REQUEST_MESSAGE" << endl;
+			cerr << "[CIM_MODIFY_INSTANCE_REQUEST_MESSAGE]" << endl;
 			response = InstanceProviderHandler::handleModifyInstanceRequest(request, provRef, this);
 			break;
 
 		case CIM_DELETE_INSTANCE_REQUEST_MESSAGE:
-			cerr << "CIM_DELETE_INSTANCE_REQUEST_MESSAGE" << endl;
+			cerr << "[CIM_DELETE_INSTANCE_REQUEST_MESSAGE]" << endl;
 			response = InstanceProviderHandler::handleDeleteInstanceRequest(request, provRef, this);
 			break;
 
 		case CIM_GET_PROPERTY_REQUEST_MESSAGE:
-			cerr << "CIM_GET_PROPERTY_REQUEST_MESSAGE" << endl;
+			cerr << "[CIM_GET_PROPERTY_REQUEST_MESSAGE]" << endl;
 			response = InstanceProviderHandler::handleGetPropertyRequest(request, provRef, this);
 			break;
 
 		case CIM_SET_PROPERTY_REQUEST_MESSAGE:
-			cerr << "CIM_SET_PROPERTY_REQUEST_MESSAGE" << endl;
+			cerr << "[CIM_SET_PROPERTY_REQUEST_MESSAGE]" << endl;
 			response = InstanceProviderHandler::handleSetPropertyRequest(request, provRef, this);
 			break;
 
 		case CIM_INVOKE_METHOD_REQUEST_MESSAGE:
-			cerr << "CIM_INVOKE_METHOD_REQUEST_MESSAGE" << endl;
+			cerr << "[CIM_INVOKE_METHOD_REQUEST_MESSAGE]" << endl;
 			response = MethodProviderHandler::handleInvokeMethodRequest(request, provRef, this);
 			break;
 
 		case CIM_ASSOCIATORS_REQUEST_MESSAGE:
-			cerr << "CIM_ASSOCIATORS_REQUEST_MESSAGE" << endl;
+			cerr << "[CIM_ASSOCIATORS_REQUEST_MESSAGE]" << endl;
 			response = AssociatorProviderHandler::handleAssociatorsRequest(request, provRef, this);
 			break;
 
 		case CIM_ASSOCIATOR_NAMES_REQUEST_MESSAGE:
-			cerr << "CIM_ASSOCIATOR_NAMES_REQUEST_MESSAGE" << endl;
+			cerr << "[CIM_ASSOCIATOR_NAMES_REQUEST_MESSAGE]" << endl;
 			response = AssociatorProviderHandler::handleAssociatorNamesRequest(request, provRef, this);
 			break;
 
 		case CIM_REFERENCES_REQUEST_MESSAGE:
-			cerr << "CIM_REFERENCES_REQUEST_MESSAGE" << endl;
+			cerr << "[CIM_REFERENCES_REQUEST_MESSAGE]" << endl;
 			response = AssociatorProviderHandler::handleReferencesRequest(request, provRef, this);
 			break;
 		case CIM_REFERENCE_NAMES_REQUEST_MESSAGE:
-			cerr << "CIM_REFERENCE_NAMES_REQUEST_MESSAGE" << endl;
+			cerr << "[CIM_REFERENCE_NAMES_REQUEST_MESSAGE]" << endl;
 			response = AssociatorProviderHandler::handleReferenceNamesRequest(request, provRef, this);
 			break;
 
 		case CIM_CREATE_SUBSCRIPTION_REQUEST_MESSAGE:
-			cerr << "CIM_CREATE_SUBSCRIPTION_REQUEST_MESSAGE" << endl;
+			cerr << "[CIM_CREATE_SUBSCRIPTION_REQUEST_MESSAGE]" << endl;
 			_incActivationCount(request, provRef);
 			response = IndicationProviderHandler::handleCreateSubscriptionRequest(request, provRef, this);
 			break;
 
 		case CIM_DELETE_SUBSCRIPTION_REQUEST_MESSAGE:
-			cerr << "CIM_DELETE_SUBSCRIPTION_REQUEST_MESSAGE" << endl;
+			cerr << "[CIM_DELETE_SUBSCRIPTION_REQUEST_MESSAGE]" << endl;
 			_decActivationCount(request, provRef);
 			response = IndicationProviderHandler::handleDeleteSubscriptionRequest(request, provRef, this);
 			break;
 
 		case CIM_MODIFY_SUBSCRIPTION_REQUEST_MESSAGE:
-			cerr << "CIM_MODIFY_SUBSCRIPTION_REQUEST_MESSAGE" << endl;
+			cerr << "[CIM_MODIFY_SUBSCRIPTION_REQUEST_MESSAGE]" << endl;
 			response = _handleModifySubscriptionRequest (request, provRef);
 			break;
 
 		case CIM_SUBSCRIPTION_INIT_COMPLETE_REQUEST_MESSAGE:
-			cerr << "CIM_SUBSCRIPTION_INIT_COMPLETE_REQUEST_MESSAGE" << endl;
+			cerr << "[CIM_SUBSCRIPTION_INIT_COMPLETE_REQUEST_MESSAGE]" << endl;
 			response = _handleSubscriptionInitCompleteRequest (request, provRef);
 			break;
 
 		case CIM_EXPORT_INDICATION_REQUEST_MESSAGE:
-			cerr << "CIM_EXPORT_INDICATION_REQUEST_MESSAGE" << endl;
+			cerr << "[CIM_EXPORT_INDICATION_REQUEST_MESSAGE]" << endl;
 			response = IndicationConsumerProviderHandler::handleExportIndicationRequest(
 				request, provRef, this);
 			break;
 
 		case CIM_STOP_ALL_PROVIDERS_REQUEST_MESSAGE:
-			cerr << "CIM_STOP_ALL_PROVIDERS_REQUEST_MESSAGE" << endl;
+			cerr << "[CIM_STOP_ALL_PROVIDERS_REQUEST_MESSAGE]" << endl;
 			response = _handleStopAllProvidersRequest(request, provRef);
 			break;
 
 		case CIM_EXEC_QUERY_REQUEST_MESSAGE:
-			cerr << "CIM_EXEC_QUERY_REQUEST_MESSAGE" << endl;
+			cerr << "[CIM_EXEC_QUERY_REQUEST_MESSAGE]" << endl;
 			// TODO
 			response = _handleExecQueryRequest(request, provRef);
 			break;
 
 		case CIM_DISABLE_MODULE_REQUEST_MESSAGE:
-			cerr << "CIM_DISABLE_MODULE_REQUEST_MESSAGE" << endl;
+			cerr << "[CIM_DISABLE_MODULE_REQUEST_MESSAGE]" << endl;
 			// TODO
 			response = _handleDisableModuleRequest(request, provRef);
 			break;
 
 		case CIM_ENABLE_MODULE_REQUEST_MESSAGE:
-			cerr << "CIM_ENABLE_MODULE_REQUEST_MESSAGE" << endl;
+			cerr << "[CIM_ENABLE_MODULE_REQUEST_MESSAGE]" << endl;
 			// TODO
 			response = _handleEnableModuleRequest(request, provRef);
 			break;
@@ -580,12 +576,11 @@ PythonProviderManager::processMessage(Message * message)
 			break;
 #endif
 		default:
-			cerr << "!!!!! UNKNOWN MESSAGE" << endl;
+			cerr << "[UNKNOWN_MESSAGE]" << endl;
 			response = _handleUnsupportedRequest(request, provRef);
 			break;
 	}
     PEG_METHOD_EXIT();
-	cerr << "processMessage returning response" << endl;
     return(response);
 }
 
@@ -607,9 +602,7 @@ cerr << "!!! _incActionCount already has response handler. Just returning" << en
 
 	CIMCreateSubscriptionRequestMessage* request =
 		dynamic_cast<CIMCreateSubscriptionRequestMessage*>(message);
-cerr << "!!! _incActionCount trace 1" << endl;
 	PEGASUS_ASSERT(request != 0);
-cerr << "!!! _incActionCount trace 2" << endl;
 
 	//  Save the provider instance from the request
     ProviderIdContainer pidc = (ProviderIdContainer)
@@ -639,6 +632,12 @@ PythonProviderManager::_decActivationCount(
 	{
 		it->second->m_activationCount--;
 		provref->m_activationCount = it->second->m_activationCount;
+		if (!(it->second->m_activationCount))
+		{
+			// Set indication response handle to NULL so indications
+			// will not get generated from this provider
+			provref->m_pIndicationResponseHandler = 0;
+		}
 	}
 }
 
@@ -648,7 +647,6 @@ PythonProviderManager::generateIndication(
 	const String& provPath,
 	const CIMInstance& indicationInstance)
 {
-cerr << "!!!! ProviderManager generateIndication called with provider: " << provPath << endl;
 	AutoMutex am(g_provGuard);
 	ProviderMap::iterator it = m_provs.find(provPath);
 	if (it == m_provs.end())
@@ -657,8 +655,6 @@ cerr << "!!!! ProviderManager generateIndication DID NOT FIND PROVIDER" << endl;
 		return;
 	}
 	PyProviderRef pref = it->second;
-cerr << "!!!! ProviderManager generateIndication found provider: " << pref->m_path << endl;
-cerr << "!!!! ProviderManager response handler: " << (void*) pref->m_pIndicationResponseHandler << endl;
 	if (!(pref->m_pIndicationResponseHandler))
 	{
 cerr << "!!!! ProviderManager generateIndication NO RESPONSE HANDLER" << endl;
@@ -667,7 +663,6 @@ cerr << "!!!! ProviderManager generateIndication NO RESPONSE HANDLER" << endl;
 
 	pref->m_pIndicationResponseHandler->deliver(
 		CIMIndication(indicationInstance));
-cerr << "!!!! ProviderManager generateIndication returning" << endl;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
