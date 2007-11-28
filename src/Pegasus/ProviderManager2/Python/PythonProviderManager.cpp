@@ -130,7 +130,8 @@ getFunctionName(
 Py::Callable
 getFunction(
 	const Py::Object& obj,
-	const String& fnameArg)
+	const String& fnameArg,
+	bool throwIfNotFound)
 {
 	String fn = getFunctionName(fnameArg);
 	try
@@ -142,7 +143,10 @@ getFunction(
 	{
 		e.clear();
 	}
-	THROW_NOSUCHMETH_EXC(fn);
+	if (throwIfNotFound)
+	{
+		THROW_NOSUCHMETH_EXC(fn);
+	}
 	return Py::Callable();	// Shouldn't hit this
 }
 
@@ -263,7 +267,14 @@ PythonProviderManager::~PythonProviderManager()
 	ProviderMap::iterator it = m_provs.begin();
 	while(it != m_provs.end())
 	{
-		_shutdownProvider(it->second, OperationContext());
+		try
+		{
+			_shutdownProvider(it->second, OperationContext());
+		}
+		catch(...)
+		{
+			// Ignore
+		}
 		it++;
 	}
 	PyEval_AcquireLock();
@@ -314,6 +325,10 @@ PythonProviderManager::_shutdownProvider(
 	{
 cerr << "******* about to call 'shutdown' (for reload?  or for shutdown?) *****" << endl;
 		Py::Callable pyfunc = getFunction(provref->m_pyprov, "shutdown");
+		if (!pyfunc.isCallable())
+		{
+			return;
+		}
 		Py::Tuple args(1);
 		args[0] = PyProviderEnvironment::newObject(opctx, this, provref->m_path);
 	    pyfunc.apply(args);
@@ -367,7 +382,14 @@ cerr << "*** _path2PyProviderRef Found EXISTING returning" << endl;
         else
         {
             //cleanup for reload on fall-thru
-            _shutdownProvider(it->second, opctx);
+			try
+			{
+				_shutdownProvider(it->second, opctx);
+			}
+			catch(...)
+			{
+				// Ignore?
+			}
             m_provs.erase(it);
         }
 	}
@@ -621,13 +643,6 @@ PythonProviderManager::generateIndication(
 {
 cerr << "!!!! ProviderManager generateIndication called with provider: " << provPath << endl;
 	AutoMutex am(g_provGuard);
-/*
-	if (!_subscriptionInitComplete)
-	{
-cerr << "!!!! ProviderManager generateIndication subscriptionInitComplete is FALSE" << endl;
-		return;
-	}
-*/
 	ProviderMap::iterator it = m_provs.find(provPath);
 	if (it == m_provs.end())
 	{

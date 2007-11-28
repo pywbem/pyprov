@@ -201,7 +201,7 @@ String getPyFile(const String& fname);
 Py::Object getPyPropertyList(const CIMPropertyList& pgpropList);
 time_t getModTime(const String& fileName);
 String getFunctionName(const String& fnameArg);
-Py::Callable getFunction(const Py::Object& obj, const String& fnameArg);
+Py::Callable getFunction(const Py::Object& obj, const String& fnameArg, bool throwIfNotFound=true);
 String processPyException(Py::Exception& thrownEx, int lineno, 
 	const String& provPath, OperationResponseHandler* pHandler=0);
 
