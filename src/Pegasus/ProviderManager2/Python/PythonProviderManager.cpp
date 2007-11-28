@@ -43,6 +43,8 @@
 
 #include "PG_PyConverter.h"
 
+#include <unistd.h>
+
 PEGASUS_USING_STD;
 PEGASUS_USING_PEGASUS;
 
@@ -254,10 +256,16 @@ PythonProviderManager::PythonProviderManager()
 ///////////////////////////////////////////////////////////////////////////////
 PythonProviderManager::~PythonProviderManager()
 {
-	cerr << "*****In PythonProviderManager::~dtor" << endl;
+	cerr << "*****In PythonProviderManager::~dtor. pid: " << ::getpid() << endl;
     PEG_METHOD_ENTER(
         TRC_PROVIDERMANAGER,
         "PythonProviderManager::~PythonProviderManager()");
+	ProviderMap::iterator it = m_provs.begin();
+	while(it != m_provs.end())
+	{
+		_shutdownProvider(it->second, OperationContext());
+		it++;
+	}
 	PyEval_AcquireLock();
 	PyThreadState_Swap(m_mainPyThreadState);
 	Py_Finalize();
@@ -558,21 +566,27 @@ PythonProviderManager::_incActivationCount(
 	CIMRequestMessage* message,
 	PyProviderRef& provref)
 {
+cerr << "!!! _incActionCount called with provider: " << provref->m_path << endl;
+
 	AutoMutex am(g_provGuard);
 	provref->m_activationCount++;
 	if (provref->m_pIndicationResponseHandler)
 	{
+cerr << "!!! _incActionCount already has response handler. Just returning" << endl;
 		return;
 	}
 
 	CIMCreateSubscriptionRequestMessage* request =
 		dynamic_cast<CIMCreateSubscriptionRequestMessage*>(message);
+cerr << "!!! _incActionCount trace 1" << endl;
 	PEGASUS_ASSERT(request != 0);
+cerr << "!!! _incActionCount trace 2" << endl;
 
 	//  Save the provider instance from the request
     ProviderIdContainer pidc = (ProviderIdContainer)
         request->operationContext.get(ProviderIdContainer::NAME);
 	provref->m_provInstance = pidc.getProvider();
+cerr << "!!! _incActionCount setting response handler" << endl;
 	provref->m_pIndicationResponseHandler = 
 		new EnableIndicationsResponseHandler(
 			0,    // request
@@ -580,6 +594,8 @@ PythonProviderManager::_incActivationCount(
 			provref->m_provInstance,
 			_indicationCallback,
 			_responseChunkCallback);
+cerr << "!!! _incActionCount response handler: " << (void*) provref->m_pIndicationResponseHandler << endl;
+cerr << "!!! _incActionCount returning" << endl;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -603,37 +619,49 @@ PythonProviderManager::generateIndication(
 	const String& provPath,
 	const CIMInstance& indicationInstance)
 {
+cerr << "!!!! ProviderManager generateIndication called with provider: " << provPath << endl;
 	AutoMutex am(g_provGuard);
+/*
 	if (!_subscriptionInitComplete)
 	{
+cerr << "!!!! ProviderManager generateIndication subscriptionInitComplete is FALSE" << endl;
 		return;
 	}
+*/
 	ProviderMap::iterator it = m_provs.find(provPath);
 	if (it == m_provs.end())
 	{
+cerr << "!!!! ProviderManager generateIndication DID NOT FIND PROVIDER" << endl;
 		return;
 	}
 	PyProviderRef pref = it->second;
+cerr << "!!!! ProviderManager generateIndication found provider: " << pref->m_path << endl;
+cerr << "!!!! ProviderManager response handler: " << (void*) pref->m_pIndicationResponseHandler << endl;
 	if (!(pref->m_pIndicationResponseHandler))
 	{
+cerr << "!!!! ProviderManager generateIndication NO RESPONSE HANDLER" << endl;
 		return;
 	}
 
 	pref->m_pIndicationResponseHandler->deliver(
 		CIMIndication(indicationInstance));
+cerr << "!!!! ProviderManager generateIndication returning" << endl;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 Boolean PythonProviderManager::hasActiveProviders()
 {
 	// TODO
-	return false;
+	cerr << "**** hasActiveProviders called pid: " << ::getpid() << endl;
+	//return false;
+	return true;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 void PythonProviderManager::unloadIdleProviders()
 {
 	// TODO
+	cerr << "**** unloadIdleProviders called pid: " << ::getpid() << endl;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -788,6 +816,7 @@ CIMResponseMessage* PythonProviderManager::_handleSubscriptionInitCompleteReques
 		dynamic_cast<CIMSubscriptionInitCompleteResponseMessage*>(
 			request->buildResponse());
 	PEGASUS_ASSERT(response != 0);
+cerr << "$$$$$ Setting _subscriptionInitComplete = true $$$$$" << endl;
 	_subscriptionInitComplete = true;
     PEG_METHOD_EXIT();
     return response;
