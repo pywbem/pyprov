@@ -418,6 +418,12 @@ class TestMethods(unittest.TestCase):
         self.assertEquals(rv, ','.join(ra))
         self.assertFalse(outs)
 
+    def test_strSplit(self):
+        ra = 'one,two,three,four'
+        rv, outs = self.conn.InvokeMethod('strSplit', 'TestMethod', 
+                str=ra, sep=',')
+        self.assertEquals(outs['elems'], ra.split(','))
+        self.assertTrue(ra)
 
     def test_getDate(self):
         dt = pywbem.CIMDateTime.now()
