@@ -616,6 +616,7 @@ cerr << "!!! _incActionCount setting response handler" << endl;
 			provref->m_provInstance,
 			_indicationCallback,
 			_responseChunkCallback);
+	provref->m_pIndicationResponseHandler->processing();
 cerr << "!!! _incActionCount response handler: " << (void*) provref->m_pIndicationResponseHandler << endl;
 cerr << "!!! _incActionCount returning" << endl;
 }
@@ -627,13 +628,15 @@ PythonProviderManager::_decActivationCount(
 	PyProviderRef& provref)
 {
 	AutoMutex am(g_provGuard);
+	// Make sure we know about this provider
 	ProviderMap::iterator it = m_provs.find(provref->m_path);
 	if (it != m_provs.end())
 	{
-		it->second->m_activationCount--;
-		provref->m_activationCount = it->second->m_activationCount;
-		if (!(it->second->m_activationCount))
+		provref->m_activationCount--;
+		if (!provref->m_activationCount
+			&& provref->m_pIndicationResponseHandler)
 		{
+			provref->m_pIndicationResponseHandler->complete();
 			// Set indication response handle to NULL so indications
 			// will not get generated from this provider
 			provref->m_pIndicationResponseHandler = 0;

@@ -46,8 +46,9 @@ namespace PythonProvIFC
 struct Python_SelectExp;
 
 
-struct PyProviderRep
+class PyProviderRep
 {
+public:
 	PyProviderRep()
 		: m_path()
 		, m_pyprov(Py::None())
@@ -73,31 +74,6 @@ struct PyProviderRep
 	{
 	}
 
-	PyProviderRep(const PyProviderRep& arg)
-		: m_path(arg.m_path)
-		, m_pyprov(arg.m_pyprov)
-		, m_canUnload(arg.m_canUnload)
-		, m_lastAccessTime(arg.m_lastAccessTime)
-		, m_fileModTime(arg.m_fileModTime)
-		, m_activationCount(arg.m_activationCount)
-		, m_provInstance(arg.m_provInstance)
-		, m_pIndicationResponseHandler(arg.m_pIndicationResponseHandler)
-	{
-	}
-
-	PyProviderRep& operator= (const PyProviderRep& arg)
-	{
-		m_path = arg.m_path;
-		m_pyprov = arg.m_pyprov;
-		m_canUnload = arg.m_canUnload;
-		m_lastAccessTime = arg.m_lastAccessTime;
-		m_fileModTime = arg.m_fileModTime;
-		m_activationCount = arg.m_activationCount;
-		m_provInstance = arg.m_provInstance;
-		m_pIndicationResponseHandler = arg.m_pIndicationResponseHandler;
-		return *this;
-	}
-
 	~PyProviderRep()
 	{
 		m_pyprov.release();
@@ -113,6 +89,11 @@ struct PyProviderRep
 	int m_activationCount;
 	CIMInstance m_provInstance;
 	EnableIndicationsResponseHandler *m_pIndicationResponseHandler;
+private:
+
+	// These are unimplemented. Copy not allowed
+	PyProviderRep(const PyProviderRep& arg);
+	PyProviderRep& operator=(const PyProviderRep& arg);
 };
 
 typedef Reference<PyProviderRep> PyProviderRef;
