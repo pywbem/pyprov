@@ -182,6 +182,7 @@ private:
 		const OperationContext& opctx);
 	void _incActivationCount(CIMRequestMessage* message, PyProviderRef& provref);
 	void _decActivationCount(CIMRequestMessage* message, PyProviderRef& provref);
+	void _stopAllProviders();
 
 	Py::Module m_pywbemMod;
 	Py::Object m_cimexobj;

@@ -264,19 +264,7 @@ PythonProviderManager::~PythonProviderManager()
     PEG_METHOD_ENTER(
         TRC_PROVIDERMANAGER,
         "PythonProviderManager::~PythonProviderManager()");
-	ProviderMap::iterator it = m_provs.begin();
-	while(it != m_provs.end())
-	{
-		try
-		{
-			_shutdownProvider(it->second, OperationContext());
-		}
-		catch(...)
-		{
-			// Ignore
-		}
-		it++;
-	}
+	_stopAllProviders();
 	PyEval_AcquireLock();
 	PyThreadState_Swap(m_mainPyThreadState);
 	Py_Finalize();
@@ -313,6 +301,24 @@ PythonProviderManager::_loadProvider(
 	return Py::None();
 }
 
+///////////////////////////////////////////////////////////////////////////////
+void
+PythonProviderManager::_stopAllProviders()
+{
+	ProviderMap::iterator it = m_provs.begin();
+	while(it != m_provs.end())
+	{
+		try
+		{
+			_shutdownProvider(it->second, OperationContext());
+		}
+		catch(...)
+		{
+			// Ignore
+		}
+		it++;
+	}
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 void
@@ -542,6 +548,11 @@ PythonProviderManager::processMessage(Message * message)
 				request, provRef, this);
 			break;
 
+		case CIM_STOP_ALL_PROVIDERS_REQUEST_MESSAGE:
+			cerr << "CIM_STOP_ALL_PROVIDERS_REQUEST_MESSAGE" << endl;
+			response = _handleStopAllProvidersRequest(request, provRef);
+			break;
+
 		case CIM_EXEC_QUERY_REQUEST_MESSAGE:
 			cerr << "CIM_EXEC_QUERY_REQUEST_MESSAGE" << endl;
 			// TODO
@@ -560,11 +571,6 @@ PythonProviderManager::processMessage(Message * message)
 			response = _handleEnableModuleRequest(request, provRef);
 			break;
 
-		case CIM_STOP_ALL_PROVIDERS_REQUEST_MESSAGE:
-			cerr << "CIM_STOP_ALL_PROVIDERS_REQUEST_MESSAGE" << endl;
-			// TODO
-			response = _handleStopAllProvidersRequest(request, provRef);
-			break;
 
 // Note: The PG_Provider AutoStart property is not yet supported
 #if 0
@@ -729,8 +735,6 @@ CIMResponseMessage* PythonProviderManager::_handleEnableModuleRequest(
     CIMRequestMessage* message,
 	PyProviderRef& provref)
 {
-	Py::GILGuard gg;	// Acquire Python's GIL
-
     PEG_METHOD_ENTER(
         TRC_PROVIDERMANAGER,
         "PythonProviderManager::_handleEnableModuleRequest()");
@@ -751,8 +755,6 @@ CIMResponseMessage* PythonProviderManager::_handleStopAllProvidersRequest(
     CIMRequestMessage* message,
 	PyProviderRef& provref)
 {
-	Py::GILGuard gg;	// Acquire Python's GIL
-
     PEG_METHOD_ENTER(
         TRC_PROVIDERMANAGER,
         "PythonProviderManager::_handleStopAllProvidersRequest()");
@@ -761,11 +763,9 @@ CIMResponseMessage* PythonProviderManager::_handleStopAllProvidersRequest(
     PEGASUS_ASSERT(request != 0 );
 
     CIMResponseMessage* response = request->buildResponse();
-    response->cimException =
-        PEGASUS_CIM_EXCEPTION(CIM_ERR_NOT_SUPPORTED,
-				"StopAllProviders not yet implemented");
+	_stopAllProviders();
     PEG_METHOD_EXIT();
-    return response;
+	return response;
 }
 
 #if 0
