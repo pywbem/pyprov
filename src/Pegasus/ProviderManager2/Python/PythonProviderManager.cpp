@@ -650,8 +650,7 @@ PythonProviderManager::_decActivationCount(
 void
 PythonProviderManager::generateIndication(
 	const String& provPath,
-	const CIMInstance& indicationInstance,
-    const String& ns)
+	const CIMInstance& indicationInstance)
 {
 	AutoMutex am(g_provGuard);
 	ProviderMap::iterator it = m_provs.find(provPath);
@@ -666,10 +665,8 @@ cerr << "!!!! ProviderManager generateIndication DID NOT FIND PROVIDER" << endl;
 cerr << "!!!! ProviderManager generateIndication NO RESPONSE HANDLER" << endl;
 		return;
 	}
-    CIMInstance lci(indicationInstance);
-    lci.setPath(CIMObjectPath("", ns,
-        indicationInstance.getClassName()));
-	pref->m_pIndicationResponseHandler->deliver(CIMIndication(lci));
+	pref->m_pIndicationResponseHandler->deliver(
+		CIMIndication(indicationInstance));
 }
 
 ///////////////////////////////////////////////////////////////////////////////

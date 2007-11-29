@@ -482,8 +482,9 @@ PyCIMOMHandle::exportIndication(
 					"'namespace' is a required parameter");
 			}
 		}
+		ci.setPath(CIMObjectPath("", ns, ci.getClassName()));
 		PYCXX_ALLOW_THREADS
-		m_pmgr->generateIndication(m_provPath, ci, ns);
+		m_pmgr->generateIndication(m_provPath, ci);
 		PYCXX_END_ALLOW_THREADS
 	}
 	catch(const CIMException& e)
