@@ -616,7 +616,8 @@ cerr << "!!! _incActionCount setting response handler" << endl;
 			provref->m_provInstance,
 			_indicationCallback,
 			_responseChunkCallback);
-	provref->m_pIndicationResponseHandler->processing();
+
+    provref->m_pIndicationResponseHandler->processing();
 cerr << "!!! _incActionCount response handler: " << (void*) provref->m_pIndicationResponseHandler << endl;
 cerr << "!!! _incActionCount returning" << endl;
 }
@@ -637,6 +638,7 @@ PythonProviderManager::_decActivationCount(
 			&& provref->m_pIndicationResponseHandler)
 		{
 			provref->m_pIndicationResponseHandler->complete();
+
 			// Set indication response handle to NULL so indications
 			// will not get generated from this provider
 			provref->m_pIndicationResponseHandler = 0;
@@ -648,7 +650,8 @@ PythonProviderManager::_decActivationCount(
 void
 PythonProviderManager::generateIndication(
 	const String& provPath,
-	const CIMInstance& indicationInstance)
+	const CIMInstance& indicationInstance,
+    const String& ns)
 {
 	AutoMutex am(g_provGuard);
 	ProviderMap::iterator it = m_provs.find(provPath);
@@ -663,9 +666,10 @@ cerr << "!!!! ProviderManager generateIndication DID NOT FIND PROVIDER" << endl;
 cerr << "!!!! ProviderManager generateIndication NO RESPONSE HANDLER" << endl;
 		return;
 	}
-
-	pref->m_pIndicationResponseHandler->deliver(
-		CIMIndication(indicationInstance));
+    CIMInstance lci(indicationInstance);
+    lci.setPath(CIMObjectPath("", ns,
+        indicationInstance.getClassName()));
+	pref->m_pIndicationResponseHandler->deliver(CIMIndication(lci));
 }
 
 ///////////////////////////////////////////////////////////////////////////////

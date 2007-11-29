@@ -483,7 +483,7 @@ PyCIMOMHandle::exportIndication(
 			}
 		}
 		PYCXX_ALLOW_THREADS
-		m_pmgr->generateIndication(m_provPath, ci);
+		m_pmgr->generateIndication(m_provPath, ci, ns);
 		PYCXX_END_ALLOW_THREADS
 	}
 	catch(const CIMException& e)

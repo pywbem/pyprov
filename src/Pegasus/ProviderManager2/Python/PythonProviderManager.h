@@ -127,7 +127,7 @@ public:
     }
 
 	void generateIndication(const String& provPath,
-		const CIMInstance& indicationInstance);
+		const CIMInstance& indicationInstance, const String& ns);
 
 protected:
 
