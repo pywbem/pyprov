@@ -1361,19 +1361,26 @@ PGPyConv::PyProperty2PG(const Py::Object& pyprop)
 		else
 			THROW_CONV_EXC("Embedded classes not supported");
 	}
-	CIMValue theValue;
-	wko = pyprop.getAttr("value");
-	if (!wko.isNone())
-	{
-		theValue = PyVal2PG(strtype, wko);
-	}
-
 	Uint32 arraySize = 0;
 	wko = pyprop.getAttr("array_size");
 	if (!wko.isNone())
 	{
 		arraySize = Uint32(Py::Int(wko));
 	}
+	CIMValue theValue;
+	wko = pyprop.getAttr("value");
+	if (!wko.isNone())
+	{
+		theValue = PyVal2PG(strtype, wko);
+	}
+	else
+	{
+		CIMType dt = PGPyConv::PyDataType2PG(strtype);
+		wko = pyprop.getAttr("is_array");
+		bool isArray = wko.isTrue();
+		theValue = CIMValue(dt, isArray, arraySize);
+	}
+
 	CIMProperty theProp(theName, theValue, arraySize, refClass,
 		classOrigin, propagated);
 

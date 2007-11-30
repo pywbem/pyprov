@@ -79,20 +79,18 @@ IndicationProviderHandler::handleCreateSubscriptionRequest(
 		StatProviderTimeMeasurement providerTime(response.get());
 		Py::Object pyProv = provref->m_pyprov;
 		Py::Callable pyfunc = getFunction(pyProv, "activateFilter");
-		Py::Tuple args(6);
+		Py::Tuple args(5);
 		args[0] = PyProviderEnvironment::newObject(request->operationContext,
 			pmgr, provref->m_path);
 		args[1] = Py::String(request->query);
-		// TODO: What to do with event type... I don't get that from Pegasus request
-		args[2] = Py::String("");//request->eventType);
-		args[3] = Py::String(request->nameSpace.getString());
+		args[2] = Py::String(request->nameSpace.getString());
 		Py::List pyclasses;
 		for (Uint32 i = 0; i < request->classNames.size(); i++)
 		{
 			pyclasses.append(Py::String(request->classNames[i].getString()));
 		}
-		args[4] = pyclasses;
-		args[5] = Py::Bool(provref->m_activationCount == 1);// whether first activation or not
+		args[3] = pyclasses;
+		args[4] = Py::Bool(provref->m_activationCount == 1);// whether first activation or not
 		pyfunc.apply(args);
 	}
 	HANDLECATCH(handler, provref, createSubscription)
@@ -167,21 +165,19 @@ IndicationProviderHandler::handleDeleteSubscriptionRequest(CIMRequestMessage* me
 
 		Py::Object pyProv = provref->m_pyprov;
 		Py::Callable pyfunc = getFunction(pyProv, "deactivateFilter");
-		Py::Tuple args(6);
+		Py::Tuple args(5);
 		args[0] = PyProviderEnvironment::newObject(request->operationContext,
 			pmgr, provref->m_path);
 		args[1] = Py::String();//request->query);
-		// TODO: What to do with event type... I don't get that from Pegasus request
-		args[2] = Py::String();//request->eventType);
-		args[3] = Py::String(request->nameSpace.getString());
+		args[2] = Py::String(request->nameSpace.getString());
 		Py::List pyclasses;
 		for (unsigned long i = 0; i < request->classNames.size(); i++)
 		{
 			pyclasses.append(Py::String(request->classNames[i].getString()));
 		}
-		args[4] = pyclasses;
+		args[3] = pyclasses;
 		provref->m_activationCount--;
-		args[5] = Py::Bool(provref->m_activationCount == 0);// whether last activation or not
+		args[4] = Py::Bool(provref->m_activationCount == 0);// whether last activation or not
 		pyfunc.apply(args);
 
 		//handler.complete();
