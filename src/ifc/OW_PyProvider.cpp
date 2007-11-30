@@ -1246,22 +1246,21 @@ PyProvider::activateFilter(
 	try
 	{
 		Py::Callable pyfunc = getFunction(m_pyprov, "activateFilter");
-		Py::Tuple args(6);
+		Py::Tuple args(5);
 		args[0] = PyProviderEnvironment::newObject(env);
 		args[1] = Py::String(filter.toString());
-		args[2] = Py::String(eventType);
-		args[3] = Py::String(nameSpace);
+		args[2] = Py::String(nameSpace);
 		Py::List pyclasses;
 		for (StringArray::size_type i = 0; i < classes.size(); i++)
 		{
 			pyclasses.append(Py::String(classes[i]));
 		}
-		args[4] = pyclasses;
+		args[3] = pyclasses;
 #if OW_OPENWBEM_MAJOR_VERSION >= 4
-		args[5] = Py::Bool(firstActivation);
+		args[4] = Py::Bool(firstActivation);
 #elif OW_OPENWBEM_MAJOR_VERSION == 3
 		m_activationCount++;
-		args[5] = Py::Bool(m_activationCount == 1);
+		args[4] = Py::Bool(m_activationCount == 1);
 #endif
 		pyfunc.apply(args);
 	}
@@ -1293,43 +1292,7 @@ PyProvider::authorizeFilter(
 	const StringArray& classes,
 	const String& owner)
 {
-	Py::GILGuard gg;	// Acquire python's GIL
-
-	LoggerRef logger = myLogger(env);
-
-	try
-	{
-		Py::Callable pyfunc = getFunction(m_pyprov, "authorizeFilter");
-		Py::Tuple args(6);
-		args[0] = PyProviderEnvironment::newObject(env);
-		args[1] = Py::String(filter.toString());
-		args[2] = Py::String(eventType);
-		args[3] = Py::String(nameSpace);
-		Py::List pyclasses;
-		for (StringArray::size_type i = 0; i < classes.size(); i++)
-		{
-			pyclasses.append(Py::String(classes[i]));
-		}
-		args[4] = pyclasses;
-		args[5] = Py::String(owner);
-		pyfunc.apply(args);
-	}
-	catch(Py::Exception& e)
-	{
-		OW_LOG_ERROR(logger, Format("Caught python exception invoking "
-			"authorizeFilter on provider %1", m_path));
-
-		// Rethrow as an exception OW understands
-		processPyException(e, __LINE__, logger);
-	}
-	catch(const PyConversionException& e)
-	{
-		String msg = Format("Caught python conversion exception calling "
-			"authorizeFilter on provider %1. Exception Message: %2", m_path,
-			e.getMessage());
-		OW_LOG_ERROR(logger, msg);
-		OW_THROWCIMMSG(CIMException::FAILED, msg.c_str());
-	}
+	// Ignored
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1352,22 +1315,21 @@ PyProvider::deActivateFilter(
 	try
 	{
 		Py::Callable pyfunc = getFunction(m_pyprov, "deActivateFilter");
-		Py::Tuple args(6);
+		Py::Tuple args(5);
 		args[0] = PyProviderEnvironment::newObject(env);
 		args[1] = Py::String(filter.toString());
-		args[2] = Py::String(eventType);
-		args[3] = Py::String(nameSpace);
+		args[2] = Py::String(nameSpace);
 		Py::List pyclasses;
 		for (StringArray::size_type i = 0; i < classes.size(); i++)
 		{
 			pyclasses.append(Py::String(classes[i]));
 		}
-		args[4] = pyclasses;
+		args[3] = pyclasses;
 #if OW_OPENWBEM_MAJOR_VERSION >= 4
-		args[5] = Py::Bool(lastActivation);
+		args[4] = Py::Bool(lastActivation);
 #elif OW_OPENWBEM_MAJOR_VERSION == 3
 		m_activationCount--;
-		args[5] = Py::Bool(m_activationCount == 0);
+		args[4] = Py::Bool(m_activationCount == 0);
 #endif
 		pyfunc.apply(args);
 	}
