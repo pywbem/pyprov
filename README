@@ -6,3 +6,46 @@ patches/ folder.
 Overlay the contents or src over the Pegasus source code at PEGASUS_ROOT. 
 Build Pegasus. 
 
+
+** Indications in Pegasus **
+
+> ConsumerCapabilities
+  PG_Interop:PG_ConsumerCapabilities
+  An indicationConsumer provider must register as such via an instance
+  of PG_ConsumerCapabilities in the PG_InterOp namespace, where the 
+  ProviderType=6 and the Destination is of some well-known name that
+  will be used when setting up the handler
+  NOTE:  This well-known name MUST have a leading '/'
+
+> Filters
+  root/cimv2:CIM_IndicationFilter
+  Setup a filter with language 'WQL'.
+  ie:  'Select * from CIM_ProcessIndication'  
+
+> Handlers
+  root/cimv2:CIM_ListenerDestinationCIMXML
+  root/cimv2:CIM_IndicationHandlerCIMXML
+  These two classes are handled virtually the same.
+  To send to an external process, ie pywbem's irecv:
+    Specify destination with appropriate protocol, host and port that the
+    external process is listening on.  ie:
+    'http://npaxton1.provo.novell.com:5998'
+    In this case the Destination from ConsumerCapabilities is irrelevant
+  To send to an external cimom:
+    Specify destination with appropriate protocol, host and port that the
+    external cimom is listening on, followed by the value of the 
+    'Destination' property of the ConsumerCapabilities for that consumer on
+    the external cimom.  ie:'http://npaxton1.provo.novell.com:5998/MyConsumer'
+  To send to a Python Indication Consumer Provider on the same cimom:
+    Specify the following, assuming the 'Destination' property of the 
+    ConsumerCapabilities for that consumer is 'MyConsumer':
+    'localhost/CIMListener/MyConsumer'
+    The 'localhost/CIMListener', exactly as it is, is important !!!
+    
+> Subscriptions
+  root/cimv2:CIM_IndicationSubscription
+  Filters and Handlers are 'passive':  they do nothing.  In order to actually
+  register the indication subscription, create a CIM_IndicationSubscription,
+  which is an association between a Filter and a Handler.
+  Once that subscription has been created, the cimom should start watching it.
+
