@@ -67,7 +67,7 @@ IndicationConsumerProviderHandler::handleExportIndicationRequest(
 	try
 	{
 		StatProviderTimeMeasurement providerTime(response.get());
-		Py::Callable pyfunc = getFunction(provref->m_pyprov, "handleIndication");
+		Py::Callable pyfunc = getFunction(provref->m_pyprov, "consumeIndication");
 		Py::Tuple args(3);
 		args[0] = PyProviderEnvironment::newObject(request->operationContext,
 			pmgr, provref->m_path);

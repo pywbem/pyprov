@@ -47,8 +47,6 @@ IndicationProviderHandler::handleCreateSubscriptionRequest(
 	PyProviderRef& provref, 
 	PythonProviderManager* pmgr)
 {
-	cout << "**** handleCreateSubscriptionRequest called..." << endl;
-
 	PEG_METHOD_ENTER(
 		TRC_PROVIDERMANAGER,
 		"PythonProviderManager::handleCreateSubscriptionRequest()");
@@ -99,7 +97,6 @@ IndicationProviderHandler::handleCreateSubscriptionRequest(
 	}
 	HANDLECATCH(handler, provref, createSubscription)
 	PEG_METHOD_EXIT();
-	cout << "**** handleCreateSubscriptionRequest returning" << endl;
 	return response.release();
 }
 

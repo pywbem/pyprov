@@ -1357,7 +1357,6 @@ PyCIMOMHandle::enumInstanceNames(
 
 		Array<CIMObjectPath> cops;
 		PYCXX_ALLOW_THREADS
-        cerr << " CH Namespace: " << ns << endl;
 		cops = m_chdl.enumerateInstanceNames(OperationContext(), ns, className);
 		PYCXX_END_ALLOW_THREADS
 		return _processCIMObjectPathResults(cops, cb, ns);
@@ -1870,13 +1869,10 @@ PyCIMOMHandle::associatorNames(
 {
 	try
 	{
-        cerr << " entering CH:assocNames " << endl;
 		CIMObjectPath objectName;
 		if (args.length() && !args[0].isNone())
 		{
-            cerr << " CH:assocNames:objectName/args[0]: " << args[0] << endl;
 			objectName = PGPyConv::PyRef2PG(args[0]);
-            cerr << " CH:assocNames:objectName: " << objectName.toString() << endl;
 		}
 		else
 		{
@@ -1933,7 +1929,6 @@ PyCIMOMHandle::associatorNames(
 		}
 		Array<CIMObjectPath> names;
 		PYCXX_ALLOW_THREADS
-        cerr << " CH:assocNames ns: " << ns << endl;
 		names = m_chdl.associatorNames(OperationContext(), ns, objectName,
 			assocClass, resultClass, role, resultRole);
 		PYCXX_END_ALLOW_THREADS

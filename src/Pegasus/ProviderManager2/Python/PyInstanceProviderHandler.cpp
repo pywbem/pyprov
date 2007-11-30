@@ -168,7 +168,6 @@ InstanceProviderHandler::handleEnumerateInstancesRequest(
 		}
 		if (PyErr_Occurred())
 		{
-			std::cerr << "PyErr_Occurred" << std::endl;
 			throw Py::Exception();
 		}
 		handler.complete();
@@ -238,7 +237,6 @@ InstanceProviderHandler::handleEnumerateInstanceNamesRequest(
 		}
 		if (PyErr_Occurred())
 		{
-			std::cerr << "PyErr_Occurred" << std::endl;
 			throw Py::Exception();
 		}
 		handler.complete();
