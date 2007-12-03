@@ -233,8 +233,6 @@ processPyException(
 	}
 
 	pHandler->setCIMException(CIMException(CIMStatusCode(errval), tb));
-//		Formatter::format("$0 File: $1  Line: $2",
-//			msg, __FILE__, lineno)));
 	return tb;
 }
 
@@ -633,7 +631,6 @@ PythonProviderManager::generateIndication(
 ///////////////////////////////////////////////////////////////////////////////
 Boolean PythonProviderManager::hasActiveProviders()
 {
-cerr << "!!!! hasActiveProviders called..." << endl;
 	bool cc = false;
 	AutoMutex am(g_provGuard);
 	try
@@ -645,7 +642,6 @@ cerr << "!!!! hasActiveProviders called..." << endl;
 			if (it->second->m_isIndicationConsumer
 				|| it->second->m_pIndicationResponseHandler)
 			{
-cerr << "!!!! hasActiveProviders found indication/consumer prov. return true" << endl;
 				cc = true;
 				break;
 			}
@@ -654,7 +650,6 @@ cerr << "!!!! hasActiveProviders found indication/consumer prov. return true" <<
 				time_t tdiff = currtime - it->second->m_lastAccessTime;
 				if (tdiff < PYPROV_SECS_TO_LIVE)
 				{
-cerr << "!!!! hasActiveProviders found active prov" << endl;
 					cc = true;
 					break;
 				}
@@ -667,14 +662,12 @@ cerr << "!!!! hasActiveProviders found active prov" << endl;
 		// TODO
 		cc = true;
 	}
-cerr << "!!!! hasActiveProviders returning " << cc << endl;
 	return cc;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 void PythonProviderManager::unloadIdleProviders()
 {
-cerr << "!!!! unloadIdleProviders called..." << endl;
 	AutoMutex am(g_provGuard);
 	time_t currtime = ::time(NULL);
 	ProviderMap::iterator it = m_provs.begin();
@@ -688,20 +681,18 @@ cerr << "!!!! unloadIdleProviders called..." << endl;
 			{
 				try
 				{
-cerr << "!!!! unloadIdleProviders unloading idle prov: " << it->second->m_path << endl;
 					_shutdownProvider(it->second, OperationContext());
 				}
 				catch(...)
 				{
+					// Ignore?
 				}
-cerr << "!!!! unloadIdleProviders removing prov " << it->second->m_path << " from map" << endl;
 				m_provs.erase(it++);
 				continue;
 			}
 		}
 		it++;
 	}
-cerr << "!!!! unloadIdleProviders returning" << endl;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
