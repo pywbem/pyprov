@@ -68,6 +68,10 @@ IndicationConsumerProviderHandler::handleExportIndicationRequest(
 	{
 		StatProviderTimeMeasurement providerTime(response.get());
 		Py::Callable pyfunc = getFunction(provref->m_pyprov, "consumeIndication");
+		if (!provref->m_isIndicationConsumer)
+		{
+			pmgr->setAsIndicationConsumer(provref);
+		}
 		Py::Tuple args(3);
 		args[0] = PyProviderEnvironment::newObject(request->operationContext,
 			pmgr, provref->m_path);

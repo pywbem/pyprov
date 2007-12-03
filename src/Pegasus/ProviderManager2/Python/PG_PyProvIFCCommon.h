@@ -28,6 +28,7 @@
 // which could be MI_getInstance.
 #define PYFUNC_PREFIX "MI_"
 #define PYSYSTEM_ID "PyProviderManager"
+#define PYPROV_SECS_TO_LIVE 900		// 15 Minutes
 
 using namespace Pegasus;
 

@@ -58,6 +58,7 @@ public:
 		, m_activationCount(0)
 		, m_provInstance()
 		, m_pIndicationResponseHandler(0)
+		, m_isIndicationConsumer(false)
 	{
 	}
 
@@ -71,6 +72,7 @@ public:
 		, m_activationCount(0)
 		, m_provInstance()
 		, m_pIndicationResponseHandler(0)
+		, m_isIndicationConsumer(false)
 	{
 	}
 
@@ -89,6 +91,7 @@ public:
 	int m_activationCount;
 	CIMInstance m_provInstance;
 	EnableIndicationsResponseHandler *m_pIndicationResponseHandler;
+	bool m_isIndicationConsumer;
 private:
 
 	// These are unimplemented. Copy not allowed
@@ -129,12 +132,12 @@ public:
 	void generateIndication(const String& provPath,
 		const CIMInstance& indicationInstance);
 
+	void setAsIndicationConsumer(PyProviderRef& provref);
+
 protected:
 
     CIMResponseMessage* _handleUnsupportedRequest(CIMRequestMessage * message, PyProviderRef& provref);
     CIMResponseMessage* _handleExecQueryRequest(CIMRequestMessage * message, PyProviderRef& provref);
-    CIMResponseMessage* _handleDeleteSubscriptionRequest(CIMRequestMessage * message, PyProviderRef& provref);
-    CIMResponseMessage* _handleExportIndicationRequest(CIMRequestMessage * message, PyProviderRef& provref);
     CIMResponseMessage* _handleDisableModuleRequest(CIMRequestMessage * message, PyProviderRef& provref);
     CIMResponseMessage* _handleEnableModuleRequest(CIMRequestMessage * message, PyProviderRef& provref);
     CIMResponseMessage* _handleStopAllProvidersRequest(CIMRequestMessage * message, PyProviderRef& provref);
@@ -148,9 +151,7 @@ protected:
 
 
     ProviderName _resolveProviderName(const ProviderIdContainer & providerId);
-
 	String _resolvePhysicalName(String physicalName);
-
 	void _initPython();
 
 private:

@@ -217,11 +217,6 @@ processPyException(
 	}
 	catch(Py::Exception& theExc)
 	{
-		// TESTING
-		Py::Object etype1, evalue1;
-		bool isCIMExc = PyErr_ExceptionMatches(g_cimexobj.ptr());
-		String tb1 = LogPyException(thrownEx, __FILE__, lineno, etype1,
-			evalue1, false);
 		theExc.clear();
 		pHandler->setCIMException(CIMException(CIM_ERR_FAILED,
 			Formatter::format("Re-Thrown from python code. type: $0  value: $1",
@@ -237,9 +232,9 @@ processPyException(
 		return tb;
 	}
 
-	pHandler->setCIMException(CIMException(CIMStatusCode(errval),
-		Formatter::format("$0 File: $1  Line: $2",
-			msg, __FILE__, lineno)));
+	pHandler->setCIMException(CIMException(CIMStatusCode(errval), tb));
+//		Formatter::format("$0 File: $1  Line: $2",
+//			msg, __FILE__, lineno)));
 	return tb;
 }
 
@@ -638,15 +633,88 @@ PythonProviderManager::generateIndication(
 ///////////////////////////////////////////////////////////////////////////////
 Boolean PythonProviderManager::hasActiveProviders()
 {
-	// TODO
-	//return false;
-	return true;
+cerr << "!!!! hasActiveProviders called..." << endl;
+	bool cc = false;
+	AutoMutex am(g_provGuard);
+	try
+	{
+		time_t currtime = ::time(NULL);
+		ProviderMap::iterator it = m_provs.begin();
+		while(it != m_provs.end())
+		{
+			if (it->second->m_isIndicationConsumer
+				|| it->second->m_pIndicationResponseHandler)
+			{
+cerr << "!!!! hasActiveProviders found indication/consumer prov. return true" << endl;
+				cc = true;
+				break;
+			}
+			else
+			{
+				time_t tdiff = currtime - it->second->m_lastAccessTime;
+				if (tdiff < PYPROV_SECS_TO_LIVE)
+				{
+cerr << "!!!! hasActiveProviders found active prov" << endl;
+					cc = true;
+					break;
+				}
+			}
+			it++;
+		}
+	}
+	catch(...)
+	{
+		// TODO
+		cc = true;
+	}
+cerr << "!!!! hasActiveProviders returning " << cc << endl;
+	return cc;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 void PythonProviderManager::unloadIdleProviders()
 {
-	// TODO
+cerr << "!!!! unloadIdleProviders called..." << endl;
+	AutoMutex am(g_provGuard);
+	time_t currtime = ::time(NULL);
+	ProviderMap::iterator it = m_provs.begin();
+	while(it != m_provs.end())
+	{
+		if (!(it->second->m_isIndicationConsumer)
+			&& !(it->second->m_pIndicationResponseHandler))
+		{
+			time_t tdiff = currtime - it->second->m_lastAccessTime;
+			if (tdiff >= PYPROV_SECS_TO_LIVE)
+			{
+				try
+				{
+cerr << "!!!! unloadIdleProviders unloading idle prov: " << it->second->m_path << endl;
+					_shutdownProvider(it->second, OperationContext());
+				}
+				catch(...)
+				{
+				}
+cerr << "!!!! unloadIdleProviders removing prov " << it->second->m_path << " from map" << endl;
+				m_provs.erase(it++);
+				continue;
+			}
+		}
+		it++;
+	}
+cerr << "!!!! unloadIdleProviders returning" << endl;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void PythonProviderManager::setAsIndicationConsumer(
+	PyProviderRef& provref)
+{
+	AutoMutex am(g_provGuard);
+	ProviderMap::iterator it = m_provs.find(provref->m_path);
+	if (it != m_provs.end())
+	{
+		it->second->m_isIndicationConsumer = true;
+		provref->m_isIndicationConsumer = true;
+	}
 }
 
 ///////////////////////////////////////////////////////////////////////////////
