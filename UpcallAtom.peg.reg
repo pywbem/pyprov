@@ -2,7 +2,7 @@
 instance of PG_ProviderModule
 {
    Name = "UpcallAtom_Module";
-   Location = "UpcallAtomProvider";
+   Location = "/usr/lib/pycim/UpcallAtomProvider.py";
    Vendor = "Novell";
    Version = "1.0.0";
    InterfaceType = "Python";
@@ -17,6 +17,7 @@ instance of PG_Provider
 
 instance of PG_ProviderCapabilities
 {
+   CapabilityID = "UpcallAtom-Prov-1";
    ProviderModuleName = "UpcallAtom_Module";
    ProviderName = "UpcallAtom_Provider";
    ClassName = "UpcallAtom";
@@ -24,11 +25,11 @@ instance of PG_ProviderCapabilities
    Namespaces = {"root/cimv2"};
    SupportedProperties = NULL;
    SupportedMethods = NULL;
-   CapabilityID = "UpcallAtom-Prov-1";
 };
 
 instance of PG_ProviderCapabilities
 {
+   CapabilityID = "UpcallAtom-Prov-2";
    ProviderModuleName = "UpcallAtom_Module";
    ProviderName = "UpcallAtom_Provider";
    ClassName = "UpcallAtom_Indication";
@@ -36,15 +37,15 @@ instance of PG_ProviderCapabilities
    Namespaces = {"root/cimv2"};
    SupportedProperties = NULL;
    SupportedMethods = NULL;
-   CapabilityID = "UpcallAtom-Prov-2";
 };
-/*
+
 instance of PG_ConsumerCapabilities
 {
+   CapabilityID = "UpcallAtom-Consumer";
    ProviderModuleName = "UpcallAtom_Module";
    ProviderName = "UpcallAtom_Provider";
    ProviderType = { 6 };    // Indication Consumer/Handler
-   CapabilityID = "UpcallAtom-Consumer-3";
-   Destinations = {"UpcallAtom_Indication_Handler"};
+   Destinations = {"/UpcallAtom"};
 };
-*/
+
+

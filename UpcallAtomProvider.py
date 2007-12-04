@@ -31,18 +31,19 @@ _atoms = {'Hydrogen': 1,
          'Fluorine': 9,
          'Neon': 10 }
 
-
 ################################################################################
-def handle_indication(env, ns, handlerInstance, indicationInstance):
+# Note: consume_indication is called on OpenPegasus because this is an 
+#       indication consumer in that environment.
+def consume_indication(env, destinationPath, indicationInstance):
     global _indication_names 
-#           Arguments:
-#            env -- Provider Environment (pycimmb.ProviderEnvironment)
-#            ns -- The namespace where the even occurred
-#            handler_instance -- don't care
-#            indication_instance -- The indication
     if indicationInstance['Description'] in _indication_names.keys():
         _indication_names[indicationInstance['Description']] = True
 
+################################################################################
+# Note: handle_indication is called on OpenWBEM because this is an 
+#       indication handler in that environment.
+def handle_indication(env, ns, handlerInstance, indicationInstance):
+    consume_indication(env, None, indicationInstance)
 
 ################################################################################
 def _compare_values(instance, time, logger):
