@@ -656,19 +656,7 @@ PGPyConv::PGInst2Py(const CIMConstInstance& ci, const String& nsArg)
 		ns = nsArg;
 		icop.setNameSpace(ns);
 	}
-
-	// If icop is a class path, then that means we didn't get
-	// the key properties or their 'key' qualifiers because
-	// of the type of instance that was given. This could
-	// be the result of having the 'ci' parameter built
-	// with includeQualifiers=false or localOnly=true or
-	// a restrictive propertyList or any/all of the above.
-	
-	const Array<CIMKeyBinding>& kbs = icop.getKeyBindings();
-	if (kbs.size() == 0)
-		pyarg[3] = Py::None();	// No way to determine keys
-	else
-		pyarg[3] = PGRef2Py(icop);
+	pyarg[3] = PGRef2Py(icop);
 	return pyfunc.apply(pyarg);
 }
 

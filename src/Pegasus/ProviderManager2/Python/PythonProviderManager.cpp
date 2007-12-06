@@ -307,14 +307,7 @@ PythonProviderManager::_stopAllProviders()
 	ProviderMap::iterator it = m_provs.begin();
 	while(it != m_provs.end())
 	{
-		try
-		{
-			_shutdownProvider(it->second, OperationContext());
-		}
-		catch(...)
-		{
-			// Ignore
-		}
+		_shutdownProvider(it->second, OperationContext());
 		it++;
 	}
 	m_provs.clear();
@@ -329,7 +322,7 @@ PythonProviderManager::_shutdownProvider(
 	Py::GILGuard gg;	// Acquire python's GIL
 	try
 	{
-		Py::Callable pyfunc = getFunction(provref->m_pyprov, "shutdown");
+		Py::Callable pyfunc = getFunction(provref->m_pyprov, "shutdown", false);
 		if (!pyfunc.isCallable())
 		{
 			return;
@@ -340,12 +333,11 @@ PythonProviderManager::_shutdownProvider(
 	}
 	catch(Py::Exception& e)
 	{
-		Logger::put(Logger::ERROR_LOG, PYSYSTEM_ID, Logger::SEVERE,
-			"ProviderManager.Python.PythonProviderManager",
-			"Caught python exception invoking 'shutdown' provider $0.",
-			provref->m_path);
 		String tb = processPyException(e, __LINE__, provref->m_path);
-		String msg = "Python Unload Error: " + tb;
+		Logger::put(Logger::ERROR_LOG, PYSYSTEM_ID, Logger::SEVERE,
+			"ProviderManager.PythonProviderManager",
+			"Caught python exception invoking 'shutdown' provider $0. $1",
+			provref->m_path, tb);
 	}
 	catch(...)
 	{
@@ -353,7 +345,6 @@ PythonProviderManager::_shutdownProvider(
 			"ProviderManager.Python.PythonProviderManager",
 			"Caught unknown exception invoking 'shutdown' provider $0.",
 			provref->m_path);
-		String msg = "Python Unload Error: Unknown error";
 	}
 }
 
@@ -378,14 +369,7 @@ PythonProviderManager::_path2PyProviderRef(
         else
         {
             //cleanup for reload on fall-thru
-			try
-			{
-				_shutdownProvider(it->second, opctx);
-			}
-			catch(...)
-			{
-				// Ignore?
-			}
+			_shutdownProvider(it->second, opctx);
             m_provs.erase(it);
         }
 	}
@@ -679,14 +663,7 @@ void PythonProviderManager::unloadIdleProviders()
 			time_t tdiff = currtime - it->second->m_lastAccessTime;
 			if (tdiff >= PYPROV_SECS_TO_LIVE)
 			{
-				try
-				{
-					_shutdownProvider(it->second, OperationContext());
-				}
-				catch(...)
-				{
-					// Ignore?
-				}
+				_shutdownProvider(it->second, OperationContext());
 				m_provs.erase(it++);
 				continue;
 			}
