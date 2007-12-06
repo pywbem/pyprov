@@ -1,4 +1,3 @@
-/*
 [ Description("Testing up-calls into the CIMOM from a provider")]
 class UpcallAtom
 {
@@ -39,7 +38,6 @@ INSTANCE OF CIM_IndicationHandlerCIMXML as $dest
 	SystemName = "jmc2.provo.novell.com";
 	Destination = "localhost/cimlistener/UpcallAtom";
 };
-*/
 
 INSTANCE OF CIM_IndicationSubscription
 {
