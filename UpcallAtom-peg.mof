@@ -1,3 +1,4 @@
+/*
 [ Description("Testing up-calls into the CIMOM from a provider")]
 class UpcallAtom
 {
@@ -24,7 +25,7 @@ INSTANCE OF CIM_IndicationFilter as $filter
     CreationClassName = "CIM_IndicationFilter";
     Name = "UpcallAtom_Indication_Filter";
     SystemCreationClassName = "CIM_ComputerSystem";
-    SystemName = "127.0.0.1";
+    SystemName = "jmc2.provo.novell.com";
     SourceNamespace = "root/cimv2";
     Query = "select * from UpcallAtom_Indication";
     QueryLanguage = "WQL";
@@ -35,14 +36,14 @@ INSTANCE OF CIM_IndicationHandlerCIMXML as $dest
 	CreationClassName = "CIM_IndicationHandlerCIMXML";
 	Name = "UpcallAtom_Indication_Handler";
 	SystemCreationClassName = "CIM_ComputerSystem";
-	SystemName = "127.0.0.1";
+	SystemName = "jmc2.provo.novell.com";
 	Destination = "localhost/cimlistener/UpcallAtom";
 };
+*/
 
 INSTANCE OF CIM_IndicationSubscription
 {
 	Filter = $filter;
 	Handler = $dest;
-	AlertOnStateChange = false;
 };
 

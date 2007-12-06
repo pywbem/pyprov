@@ -35,8 +35,10 @@ _atoms = {'Hydrogen': 1,
 # Note: consume_indication is called on OpenPegasus because this is an 
 #       indication consumer in that environment.
 def consume_indication(env, destinationPath, indicationInstance):
+    print '#### consume_indication called'
     global _indication_names 
     if indicationInstance['Description'] in _indication_names.keys():
+        print '#### consume_indication: My Indication :-)!'
         _indication_names[indicationInstance['Description']] = True
 
 ################################################################################
@@ -280,7 +282,7 @@ def _cleanup(ch):
     _inst_paths = []
 
 ##############################################################################
-def activate_filter(env, filter, eventType, namespace, classes, firstActivation):
+def activate_filter(env, filter, namespace, classes, firstActivation):
     print '#### Python activate_filter called. filter: %s' % filter
     print '#### Python firstActivation: %d' % firstActivation
 
@@ -295,7 +297,7 @@ def activate_filter(env, filter, eventType, namespace, classes, firstActivation)
 
 
 ##############################################################################
-def deactivate_filter(env, filter, eventType, namespace, classes, lastActivation):
+def deactivate_filter(env, filter, namespace, classes, lastActivation):
     print '#### Python deactivate_filter called. filter: %s' % filter
     print '#### Python lastActivation: %d' % lastActivation
 
@@ -309,7 +311,7 @@ def deactivate_filter(env, filter, eventType, namespace, classes, lastActivation
         # theIndicationThread = None
 
 ##############################################################################
-def authorize_filter(env, filter, eventType, namespace, classes, owner):
+def authorize_filter(env, filter, namespace, classes, owner):
     print '#### Python authorize_filter called. filter: %s' % filter
     print '#### Python authorize_filter owner: %s' % owner
     logger = env.get_logger()
@@ -325,6 +327,7 @@ class UpcallAtomProvider(pywbem.CIMProvider):
     """
 
     def __init__ (self, env):
+        print '#### UpcallAtomProvider CTOR'
         logger = env.get_logger()
         logger.log_debug('Initializing provider %s from %s' \
                 % (self.__class__.__name__, __file__))
