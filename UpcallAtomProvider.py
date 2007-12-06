@@ -9,10 +9,12 @@ Instruments the CIM class UpcallAtom
 # author: kenny woodson
 # Date: Nov. 2007
 
+import os,time,socket
 import pywbem
 
 
 _inst_paths = []
+_indication_count = 0
 _indication_names = { "jon": False,
                       "norm": False,
                       "matt": False, 
@@ -35,11 +37,13 @@ _atoms = {'Hydrogen': 1,
 # Note: consume_indication is called on OpenPegasus because this is an 
 #       indication consumer in that environment.
 def consume_indication(env, destinationPath, indicationInstance):
-    print '#### consume_indication called'
-    global _indication_names 
+    print '#### consume_indication called. pid:',os.getpid()
+    global _indication_names,_indication_count
     if indicationInstance['Description'] in _indication_names.keys():
         print '#### consume_indication: My Indication :-)!'
         _indication_names[indicationInstance['Description']] = True
+        _indication_count += 1
+
 
 ################################################################################
 # Note: handle_indication is called on OpenWBEM because this is an 
@@ -790,8 +794,8 @@ class UpcallAtomProvider(pywbem.CIMProvider):
         """
         Method to test the upcalls to the cimom handle for export_indications.
         """
-        global _indication_names 
-        time = pywbem.CIMDateTime.now()
+        global _indication_names,_indication_count
+        cimtime = pywbem.CIMDateTime.now()
         ch = env.get_cimom_handle()
         ch.set_default_namespace("root/cimv2")
         logger = env.get_logger()
@@ -804,17 +808,26 @@ class UpcallAtomProvider(pywbem.CIMProvider):
             alert_ind['Description'] = name
             alert_ind['PerceivedSeverity'] = pywbem.Uint16(1)
             alert_ind['PorbablyCause'] = pywbem.Uint16(1)
-            alert_ind['IndicationTime'] = time
-            alert_ind['SystemName'] = "c119.cim.lab.novell.com"
+            alert_ind['IndicationTime'] = cimtime
+            alert_ind['SystemName'] = socket.getfqdn()
             
             try:
+                print '### Exporting indication. pid:',os.getpid()
                 ch.export_indication(alert_ind)
+                print '### Done exporting indication'
             except pywbem.CIMError, arg:
+                print '### Caught exception exporting indication'
                 raise
-            
-        
-        for name ,bool in _indication_names.items():
-            if bool:
+
+        indcount = len(_indication_names)
+        st = time.time()
+        while _indication_count < indcount:
+            time.sleep(.01)
+            if (time.time() - st) > 60.00:
+                raise "Only received %d. expected %d" % (_indication_count, indcount)
+
+        for name,received in _indication_names.items():
+            if not received:
                 raise "Indication Not received for: %s" % str(name)
 
         out_params = {}
