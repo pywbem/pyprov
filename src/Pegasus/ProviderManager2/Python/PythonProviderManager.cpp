@@ -505,21 +505,19 @@ PythonProviderManager::processMessage(Message * message)
 			response = _handleStopAllProvidersRequest(request, provRef);
 			break;
 
-		case CIM_EXEC_QUERY_REQUEST_MESSAGE:
-			// TODO
-			response = _handleExecQueryRequest(request, provRef);
-			break;
-
 		case CIM_DISABLE_MODULE_REQUEST_MESSAGE:
-			// TODO
 			response = _handleDisableModuleRequest(request, provRef);
 			break;
 
 		case CIM_ENABLE_MODULE_REQUEST_MESSAGE:
-			// TODO
+			// IGNORE?
 			response = _handleEnableModuleRequest(request, provRef);
 			break;
 
+		case CIM_EXEC_QUERY_REQUEST_MESSAGE:
+			// TODO?
+			response = _handleExecQueryRequest(request, provRef);
+			break;
 
 // Note: The PG_Provider AutoStart property is not yet supported
 #if 0
@@ -718,14 +716,67 @@ CIMResponseMessage* PythonProviderManager::_handleDisableModuleRequest(
     PEG_METHOD_ENTER(
         TRC_PROVIDERMANAGER,
         "PythonProviderManager::_handleDisableModuleRequest()");
-    CIMRequestMessage* request =
-        dynamic_cast<CIMRequestMessage *>(message);
+
+	CIMDisableModuleRequestMessage* request = 
+		dynamic_cast<CIMDisableModuleRequestMessage*>(message);
     PEGASUS_ASSERT(request != 0 );
 
-    CIMResponseMessage* response = request->buildResponse();
-    response->cimException =
-        PEGASUS_CIM_EXCEPTION(CIM_ERR_NOT_SUPPORTED,
-				"DisableModuleRequest not yet implemented");
+	Array<Uint16> operationalStatus;
+	CIMException cimException;
+	try
+	{
+		ProviderMap::iterator it = m_provs.find(provref->m_path);
+		if (it != m_provs.end())
+		{
+			_shutdownProvider(it->second, OperationContext());
+			m_provs.erase(it);
+			operationalStatus.append(CIM_MSE_OPSTATUS_VALUE_STOPPED);
+		}
+		else
+		{
+			operationalStatus.append(CIM_MSE_OPSTATUS_VALUE_OK);
+		}
+	}
+	catch (Py::Exception& e)
+	{
+		String tb = processPyException(e, __LINE__, provref->m_path, false);
+		Logger::put(Logger::ERROR_LOG, PYSYSTEM_ID, Logger::SEVERE,
+			"ProviderManager.Python.PythonProviderManager",
+			"Caught exception processing Disable Module Request. "
+			"Provider $0. $1", provref->m_path, tb);
+		String msg = "Python UnLoad Error: " + tb;
+        cimException = CIMException(CIM_ERR_FAILED, msg);
+		operationalStatus.append(CIM_MSE_OPSTATUS_VALUE_OK);
+	}
+	catch (CIMException& e)
+    {
+        PEG_TRACE_STRING(TRC_PROVIDERMANAGER, Tracer::LEVEL4,
+                         "Exception: " + e.getMessage());
+        cimException = e;
+		operationalStatus.append(CIM_MSE_OPSTATUS_VALUE_OK);
+    }
+    catch (Exception& e)
+    {
+        PEG_TRACE_STRING(TRC_PROVIDERMANAGER, Tracer::LEVEL4,
+            "Exception: " + e.getMessage());
+        cimException = CIMException(CIM_ERR_FAILED, e.getMessage());
+		operationalStatus.append(CIM_MSE_OPSTATUS_VALUE_OK);
+    }
+    catch (...)
+    {
+        PEG_TRACE_CSTRING(TRC_PROVIDERMANAGER, Tracer::LEVEL4,
+            "Exception: Unknown");
+        cimException = PEGASUS_CIM_EXCEPTION_L(
+            CIM_ERR_FAILED, "PythonProviderManager. Disable Module Request "
+			"failed with unknown exception");
+		operationalStatus.append(CIM_MSE_OPSTATUS_VALUE_OK);
+    }
+
+    CIMDisableModuleResponseMessage* response =
+        dynamic_cast<CIMDisableModuleResponseMessage*>(
+            request->buildResponse());
+    PEGASUS_ASSERT(response != 0);
+	response->operationalStatus = operationalStatus;
     PEG_METHOD_EXIT();
     return response;
 }
