@@ -16,17 +16,40 @@
 * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 *****************************************************************************/
 #include "PG_PyExtensions.h"
+#include <Pegasus/Config/ConfigManager.h>
 
-using namespace std;
-using namespace Pegasus;
+#include <iostream>
+
+extern "C"
+{
+#include <unistd.h>
+}
+
+PEGASUS_USING_STD;
+PEGASUS_USING_PEGASUS;
 
 namespace PythonProvIFC
 {
+
+namespace
+{
+bool g_toStdOut = false;
+}
 
 //////////////////////////////////////////////////////////////////////////////
 PyLogger::PyLogger()
 	: Py::PythonExtension<PyLogger>()
 {
+	try
+	{
+		String daemon = ConfigManager::getInstance()->getCurrentValue("daemon");
+		daemon.toLower();
+		g_toStdOut = (daemon == "false") ? true : false;
+	}
+	catch(...)
+	{
+		// Ignore
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -41,10 +64,17 @@ PyLogger::logFatalError(const Py::Tuple& args)
 	if (args.length() && !args[0].isNone())
 	{
 		Py::String msg(args[0]);
-		PYCXX_ALLOW_THREADS
-		Logger::put(Logger::STANDARD_LOG, "PGPythonProvider",
-			Logger::FATAL, msg);
-		PYCXX_END_ALLOW_THREADS
+		if (g_toStdOut)
+		{
+			cout << "[F-" << ::getpid() << "] " << msg << endl;
+		}
+		else
+		{
+			PYCXX_ALLOW_THREADS
+			Logger::put(Logger::STANDARD_LOG, "PGPythonProvider",
+				Logger::FATAL, msg);
+			PYCXX_END_ALLOW_THREADS
+		}
 	}
 	return Py::Nothing();
 }
@@ -56,10 +86,17 @@ PyLogger::logError(const Py::Tuple& args)
 	if (args.length() && !args[0].isNone())
 	{
 		Py::String msg(args[0]);
-		PYCXX_ALLOW_THREADS
-		Logger::put(Logger::STANDARD_LOG, "PGPythonProvider",
-			Logger::SEVERE, msg);
-		PYCXX_END_ALLOW_THREADS
+		if (g_toStdOut)
+		{
+			cout << "[E-" << ::getpid() << "] " << msg << endl;
+		}
+		else
+		{
+			PYCXX_ALLOW_THREADS
+			Logger::put(Logger::STANDARD_LOG, "PGPythonProvider",
+				Logger::SEVERE, msg);
+			PYCXX_END_ALLOW_THREADS
+		}
 	}
 	return Py::Nothing();
 }
@@ -71,10 +108,17 @@ PyLogger::logInfo(const Py::Tuple& args)
 	if (args.length() && !args[0].isNone())
 	{
 		Py::String msg(args[0]);
-		PYCXX_ALLOW_THREADS
-		Logger::put(Logger::STANDARD_LOG, "PGPythonProvider",
-			Logger::INFORMATION, msg);
-		PYCXX_END_ALLOW_THREADS
+		if (g_toStdOut)
+		{
+			cout << "[I-" << ::getpid() << "] " << msg << endl;
+		}
+		else
+		{
+			PYCXX_ALLOW_THREADS
+			Logger::put(Logger::STANDARD_LOG, "PGPythonProvider",
+				Logger::INFORMATION, msg);
+			PYCXX_END_ALLOW_THREADS
+		}
 	}
 	return Py::Nothing();
 }
@@ -86,10 +130,17 @@ PyLogger::logDebug(const Py::Tuple& args)
 	if (args.length() && !args[0].isNone())
 	{
 		Py::String msg(args[0]);
-		PYCXX_ALLOW_THREADS
-		Logger::put(Logger::STANDARD_LOG, "PGPythonProvider",
-			Logger::TRACE, msg);
-		PYCXX_END_ALLOW_THREADS
+		if (g_toStdOut)
+		{
+			cout << "[D-" << ::getpid() << "] " << msg << endl;
+		}
+		else
+		{
+			PYCXX_ALLOW_THREADS
+			Logger::put(Logger::STANDARD_LOG, "PGPythonProvider",
+				Logger::TRACE, msg);
+			PYCXX_END_ALLOW_THREADS
+		}
 	}
 	return Py::Nothing();
 }
