@@ -13,7 +13,10 @@ import pywbem
 from os import path
 import subprocess
 import unittest
+import math
 from lib import wbem_connection
+
+_tolerance = .04
 
 _atoms = {'Hydrogen': 1,
          'Helium': 2,
@@ -25,6 +28,17 @@ _atoms = {'Hydrogen': 1,
          'Oxygen': 8,
          'Fluorine': 9,
          'Neon': 10 }
+
+_atomic_weights = {'Hydrogen': 1.00794,
+                   'Helium': 4.002602,
+                   'Lithium': 6.941,
+                   'Beryllium': 9.012182,
+                   'Boron': 10.811,
+                   'Carbon': 12.0107,
+                   'Nitrogen': 14.0067,
+                   'Oxygen': 15.9994,
+                   'Fluorine': 18.9984032,
+                   'Neon': 20.1797 }
 
 def restart_gmond():
     p = subprocess.Popen([ path.join('/etc/init.d/', "novell-gmond"), \
@@ -61,8 +75,9 @@ def _compare_values(conn, instance, time):
     if instance['Name'] in _atoms:
         #print instance['Name']
         atoms_value = _atoms.get(instance['Name'])
+        atoms_weight = _atomic_weights[instance['Name']]
         for prop,value in instance.items():
-            #print prop
+            #print "Property=%s"%str(prop)
             #Char and Char_array
             if prop == 'char16Prop' or prop == 'char16Propa':
                 pass
@@ -80,12 +95,15 @@ def _compare_values(conn, instance, time):
                 if instance[prop] !=  False:
                     raise "False NOT EQUAL False"
             #All values not in lists
+            #real64Prop fails this check
             elif (instance.properties[prop].type == types.get(prop)) and \
-                  value == atoms_value and \
                   type(instance.properties[prop].value) != type([]):
                 if prop == 'uint8Prop':
                     if pywbem.Uint8(atoms_value) != instance[prop]:
                         raise "%s Error: %s" % (prop, instance[prop])
+                elif prop.startswith("real"):
+                    if _atomic_weights[instance['Name']] != atoms_weight:
+                        raise "%s == %s"%(_atomic_weights[instance['Name']],atoms_weight)
                 elif atoms_value != value:
                     raise "%s == %s"%(atoms_value,value)
             #All list values
@@ -95,14 +113,27 @@ def _compare_values(conn, instance, time):
                     if value[0] != 'proton' and value[1] != 'electron' \
                        and value[2] != 'neutron':
                         raise "String Array NOT EQUAL"
-                elif prop == 'uint8':
+                elif prop == 'uint8Propa':
                     for val in instance.properties[prop].value:
-                        if pywbem.uint8(atoms_value) != val:
+                        if pywbem.Uint8(atoms_value) != val:
                             raise ("Uint8 Values NOT EQUAL")
                 else:
+                    #print "\n"
+                    #print "instance.properties[prop]=%s"%str(prop)
+                    #print "atoms_value=%s"%str(atoms_value)
                     for a_prop in instance.properties[prop].value:
-                        if a_prop != atoms_value:
-                            raise "%s NOT EQUAL %s" % (atoms_value, value)
+                        #print "a_prop=%s"%str(a_prop)
+                        #print "value=%s"%str(value)
+                        for num in value: #Array
+                            #print "Checking a_prop=%s with num=%s" % (str(a_prop),str(num))
+                            #print "startswith=%s"%str(prop.startswith("real"))
+                            #if str(instance.properties[prop]).startswith("real"): 
+                            if prop.startswith("real"): 
+                                #print "Checking num=%s with atoms_weight=%s"%(str(num),str(atoms_weight))
+                                if math.fabs(num - atoms_weight) > _tolerance:
+                                    raise "%s NOT EQUAL %s" % (str(num), str(atoms_weight))
+                            elif a_prop != num:
+                                raise "%s NOT EQUAL %s" % (atoms_value, num)
             else:
                 raise "%s NOT EQUAL %s" % (atoms_value, value)
     else:
@@ -171,7 +202,7 @@ class TestAtomProvider(unittest.TestCase):
         self.inst_paths = []
         self.instance = None
         wconn = wbem_connection.wbem_connection()
-        self.conn = wconn.get_wbem_connection()
+        self.conn = wconn._WBEMConnFromOptions()
         unittest.TestCase.setUp(self)
 
     def tearDown(self):
@@ -183,63 +214,68 @@ class TestAtomProvider(unittest.TestCase):
         unittest.TestCase.tearDown(self)
 
 
-   # def test_1_register(self):
-   #     """ Test Register Provider """
-   #     testdir = "/usr/lib/pycim"
-   #     reginst = pywbem.CIMInstance('OpenWBEM_PyProviderRegistration', \
-   #               properties={ 'InstanceID':'TestAtomProvider', \
-   #               'NamespaceNames':['root/cimv2'],
-   #               'ClassName':'TestAtom',
-   #               'ProviderTypes':[pywbem.Uint16(1)], # Indication Handler
-   #               'ModulePath':'%s/TestAtomProvider.py' % testdir,
-   #                },
-   #                path=pywbem.CIMInstanceName('OpenWBEM_PyProviderRegistration',
-   #                namespace='Interop')) 
-   #         
-   #     try:
-   #         self.conn.CreateInstance(reginst)
-   #     except pywbem.CIMError, arg:
-   #         self.fail("Could not REGISTER %s:%s" % (reginst.classname, str(arg)))
-   #     restart_gmond()
 
-   # def test_7_deregister(self):
-   #     """ Test Deregister Provider """
-   #     self.conn.default_namespace = 'Interop'
-   #     reglist = self.conn.EnumerateInstanceNames('OpenWBEM_PyProviderRegistration')
-   #     for inst_name in reglist:
-   #         if inst_name['InstanceID'] == 'TestAtomProvider':
-   #             try:
-   #                 self.conn.DeleteInstance(inst_name)
-   #             except pywbem.CIMError, arg:
-   #                 self.fail("Could not DEREGISTER Class")
+    #def test_1_register(self):
+    #    """ Test Register Provider """
+    #    testdir = "/usr/lib/pycim"
+    #    reginst = pywbem.CIMInstance('OpenWBEM_PyProviderRegistration', \
+    #              properties={ 'InstanceID':'TestAtomProvider', \
+    #              'NamespaceNames':['root/cimv2'],
+    #              'ClassName':'TestAtom',
+    #              'ProviderTypes':[pywbem.Uint16(1)], # Indication Handler
+    #              'ModulePath':'%s/TestAtomProvider.py' % testdir,
+    #               },
+    #               path=pywbem.CIMInstanceName('OpenWBEM_PyProviderRegistration',
+    #               namespace='Interop')) 
+    #        
+    #    try:
+    #        self.conn.CreateInstance(reginst)
+    #    except pywbem.CIMError, arg:
+    #        self.fail("Could not REGISTER %s:%s" % (reginst.classname, str(arg)))
+    #    restart_gmond()
 
-   #     restart_gmond()
 
-   #     try:
-   #         self.conn.GetInstance(inst_name)
-   #     except pywbem.CIMError, arg:
-   #         self.failUnlessEqual(arg[0], pywbem.CIM_ERR_NOT_FOUND,
-   #              'Unexpected exception on GetInstance: %s' % str(arg))
+
+
+    #def test_7_deregister(self):
+    #    """ Test Deregister Provider """
+    #    self.conn.default_namespace = 'Interop'
+    #    reglist = self.conn.EnumerateInstanceNames('OpenWBEM_PyProviderRegistration')
+    #    for inst_name in reglist:
+    #        if inst_name['InstanceID'] == 'TestAtomProvider':
+    #            try:
+    #                self.conn.DeleteInstance(inst_name)
+    #            except pywbem.CIMError, arg:
+    #                self.fail("Could not DEREGISTER Class")
+
+    #    restart_gmond()
+
+    #    try:
+    #        self.conn.GetInstance(inst_name)
+    #    except pywbem.CIMError, arg:
+    #        self.failUnlessEqual(arg[0], pywbem.CIM_ERR_NOT_FOUND,
+    #             'Unexpected exception on GetInstance: %s' % str(arg))
+
 
     
     def _create_test_instance(self, name_of_atom, number):
         """ Create a TestAtom instance.  """
 
+        weight = _atomic_weights[name_of_atom]
+        #new_instance['char16Prop']  = 
+        #new_instance['char16Propa'] = Null
         new_instance = pywbem.CIMInstance('TestAtom')
         new_instance['Name'] = name_of_atom
         new_instance['boolProp']     = False
-        #new_instance['char16Prop']  = 
-        #new_instance['char16Propa'] = Null
         new_instance['dateProp']     = self.time
-        new_instance['real32Prop']   = pywbem.Real32(number)
-        #new_instance['real32Propa'] = pywbem.CIMProperty('Real32Propa', \ type='Real32', is_array=True, value=None)
-        new_instance['real32Propa']  = [pywbem.Real32(number), \
-                                        pywbem.Real32(number), \
-                                        pywbem.Real32(number)]
-        new_instance['real64Prop']   = pywbem.Real64(number)
-        new_instance['real64Propa']  = [pywbem.Real64(number), \
-                                        pywbem.Real64(number), \
-                                        pywbem.Real64(number)]
+        new_instance['real32Prop']   = pywbem.Real32(weight)
+        new_instance['real32Propa']  = [pywbem.Real32(weight), \
+                                        pywbem.Real32(weight), \
+                                        pywbem.Real32(weight)]
+        new_instance['real64Prop']   = pywbem.Real64(weight)
+        new_instance['real64Propa']  = [pywbem.Real64(weight), \
+                                        pywbem.Real64(weight), \
+                                        pywbem.Real64(weight)]
         new_instance['sint16Prop']   = pywbem.Sint16(number)
         new_instance['sint16Propa']  = [pywbem.Sint16(number), \
                                         pywbem.Sint16(number), \
@@ -396,7 +432,7 @@ class TestAtomProvider(unittest.TestCase):
 
         for prop in inst.properties.keys():
             if prop not in propertylist:
-                print prop
+                #print prop
                 raise "Property Not Found in PropertyList: " % prop
 
 
@@ -413,6 +449,7 @@ class TestAtomProvider(unittest.TestCase):
 
         mod_instance = get_instance(self.conn, keybindings, propertylist)
 
+        weight = _atomic_weights['Boron']
         new_time = pywbem.CIMDateTime.now()
         if mod_instance['boolProp']:
             mod_instance['boolProp'] = False
@@ -421,9 +458,8 @@ class TestAtomProvider(unittest.TestCase):
         mod_instance['uint64Prop'] = pywbem.Uint64(2)
         mod_instance['dateProp'] = new_time
         mod_instance['stringProp'] = "Helium"
-        mod_instance['real32Prop'] = pywbem.Real32(2)
+        mod_instance['real32Prop'] = pywbem.Real32(weight)
         mod_instance['sint64Propa'] = pywbem.CIMProperty('sint64Propa', \
-                                        #type='Sint64', is_array=True, \
                                         value=[pywbem.Sint64(2),  \
                                         pywbem.Sint64(2), pywbem.Sint64(2)])
         mod_instance['sint64prop'] = pywbem.Sint64(2)
@@ -436,9 +472,11 @@ class TestAtomProvider(unittest.TestCase):
 
         mod_instance = get_instance(self.conn, keybindings, propertylist)
         for prop in mod_instance.properties.keys():
-            if prop == 'uint64Prop' or prop == 'real32Prop' or \
-               prop == 'sint64Prop':
+            if prop == 'uint64Prop' or prop == 'sint64Prop':
                 self.assertEqual(mod_instance[prop],2,"Values NOT EQUAL")
+            elif prop == "real32Prop":
+                self.assertTrue(math.fabs(mod_instance[prop] - weight) <\
+                        _tolerance,"Values NOT EQUAL")
             elif prop == 'dateProp':
                 self.assertNotEquals(self.time,mod_instance[prop], \
                                      "Times ARE EQUAL")
