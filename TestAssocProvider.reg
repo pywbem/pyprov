@@ -20,7 +20,7 @@ instance of OpenWBEM_PyProviderRegistration
 instance of OpenWBEM_PyProviderRegistration
 {
 	InstanceID = "<Novell:ZENworks:TestAssoc:003>";
-	NamepsaceNames = {"root/cimv2"};
+	NamespaceNames = {"root/cimv2"};
 	ClassName = "TestAssoc_MemberOfGroup";
 	ProviderTypes  = {1, 3};
 	ModulePath = "/usr/lib/pycim/TestAssocProvider.py";
