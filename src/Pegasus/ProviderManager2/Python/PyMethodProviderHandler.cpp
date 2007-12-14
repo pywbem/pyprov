@@ -110,6 +110,18 @@ MethodProviderHandler::handleInvokeMethodRequest(
 				aDict[pv.getParameterName()] = PGPyConv::PGVal2Py(cv);
 			}
 		}
+		// Now add any missing parameters with a None value
+		len = method.getParameterCount();
+		for (i = 0; i < len; i++)
+		{
+			CIMParameter param = method.getParameter(i);
+			String pname = param.getName().getString();
+			if (!aDict.hasKey(pname))
+			{
+				aDict[pname] = Py::None();
+			}
+		}
+		
 		args[3] = aDict;
 		Py::Object pyv = pyfunc.apply(args);
 		if (!pyv.isTuple())
