@@ -116,8 +116,37 @@ MethodProviderHandler::handleInvokeMethodRequest(
 		{
 			CIMParameter param = method.getParameter(i);
 			String pname = param.getName().getString();
-			if (!aDict.hasKey(pname))
+			if (aDict.hasKey(pname))
 			{
+				// Already have parameter
+				continue;
+			}
+
+			// No see if it is an input param
+			Uint32 ndx = param.findQualifier("IN");
+			if (ndx == PEG_NOT_FOUND)
+			{
+				// 'IN' qualifier not specified.
+				// According to DSP0004 assume default is TRUE
+				aDict[pname] = Py::None();
+				continue;
+			}
+
+			CIMQualifier qual = param.getQualifier(ndx);
+			CIMValue cv = qual.getValue();
+			if (cv.isNull())
+			{
+				// 'IN' qualifier not specified.
+				// According to DSP0004 assume default is TRUE
+				aDict[pname] = Py::None();
+				continue;
+			}
+
+			Boolean isIn;
+			cv.get(isIn);
+			if (isIn)
+			{
+				// 'IN' qual specified and 'TRUE'
 				aDict[pname] = Py::None();
 			}
 		}
