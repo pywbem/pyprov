@@ -138,9 +138,9 @@ protected:
 
     CIMResponseMessage* _handleUnsupportedRequest(CIMRequestMessage * message, PyProviderRef& provref);
     CIMResponseMessage* _handleExecQueryRequest(CIMRequestMessage * message, PyProviderRef& provref);
-    CIMResponseMessage* _handleDisableModuleRequest(CIMRequestMessage * message, PyProviderRef& provref);
-    CIMResponseMessage* _handleEnableModuleRequest(CIMRequestMessage * message, PyProviderRef& provref);
-    CIMResponseMessage* _handleStopAllProvidersRequest(CIMRequestMessage * message, PyProviderRef& provref);
+    CIMResponseMessage* _handleDisableModuleRequest(CIMRequestMessage * message);
+    CIMResponseMessage* _handleEnableModuleRequest(CIMRequestMessage * message);
+    CIMResponseMessage* _handleStopAllProvidersRequest(CIMRequestMessage * message);
 	CIMResponseMessage* _handleModifySubscriptionRequest(CIMRequestMessage* message, PyProviderRef& provref);
     CIMResponseMessage* _handleSubscriptionInitCompleteRequest (CIMRequestMessage * message, PyProviderRef& provref);
 

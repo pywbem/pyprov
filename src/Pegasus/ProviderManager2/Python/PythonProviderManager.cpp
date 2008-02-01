@@ -276,7 +276,10 @@ PythonProviderManager::_loadProvider(
 	const String& provPath,
 	const OperationContext& opctx)
 {
-	try
+	PEG_METHOD_ENTER(
+        TRC_PROVIDERMANAGER,
+        "PythonProviderManager::_loadProvider()");
+    try
 	{
 		Py::Object cim_provider = m_pywbemMod.getAttr("cim_provider"); 
 		Py::Callable ctor = cim_provider.getAttr("ProviderProxy");
@@ -297,6 +300,7 @@ PythonProviderManager::_loadProvider(
 		String msg = "Python Load Error: " + tb;
 		THROW_NOSUCHPROV_EXC(msg);
 	}
+    PEG_METHOD_EXIT();
 	return Py::None();
 }
 
@@ -304,6 +308,10 @@ PythonProviderManager::_loadProvider(
 void
 PythonProviderManager::_stopAllProviders()
 {
+    PEG_METHOD_ENTER(
+        TRC_PROVIDERMANAGER,
+        "PythonProviderManager::_stopAllProviders()");
+ 
 	ProviderMap::iterator it = m_provs.begin();
 	while(it != m_provs.end())
 	{
@@ -311,6 +319,7 @@ PythonProviderManager::_stopAllProviders()
 		it++;
 	}
 	m_provs.clear();
+    PEG_METHOD_EXIT();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -319,6 +328,10 @@ PythonProviderManager::_shutdownProvider(
 	const PyProviderRef& provref,
 	const OperationContext& opctx)
 {
+    PEG_METHOD_ENTER(
+        TRC_PROVIDERMANAGER,
+        "PythonProviderManager::_shutdownProvider()");
+ 
 	Py::GILGuard gg;	// Acquire python's GIL
 	try
 	{
@@ -346,6 +359,7 @@ PythonProviderManager::_shutdownProvider(
 			"Caught unknown exception invoking 'shutdown' provider $0.",
 			provref->m_path);
 	}
+    PEG_METHOD_EXIT();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -354,6 +368,10 @@ PythonProviderManager::_path2PyProviderRef(
 	const String& provPath,
 	const OperationContext& opctx)
 {
+    PEG_METHOD_ENTER(
+        TRC_PROVIDERMANAGER,
+        "PythonProviderManager::_path2PyProviderRef()");
+ 
 	AutoMutex am(g_provGuard);
 	ProviderMap::iterator it = m_provs.find(provPath);
 	if (it != m_provs.end())
@@ -397,9 +415,23 @@ PythonProviderManager::_path2PyProviderRef(
 		THROW_NOSUCHPROV_EXC(msg);
 	}
 
+    PEG_METHOD_EXIT();
 	// Shouldn't hit this
 	return PyProviderRef(0);
 }
+
+#ifdef DEBUG
+    void print(PEGASUS_STD(ostream)& os, CIMRequestMessage *msg)
+    {
+		os << "CIMRequestMessage\n";
+		os << "{";
+
+		os << "    messageId: " << msg->messageId << PEGASUS_STD(endl);
+		os << "    messageType: " << MessageTypeToString(msg->getType()) << endl;
+
+        os << "}";
+    }
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 Message*
@@ -412,16 +444,24 @@ PythonProviderManager::processMessage(Message * message)
     CIMRequestMessage* request = dynamic_cast<CIMRequestMessage*>(message);
     PEGASUS_ASSERT(request != 0);
 
-	ProviderIdContainer providerId =
-		request->operationContext.get(ProviderIdContainer::NAME);
+	//print(cerr, request);
 
-	ProviderName name = _resolveProviderName(providerId);
-
-	// If provider doesn't exist this call throws PyNoSuchProviderException
-	PyProviderRef provRef = _path2PyProviderRef(name.getLocation(),
-		request->operationContext);
-
-	// At this point we know we have a provider
+	// the following messages don't contain ProviderIdContainer,
+	// and hence don't pass a providerRef into the handler:
+	//     CIM_STOP_ALL_PROVIDERS_REQUEST_MESSAGE
+	//     CIM_DISABLE_MODULE_REQUEST_MESSAGE
+	//     CIM_ENABLE_MODULE_REQUEST_MESSAGE
+	PyProviderRef provRef;
+	if (request->operationContext.contains(ProviderIdContainer::NAME))
+	{
+		ProviderIdContainer providerId =
+			request->operationContext.get(ProviderIdContainer::NAME);
+		ProviderName name = _resolveProviderName(providerId);
+		// If provider doesn't exist this call throws PyNoSuchProviderException
+		provRef = _path2PyProviderRef(name.getLocation(),
+			request->operationContext);
+		// At this point we know we have a provider
+	}
 	CIMResponseMessage* response = 0;
 
 	// pass the request message to a handler method based on message type
@@ -502,16 +542,15 @@ PythonProviderManager::processMessage(Message * message)
 			break;
 
 		case CIM_STOP_ALL_PROVIDERS_REQUEST_MESSAGE:
-			response = _handleStopAllProvidersRequest(request, provRef);
+			response = _handleStopAllProvidersRequest(request);
 			break;
 
 		case CIM_DISABLE_MODULE_REQUEST_MESSAGE:
-			response = _handleDisableModuleRequest(request, provRef);
+			response = _handleDisableModuleRequest(request);
 			break;
 
 		case CIM_ENABLE_MODULE_REQUEST_MESSAGE:
-			// IGNORE?
-			response = _handleEnableModuleRequest(request, provRef);
+			response = _handleEnableModuleRequest(request);
 			break;
 
 		case CIM_EXEC_QUERY_REQUEST_MESSAGE:
@@ -539,6 +578,10 @@ PythonProviderManager::_incActivationCount(
 	CIMRequestMessage* message,
 	PyProviderRef& provref)
 {
+    PEG_METHOD_ENTER(
+        TRC_PROVIDERMANAGER,
+        "PythonProviderManager::_incActivationCount()");
+ 
 	AutoMutex am(g_provGuard);
 	provref->m_activationCount++;
 	if (provref->m_pIndicationResponseHandler)
@@ -563,6 +606,7 @@ PythonProviderManager::_incActivationCount(
 			_responseChunkCallback);
 
     provref->m_pIndicationResponseHandler->processing();
+    PEG_METHOD_EXIT();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -571,6 +615,10 @@ PythonProviderManager::_decActivationCount(
 	CIMRequestMessage* message,
 	PyProviderRef& provref)
 {
+    PEG_METHOD_ENTER(
+        TRC_PROVIDERMANAGER,
+        "PythonProviderManager::_decActivationCount()");
+ 
 	AutoMutex am(g_provGuard);
 	// Make sure we know about this provider
 	ProviderMap::iterator it = m_provs.find(provref->m_path);
@@ -587,6 +635,7 @@ PythonProviderManager::_decActivationCount(
 			provref->m_pIndicationResponseHandler = 0;
 		}
 	}
+    PEG_METHOD_EXIT();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -613,6 +662,10 @@ PythonProviderManager::generateIndication(
 ///////////////////////////////////////////////////////////////////////////////
 Boolean PythonProviderManager::hasActiveProviders()
 {
+    PEG_METHOD_ENTER(
+        TRC_PROVIDERMANAGER,
+        "PythonProviderManager::hasActiveProviders()");
+ 
 	bool cc = false;
 	AutoMutex am(g_provGuard);
 	try
@@ -644,12 +697,17 @@ Boolean PythonProviderManager::hasActiveProviders()
 		// TODO
 		cc = true;
 	}
+    PEG_METHOD_EXIT();
 	return cc;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 void PythonProviderManager::unloadIdleProviders()
 {
+    PEG_METHOD_ENTER(
+        TRC_PROVIDERMANAGER,
+        "PythonProviderManager::unloadIdleProviders()");
+ 
 	AutoMutex am(g_provGuard);
 	time_t currtime = ::time(NULL);
 	ProviderMap::iterator it = m_provs.begin();
@@ -668,6 +726,7 @@ void PythonProviderManager::unloadIdleProviders()
 		}
 		it++;
 	}
+    PEG_METHOD_EXIT();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -706,10 +765,35 @@ CIMResponseMessage* PythonProviderManager::_handleExecQueryRequest(
     return response;
 }
 
+#ifdef DEBUG
+void printDMR(PEGASUS_STD(ostream)& os, CIMDisableModuleRequestMessage *msg)
+{
+	os << "CIMDisableModuleRequestMessage\n" << endl;
+	os << "{" << endl;
+	os << "    messageId: " << msg->messageId << PEGASUS_STD(endl);
+	os << "    messageType: " << MessageTypeToString(msg->getType()) << endl;
+	os << "    disableProvidersOnly: " << (msg->disableProviderOnly?"true":"false") << endl;
+	os << "    authType: " << msg->authType << endl;
+	os << "    userName: " << msg->userName << endl;
+	os << "    providerModule: " << msg->providerModule.getPath().toString() << endl;
+	String physName = msg->providerModule.getProperty(msg->providerModule.findProperty("Location")).getValue().toString();
+	os << "        physName: " << physName << endl;
+	os << "    Providers (and if indicationProvider):" << endl;
+	Array<CIMInstance> _pInstances = msg->providers;
+	Array<Boolean> _indProvs = msg->indicationProviders;
+	for (Uint32 i=0, n=_pInstances.size(); i<n; i++)
+	{
+		String provName;
+		_pInstances[i].getProperty(_pInstances[i].findProperty(CIMName("Name"))).getValue().get(provName);
+		os << "        " << provName << ":" << (_indProvs[i]?"true":"false") << endl;
+	}
+	os << "}" << endl << endl;
+}
+#endif
+
 ///////////////////////////////////////////////////////////////////////////////
 CIMResponseMessage* PythonProviderManager::_handleDisableModuleRequest(
-    CIMRequestMessage* message,
-	PyProviderRef& provref)
+    CIMRequestMessage* message)
 {
 	Py::GILGuard gg;	// Acquire Python's GIL
 
@@ -721,14 +805,20 @@ CIMResponseMessage* PythonProviderManager::_handleDisableModuleRequest(
 		dynamic_cast<CIMDisableModuleRequestMessage*>(message);
     PEGASUS_ASSERT(request != 0 );
 
+	//printDMR(cerr, request);
+
 	Array<Uint16> operationalStatus;
 	CIMException cimException;
+	String loc;
 	try
 	{
-		ProviderMap::iterator it = m_provs.find(provref->m_path);
+		// first find the provider ref
+		loc = request->providerModule.getProperty(request->providerModule.findProperty("Location")).getValue().toString();
+		// ProviderMap is a map of:  Location -> ProviderRef
+		ProviderMap::iterator it = m_provs.find(loc);
 		if (it != m_provs.end())
 		{
-			_shutdownProvider(it->second, OperationContext());
+			_shutdownProvider(it->second, request->operationContext);
 			m_provs.erase(it);
 			operationalStatus.append(CIM_MSE_OPSTATUS_VALUE_STOPPED);
 		}
@@ -739,11 +829,11 @@ CIMResponseMessage* PythonProviderManager::_handleDisableModuleRequest(
 	}
 	catch (Py::Exception& e)
 	{
-		String tb = processPyException(e, __LINE__, provref->m_path, false);
+		String tb = processPyException(e, __LINE__, loc, false);
 		Logger::put(Logger::ERROR_LOG, PYSYSTEM_ID, Logger::SEVERE,
 			"ProviderManager.Python.PythonProviderManager",
 			"Caught exception processing Disable Module Request. "
-			"Provider $0. $1", provref->m_path, tb);
+			"Provider $0. $1", loc, tb);
 		String msg = "Python UnLoad Error: " + tb;
         cimException = CIMException(CIM_ERR_FAILED, msg);
 		operationalStatus.append(CIM_MSE_OPSTATUS_VALUE_OK);
@@ -775,6 +865,16 @@ CIMResponseMessage* PythonProviderManager::_handleDisableModuleRequest(
     CIMDisableModuleResponseMessage* response =
         dynamic_cast<CIMDisableModuleResponseMessage*>(
             request->buildResponse());
+	/*
+    CIMDisableModuleResponseMessage * response =
+        new CIMDisableModuleResponseMessage(
+        request->messageId,
+        CIMException(),
+        request->queueIds.copyAndPop(),
+        operationalStatus);
+	response->setHttpMethod(request->getHttpMethod());
+	*/
+
     PEGASUS_ASSERT(response != 0);
 	response->operationalStatus = operationalStatus;
     PEG_METHOD_EXIT();
@@ -783,34 +883,39 @@ CIMResponseMessage* PythonProviderManager::_handleDisableModuleRequest(
 
 ///////////////////////////////////////////////////////////////////////////////
 CIMResponseMessage* PythonProviderManager::_handleEnableModuleRequest(
-    CIMRequestMessage* message,
-	PyProviderRef& provref)
+    CIMRequestMessage* message)
 {
     PEG_METHOD_ENTER(
         TRC_PROVIDERMANAGER,
         "PythonProviderManager::_handleEnableModuleRequest()");
-    CIMRequestMessage* request =
-        dynamic_cast<CIMRequestMessage *>(message);
+    CIMEnableModuleRequestMessage* request =
+        dynamic_cast<CIMEnableModuleRequestMessage *>(message);
     PEGASUS_ASSERT(request != 0 );
 
-    CIMResponseMessage* response = request->buildResponse();
-    response->cimException =
-        PEGASUS_CIM_EXCEPTION(CIM_ERR_NOT_SUPPORTED,
-				"EnableModuleRequest not yet implemented");
-    PEG_METHOD_EXIT();
+	Array<Uint16> operationalStatus;
+	operationalStatus.append(CIM_MSE_OPSTATUS_VALUE_OK);
+
+	// let the CIMOM know that we received the message - indicating
+	// that a provider registration has been made
+	CIMEnableModuleResponseMessage* response =
+	    dynamic_cast<CIMEnableModuleResponseMessage*>(
+	        request->buildResponse());
+	PEGASUS_ASSERT(response != 0);
+	response->operationalStatus = operationalStatus;
+
+	PEG_METHOD_EXIT();
     return response;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 CIMResponseMessage* PythonProviderManager::_handleStopAllProvidersRequest(
-    CIMRequestMessage* message,
-	PyProviderRef& provref)
+    CIMRequestMessage* message)
 {
     PEG_METHOD_ENTER(
         TRC_PROVIDERMANAGER,
         "PythonProviderManager::_handleStopAllProvidersRequest()");
-    CIMRequestMessage* request =
-        dynamic_cast<CIMRequestMessage *>(message);
+    CIMStopAllProvidersRequestMessage* request =
+        dynamic_cast<CIMStopAllProvidersRequestMessage *>(message);
     PEGASUS_ASSERT(request != 0 );
 
     CIMResponseMessage* response = request->buildResponse();
