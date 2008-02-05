@@ -44,7 +44,6 @@
 #include "PG_PyConverter.h"
 
 #include <unistd.h>
-#include <signal.h>
 
 PEGASUS_USING_STD;
 PEGASUS_USING_PEGASUS;
@@ -1095,10 +1094,6 @@ void PythonProviderManager::_initPython()
 
 	// Initialize embedded python interpreter
 	Py_Initialize();
-
-	// Allow SIGCHLD so child processes can be waited on
-	// when fork/exec type of activities take place.
-	::signal(SIGCHLD, SIG_DFL);
 
 	PyEval_InitThreads();
 	m_mainPyThreadState = PyGILState_GetThisThreadState();
