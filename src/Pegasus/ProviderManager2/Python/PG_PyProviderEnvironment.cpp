@@ -45,7 +45,8 @@ Py::Object
 PyProviderEnvironment::getCIMOMHandle(
 	const Py::Tuple& args)
 {
-	return PyCIMOMHandle::newObject(m_pmgr, m_provPath);
+	IdentityContainer container(m_opctx.get(IdentityContainer::NAME));
+	return PyCIMOMHandle::newObject(m_pmgr, m_provPath, m_opctx);
 }
 
 //////////////////////////////////////////////////////////////////////////////

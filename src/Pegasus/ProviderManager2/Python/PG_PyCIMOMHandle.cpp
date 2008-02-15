@@ -422,12 +422,14 @@ _processCIMObjectPathResults(
 //////////////////////////////////////////////////////////////////////////////
 PyCIMOMHandle::PyCIMOMHandle(
 		PythonProviderManager* pmgr,
-		const String& provPath)
+		const String& provPath,
+        const OperationContext& context)
 	: Py::PythonExtension<PyCIMOMHandle>()
 	, m_chdl()
 	, m_defaultns()
 	, m_pmgr(pmgr)
 	, m_provPath(provPath)
+    , m_context(context)
 {
 }
 
@@ -552,7 +554,7 @@ PyCIMOMHandle::invokeMethod(
 		CIMName className = objectName.getClassName();
 		CIMClass cc;
 		PYCXX_ALLOW_THREADS
-		cc = m_chdl.getClass(OperationContext(), ns, className, false, 
+		cc = m_chdl.getClass(m_context, ns, className, false, 
 			true, true, CIMPropertyList());
 		PYCXX_END_ALLOW_THREADS
 		Uint32 ndx = cc.findMethod(methodName);
@@ -585,7 +587,7 @@ PyCIMOMHandle::invokeMethod(
 		Array<CIMParamValue> outParams;
 		CIMValue rcv;
 		PYCXX_ALLOW_THREADS
-		rcv = m_chdl.invokeMethod(OperationContext(), ns, objectName, methodName,
+		rcv = m_chdl.invokeMethod(m_context, ns, objectName, methodName,
 			inParams, outParams);
 		PYCXX_END_ALLOW_THREADS
 
@@ -688,7 +690,7 @@ PyCIMOMHandle::enumClassNames(
 
 		Array<CIMName> cnames;
 		PYCXX_ALLOW_THREADS
-		cnames = m_chdl.enumerateClassNames(OperationContext(), ns, className, deepflg);
+		cnames = m_chdl.enumerateClassNames(m_context, ns, className, deepflg);
 		PYCXX_END_ALLOW_THREADS
 		return _processCIMNameResults(cnames, cb);
 	}
@@ -791,7 +793,7 @@ PyCIMOMHandle::enumClass(
 		}
 		Array<CIMClass> classes;
 		PYCXX_ALLOW_THREADS
-		classes = m_chdl.enumerateClasses(OperationContext(), ns, className,
+		classes = m_chdl.enumerateClasses(m_context, ns, className,
 			deepFlg, localOnlyFlag, incQualsFlag, classOriginFlag);
 		PYCXX_END_ALLOW_THREADS
 		return _processCIMClassResults(classes, cb);
@@ -892,7 +894,7 @@ PyCIMOMHandle::getClass(
 
 		CIMClass cc;
 		PYCXX_ALLOW_THREADS
-		cc = m_chdl.getClass(OperationContext(), ns, className, localOnlyFlag,
+		cc = m_chdl.getClass(m_context, ns, className, localOnlyFlag,
 			incQualsFlag, classOriginFlag, propList);
 		PYCXX_END_ALLOW_THREADS
 		return PGPyConv::PGClass2Py(cc);
@@ -948,7 +950,7 @@ PyCIMOMHandle::createClass(
 			}
 		}
 		PYCXX_ALLOW_THREADS
-		m_chdl.createClass(OperationContext(), ns, cc);
+		m_chdl.createClass(m_context, ns, cc);
 		PYCXX_END_ALLOW_THREADS
 	}
 	catch(const CIMException& e)
@@ -1003,7 +1005,7 @@ PyCIMOMHandle::deleteClass(
 			}
 		}
 		PYCXX_ALLOW_THREADS
-		m_chdl.deleteClass(OperationContext(), ns, className);
+		m_chdl.deleteClass(m_context, ns, className);
 		PYCXX_END_ALLOW_THREADS
 	}
 	catch(const CIMException& e)
@@ -1058,7 +1060,7 @@ PyCIMOMHandle::modifyClass(
 			}
 		}
 		PYCXX_ALLOW_THREADS
-		m_chdl.modifyClass(OperationContext(), ns, cc);
+		m_chdl.modifyClass(m_context, ns, cc);
 		PYCXX_END_ALLOW_THREADS
 	}
 	catch(const CIMException& e)
@@ -1357,7 +1359,13 @@ PyCIMOMHandle::enumInstanceNames(
 
 		Array<CIMObjectPath> cops;
 		PYCXX_ALLOW_THREADS
-		cops = m_chdl.enumerateInstanceNames(OperationContext(), ns, className);
+
+IdentityContainer container(m_context.get(IdentityContainer::NAME));
+String userName(container.getUserName());
+cerr << "!!!!! User Name on context: " << userName << endl;
+
+
+		cops = m_chdl.enumerateInstanceNames(m_context, ns, className);
 		PYCXX_END_ALLOW_THREADS
 		return _processCIMObjectPathResults(cops, cb, ns);
 	}
@@ -1465,7 +1473,7 @@ PyCIMOMHandle::enumInstances(
 
 		Array<CIMInstance> instances;
 		PYCXX_ALLOW_THREADS
-		instances = m_chdl.enumerateInstances(OperationContext(), ns, className, deepFlg, localOnlyFlag,
+		instances = m_chdl.enumerateInstances(m_context, ns, className, deepFlg, localOnlyFlag,
 			incQualsFlag, classOriginFlag, propList);
 		PYCXX_END_ALLOW_THREADS
 		return _processCIMInstanceResults(instances, ns, cb);
@@ -1550,7 +1558,7 @@ PyCIMOMHandle::getInstance(
 		}
 		CIMInstance ci;
 		PYCXX_ALLOW_THREADS
-		ci = m_chdl.getInstance(OperationContext(), ns, instanceName,
+		ci = m_chdl.getInstance(m_context, ns, instanceName,
 			localOnlyFlag, incQualsFlag, classOriginFlag, propList);
 		ci.setPath(instanceName);
 		PYCXX_END_ALLOW_THREADS
@@ -1601,7 +1609,7 @@ PyCIMOMHandle::deleteInstance(
 			}
 		}
 		PYCXX_ALLOW_THREADS
-		m_chdl.deleteInstance(OperationContext(), ns, instanceName);
+		m_chdl.deleteInstance(m_context, ns, instanceName);
 		PYCXX_END_ALLOW_THREADS
 	}
 	catch(const CIMException& e)
@@ -1652,7 +1660,7 @@ PyCIMOMHandle::createInstance(
 		}
 		CIMObjectPath mcop;
 		PYCXX_ALLOW_THREADS
-		mcop = m_chdl.createInstance(OperationContext(), ns, ci);
+		mcop = m_chdl.createInstance(m_context, ns, ci);
 		mcop.setNameSpace(ns);
 		PYCXX_END_ALLOW_THREADS
 		return PGPyConv::PGRef2Py(mcop);
@@ -1725,7 +1733,7 @@ PyCIMOMHandle::modifyInstance(
 		}
 
 		PYCXX_ALLOW_THREADS
-		m_chdl.modifyInstance(OperationContext(), ns, ci,
+		m_chdl.modifyInstance(m_context, ns, ci,
 			incQualsFlag, propList);
 		PYCXX_END_ALLOW_THREADS
 	}
@@ -1840,7 +1848,7 @@ PyCIMOMHandle::associators(
 
 		Array<CIMObject> cimobjs;
 		PYCXX_ALLOW_THREADS
-		cimobjs = m_chdl.associators(OperationContext(), ns, objectName, 
+		cimobjs = m_chdl.associators(m_context, ns, objectName, 
 			assocClass, resultClass, role, resultRole, incQualsFlag,
 			classOriginFlag, propList);
 		PYCXX_END_ALLOW_THREADS
@@ -1929,7 +1937,7 @@ PyCIMOMHandle::associatorNames(
 		}
 		Array<CIMObjectPath> names;
 		PYCXX_ALLOW_THREADS
-		names = m_chdl.associatorNames(OperationContext(), ns, objectName,
+		names = m_chdl.associatorNames(m_context, ns, objectName,
 			assocClass, resultClass, role, resultRole);
 		PYCXX_END_ALLOW_THREADS
 		return _processCIMObjectPathResults(names, cb, ns);
@@ -2032,7 +2040,7 @@ PyCIMOMHandle::references(
 		}
 		Array<CIMObject> cimobjs;
 		PYCXX_ALLOW_THREADS
-		cimobjs = m_chdl.references(OperationContext(), ns, objectName, resultClass, role, 
+		cimobjs = m_chdl.references(m_context, ns, objectName, resultClass, role, 
 			incQualsFlag, classOriginFlag, propList);
 		PYCXX_END_ALLOW_THREADS
 		return _processCIMObjectResults(cimobjs, ns, cb);
@@ -2107,7 +2115,7 @@ PyCIMOMHandle::referenceNames(
 		}
 		Array<CIMObjectPath> cops;
 		PYCXX_ALLOW_THREADS
-		cops = m_chdl.referenceNames(OperationContext(), ns, objectName,
+		cops = m_chdl.referenceNames(m_context, ns, objectName,
 			resultClass, role);
 		PYCXX_END_ALLOW_THREADS
 		return _processCIMObjectPathResults(cops, cb, ns);
@@ -2200,9 +2208,10 @@ Py::Object
 PyCIMOMHandle::newObject(
 	PythonProviderManager* pmgr,
 	const String& provPath,
+    const OperationContext& context,
 	PyCIMOMHandle **pchdl)
 {
-	PyCIMOMHandle* ph = new PyCIMOMHandle(pmgr, provPath);
+	PyCIMOMHandle* ph = new PyCIMOMHandle(pmgr, provPath, context);
 	if (pchdl)
 	{
 		*pchdl = ph;

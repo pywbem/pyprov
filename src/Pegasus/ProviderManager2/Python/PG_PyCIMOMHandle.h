@@ -34,7 +34,8 @@ class PyCIMOMHandle
 	: public Py::PythonExtension<PyCIMOMHandle>
 {
 public:
-	PyCIMOMHandle(PythonProviderManager* pmgr, const String& provPath);
+	PyCIMOMHandle(PythonProviderManager* pmgr, const String& provPath,
+        const OperationContext& context);
 	~PyCIMOMHandle();
 
 	Py::Object setDefaultNs(const Py::Tuple& args);
@@ -78,6 +79,7 @@ public:
 	static Py::Object newObject(
 		PythonProviderManager* pmgr,
 		const String& provPath,
+        const OperationContext& context,
 		PyCIMOMHandle **pchdl=0);
 
 private:
@@ -86,6 +88,7 @@ private:
 	String m_defaultns;
 	PythonProviderManager* m_pmgr;
 	String m_provPath;
+    OperationContext m_context;
 };
 
 }	// End of namespace PythonProvIFC
