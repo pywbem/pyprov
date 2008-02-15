@@ -824,7 +824,8 @@ CIMResponseMessage* PythonProviderManager::_handleDisableModuleRequest(
 		}
 		else
 		{
-			operationalStatus.append(CIM_MSE_OPSTATUS_VALUE_OK);
+            // no providers were loaded... still set it to stopped
+			operationalStatus.append(CIM_MSE_OPSTATUS_VALUE_STOPPED);
 		}
 	}
 	catch (Py::Exception& e)
@@ -1157,4 +1158,4 @@ extern "C" PEGASUS_EXPORT ProviderManager * PegasusCreateProviderManager(
     }
     return(0);
 }
-    
+
