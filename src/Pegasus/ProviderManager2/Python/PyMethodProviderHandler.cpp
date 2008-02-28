@@ -63,6 +63,8 @@ MethodProviderHandler::handleInvokeMethodRequest(
 	InvokeMethodResponseHandler handler(
 		request, response.get(), pmgr->_responseChunkCallback);
 
+	OperationContext ctx(request->operationContext);
+
 	CIMObjectPath objectPath(
 		System::getHostName(),
 		request->nameSpace,
@@ -70,7 +72,7 @@ MethodProviderHandler::handleInvokeMethodRequest(
 		request->instanceName.getKeyBindings());
 
 	CIMOMHandle chdl;
-	CIMClass cc = chdl.getClass(OperationContext(), request->nameSpace,
+	CIMClass cc = chdl.getClass(ctx, request->nameSpace,
 		request->instanceName.getClassName(), false, true, true,
 		CIMPropertyList());
 

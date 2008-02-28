@@ -61,6 +61,8 @@ InstanceProviderHandler::handleGetInstanceRequest(
 			request->buildResponse()));
 	PEGASUS_ASSERT(response.get() != 0);
 
+	OperationContext ctx(request->operationContext);
+
 	// create a handler for this request
 	GetInstanceResponseHandler handler(
 		request, response.get(), pmgr->_responseChunkCallback);
@@ -72,7 +74,7 @@ InstanceProviderHandler::handleGetInstanceRequest(
 		request->instanceName.getKeyBindings());
 
 	CIMOMHandle chdl;
-	CIMClass cc = chdl.getClass(OperationContext(), request->nameSpace,
+	CIMClass cc = chdl.getClass(ctx, request->nameSpace,
 		request->instanceName.getClassName(), false, true, true,
 		CIMPropertyList());
 
@@ -129,8 +131,10 @@ InstanceProviderHandler::handleEnumerateInstancesRequest(
 	EnumerateInstancesResponseHandler handler(
 		request, response.get(), pmgr->_responseChunkCallback);
 
+	OperationContext ctx(request->operationContext);
+
 	CIMOMHandle chdl;
-	CIMClass cc = chdl.getClass(OperationContext(), request->nameSpace,
+	CIMClass cc = chdl.getClass(ctx, request->nameSpace,
 		request->className, false, true, true, CIMPropertyList());
 
 	Py::GILGuard gg;	// Acquire Python's GIL
@@ -201,8 +205,10 @@ InstanceProviderHandler::handleEnumerateInstanceNamesRequest(
 	EnumerateInstanceNamesResponseHandler handler(
 		request, response.get(), pmgr->_responseChunkCallback);
 
+	OperationContext ctx(request->operationContext);
+
 	CIMOMHandle chdl;
-	CIMClass cc = chdl.getClass(OperationContext(), request->nameSpace,
+	CIMClass cc = chdl.getClass(ctx, request->nameSpace,
 		request->className, false, true, true, CIMPropertyList());
 
 	Py::GILGuard gg;	// Acquire Python's GIL
@@ -270,8 +276,10 @@ InstanceProviderHandler::handleCreateInstanceRequest(
 	CreateInstanceResponseHandler handler(
 		request, response.get(), pmgr->_responseChunkCallback);
 
+	OperationContext ctx(request->operationContext);
+
 	CIMOMHandle chdl;
-	CIMClass cc = chdl.getClass(OperationContext(), request->nameSpace,
+	CIMClass cc = chdl.getClass(ctx, request->nameSpace,
 		request->newInstance.getClassName(), false, true, true,
 		CIMPropertyList());
 	CIMObjectPath objectPath = request->newInstance.buildPath(cc);
@@ -329,8 +337,9 @@ InstanceProviderHandler::handleModifyInstanceRequest(
 	ModifyInstanceResponseHandler handler(
 		request, response.get(), pmgr->_responseChunkCallback);
 
+	OperationContext ctx(request->operationContext);
 	CIMOMHandle chdl;
-	CIMClass cc = chdl.getClass(OperationContext(), request->nameSpace,
+	CIMClass cc = chdl.getClass(ctx, request->nameSpace,
 		request->modifiedInstance.getClassName(), false, true, true,
 		CIMPropertyList());
 
@@ -339,7 +348,7 @@ InstanceProviderHandler::handleModifyInstanceRequest(
 	objectPath.setHost(System::getHostName());
 	request->modifiedInstance.setPath(objectPath);
 
-	CIMInstance prevInstance = chdl.getInstance(OperationContext(),
+	CIMInstance prevInstance = chdl.getInstance(ctx,
 		request->nameSpace, objectPath, false, true, true, CIMPropertyList());
 	prevInstance.setPath(objectPath);
 
@@ -435,6 +444,8 @@ InstanceProviderHandler::handleGetPropertyRequest(
 	GetPropertyResponseHandler handler(
 		request, response.get(), pmgr->_responseChunkCallback);
 
+	OperationContext ctx(request->operationContext);
+
 	// Do GetProperty through getInstance
 
     CIMObjectPath objectPath(
@@ -444,7 +455,7 @@ InstanceProviderHandler::handleGetPropertyRequest(
         request->instanceName.getKeyBindings());
 
 	CIMOMHandle chdl;
-	CIMClass cc = chdl.getClass(OperationContext(), request->nameSpace,
+	CIMClass cc = chdl.getClass(ctx, request->nameSpace,
 		request->instanceName.getClassName(), false, true, true,
 		CIMPropertyList());
 
@@ -510,6 +521,8 @@ InstanceProviderHandler::handleSetPropertyRequest(
 	SetPropertyResponseHandler handler(
 		request, response.get(), pmgr->_responseChunkCallback);
 
+	OperationContext ctx(request->operationContext);
+
 	// Do SetProperty through modifyInstance
 	//
     CIMObjectPath objectPath(
@@ -525,11 +538,11 @@ InstanceProviderHandler::handleSetPropertyRequest(
     instance.setPath(objectPath);
 
 	CIMOMHandle chdl;
-	CIMClass cc = chdl.getClass(OperationContext(), request->nameSpace,
+	CIMClass cc = chdl.getClass(ctx, request->nameSpace,
 		request->instanceName.getClassName(), false, true, true,
 		CIMPropertyList());
 
-	CIMInstance prevInstance = chdl.getInstance(OperationContext(),
+	CIMInstance prevInstance = chdl.getInstance(ctx,
 		request->nameSpace, objectPath, false, true, true, CIMPropertyList());
 	prevInstance.setPath(objectPath);
 
