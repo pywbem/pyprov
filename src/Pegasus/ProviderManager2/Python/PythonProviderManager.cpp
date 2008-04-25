@@ -1192,3 +1192,28 @@ extern "C" PEGASUS_EXPORT ProviderManager * PegasusCreateProviderManager(
     return(0);
 }
 
+const char *ifcNames[] = {"Python", NULL};
+const char *ifcVersionsPython[] = {"1.0.0", NULL};
+const char *ifcVersionsNone[] = {NULL};
+
+///////////////////////////////////////////////////////////////////////////////
+extern "C" PEGASUS_EXPORT const char ** getProviderManagerInterfaceNames()
+{
+    return ifcNames;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+extern "C" PEGASUS_EXPORT const char ** getProviderManagerInterfaceVersions(
+    const char *providerManagerName)
+{
+    if (Pegasus::String::equalNoCase(String(providerManagerName), "Python"))
+    {
+        return ifcVersionsPython;
+    }
+    return ifcVersionsNone;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+PEGASUS_GET_VERSION_FACTORY; 
+
