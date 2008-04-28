@@ -73,6 +73,6 @@ libPGPythonProviderManager.so : $(OBJECTS)
 	g++ -g -shared \
 		-Wl,-hlibPGPythonProviderManager.so \
 		-Xlinker -export-dynamic \
-		$(LIBRARIES) \
+		$(LIBRARIES) $(EXTRA_LINK_FLAGS)\
 		-o $@ *.o
 	    
