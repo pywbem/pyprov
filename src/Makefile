@@ -1,8 +1,3 @@
-ROOT = ../../../..
-
-DIR = Pegasus/ProviderManager2/Python
-
-include $(ROOT)/mak/config.mak
 
 PY_VER = $(shell python -c "import distutils.sysconfig; print distutils.sysconfig.get_python_version()")
 PY_LIB = python$(PY_VER)
@@ -12,32 +7,27 @@ PY_LIBS = $(shell python -c "import distutils.sysconfig; print distutils.sysconf
 EXTRA_INCLUDES = $(SYS_INCLUDES) -I$(PY_INC)
 EXTRA_LINK_FLAGS += $(PY_LINK) -l$(PY_LIB) $(PY_LIBS)
 
+PEG_CFLAGS = $(shell pkg-config --cflags tog-pegasus)
 
 LOCAL_DEFINES = -DPEGASUS_PYTHONPM_INTERNAL -DPEGASUS_INTERNALONLY
 
-LIBRARY = PGPythonProviderManager
 
-ifeq ($(OS_TYPE),vms)
- VMS_VECTOR = PegasusCreateProviderManager
-endif
+CFLAGS = $(PEG_CFLAGS) $(EXTRA_INCLUDES) -I/usr/include/Pegasus-internal \
+		 $(LOCAL_DEFINES)
 
 LIBRARIES = \
-    pegprovider \
-    pegprovidermanager \
-    pegprm \
-    pegclient \
-    pegquerycommon \
-    pegwql
-
-ifndef PEGASUS_DISABLE_CQL
-    LIBRARIES += \
-       pegcql
-endif
+    -lpegprovider \
+    -lpegprovidermanager \
+    -lpegprm \
+    -lpegclient \
+    -lpegquerycommon \
+    -lpegwql \
+	-lpegcql
 
 LIBRARIES += \
-    pegquerycommon \
-    pegconfig \
-    pegcommon
+    -lpegquerycommon \
+    -lpegconfig \
+    -lpegcommon
 
 
 SOURCES = \
@@ -58,5 +48,31 @@ SOURCES = \
 	PyIndConsumerProviderHandler.cpp \
 	PG_PyConverter.cpp
 
-include $(ROOT)/mak/dynamic-library.mak
+OBJECTS = \
+	PythonProviderManager.o \
+	PG_PyProvIFCCommon.o \
+	PyCxxExtensions.o \
+	PyCxxObjects.o \
+	PyCxxPythonWrap.o \
+	PyCxxSupport.o \
+	PG_PyExtensions.o \
+	PG_PyLogger.o \
+	PG_PyCIMOMHandle.o \
+	PG_PyProviderEnvironment.o \
+	PyInstanceProviderHandler.o \
+	PyMethodProviderHandler.o \
+	PyAssociatorProviderHandler.o \
+	PyIndicationProviderHandler.o \
+	PyIndConsumerProviderHandler.o \
+	PG_PyConverter.o
 
+.cpp.o : 
+	c++ $(CFLAGS) -c -o $@ $<
+
+libPGPythonProviderManager.so : $(OBJECTS)
+	g++ -g -shared \
+		-Wl,-hlibPGPythonProviderManager.so \
+		-Xlinker -export-dynamic \
+		$(LIBRARIES) \
+		-o $@ *.o
+	    

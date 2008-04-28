@@ -27,9 +27,9 @@
 #include <Pegasus/Common/OperationContextInternal.h>
 #include <Pegasus/Config/ConfigManager.h>
 #include <Pegasus/ProviderManager2/OperationResponseHandler.h>
-#include <Pegasus/ProviderManager2/Python/Linkage.h>
 #include <Pegasus/Provider/CIMOMHandleQueryContext.h>
 
+#include "Linkage.h"
 #include "Reference.h"
 #include "PyCxxObjects.h"
 #include "PG_PyExtensions.h"
