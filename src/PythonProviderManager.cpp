@@ -1215,5 +1215,5 @@ extern "C" PEGASUS_EXPORT const char ** getProviderManagerInterfaceVersions(
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-PEGASUS_GET_VERSION_FACTORY; 
+PEGASUS_GET_VERSION_FUNC; 
 

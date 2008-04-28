@@ -67,7 +67,7 @@ OBJECTS = \
 	PG_PyConverter.o
 
 .cpp.o : 
-	c++ $(CFLAGS) -c -o $@ $<
+	c++ -g $(CFLAGS) -c -o $@ $<
 
 libPGPythonProviderManager.so : $(OBJECTS)
 	g++ -g -shared \
@@ -76,3 +76,5 @@ libPGPythonProviderManager.so : $(OBJECTS)
 		$(LIBRARIES) $(EXTRA_LINK_FLAGS)\
 		-o $@ *.o
 	    
+clean: 
+	rm -f libPGPythonProviderManager.so $(OBJECTS)
