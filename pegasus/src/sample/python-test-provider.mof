@@ -1,0 +1,52 @@
+#pragma locale ("en_US")
+
+
+///////////////////////////////////////////////////////////////////////////////
+[ Description("Python Sample Class for Pegasus Python Provider IFC") ]
+class Python_Sample_Class
+{
+	[Description ("The name of this sample instance"),
+		Required, Key ]
+	string Name;
+	
+	[Description ("The description of this sample instance") ]
+	string Description;
+
+	[Description("Print the 'Name' + postfix to stdout")]
+	string cout([IN] string postfix);
+};
+
+
+//////////////////////////////////////////////////////////////////////////////
+[ Description("Second Python Sample Class for Pegasus Python Provider IFC, "
+		" For testing associations") ]
+class Python_Sample_Class_2
+{
+	[Description ("The name of this sample instance"),
+		Required, Key ]
+	string Name;
+	
+	[Description ("The description of this sample instance") ]
+	string Description;
+
+	[Description("Print the prefix + 'Name' to stdout")]
+	string cout([IN] string prefix);
+};
+
+
+////////////////////////////////////////////////////////////////////////////
+[ Association, Description(
+		"Association Python Sample Class for Pegasus Python Provider IFC")]
+class Python_Sample_Association_Class
+{
+	[ Key,
+		Description ("Instance of Python_Sample_Class") ]
+	Python_Sample_Class REF Antecedent;
+	
+	[ Key,
+		Description ("Instance of Python_Sample_Class_2") ]
+	Python_Sample_Class_2 REF Dependent;
+
+};
+
+

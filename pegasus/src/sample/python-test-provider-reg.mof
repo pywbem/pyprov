@@ -1,0 +1,64 @@
+
+instance of PG_ProviderModule
+{
+   Name = "Python_Sample_Class_Module";
+   Location = "py_sample_class";
+   Vendor = "Novell";
+   Version = "1.0.0";
+   InterfaceType = "Python";
+   InterfaceVersion = "1.0.0";
+};
+
+instance of PG_Provider
+{
+   Name = "Python_Sample_Class_Provider";
+   ProviderModuleName = "Python_Sample_Class_Module";
+};
+
+instance of PG_ConsumerCapabilities
+{
+   ProviderModuleName = "Python_Sample_Class_Module";
+   ProviderName = "Python_Sample_Class_Provider";
+   ProviderType = { 6 };
+   CapabilityID = "Python_Sample_Class-Con-1";
+   Destinations = {"/Python_PythonSampleClass"};
+};
+
+instance of PG_ProviderCapabilities
+{
+   ProviderModuleName = "Python_Sample_Class_Module";
+   ProviderName = "Python_Sample_Class_Provider";
+   ClassName = "Python_Sample_Class";
+   ProviderType = { 2,5 };
+   Namespaces = {"root/cimv2"};
+   SupportedProperties = NULL;
+   SupportedMethods = NULL;
+   CapabilityID = "Python_Sample_Class-Prov-1";
+};
+
+instance of PG_ProviderCapabilities
+{
+   ProviderModuleName = "Python_Sample_Class_Module";
+   ProviderName = "Python_Sample_Class_Provider";
+   ClassName = "Python_Sample_Class_2";
+   ProviderType = { 2,5 };
+   Namespaces = {"root/cimv2"};
+   SupportedProperties = NULL;
+   SupportedMethods = NULL;
+   CapabilityID = "Python_Sample_Class_2-Prov-2";
+};
+
+
+instance of PG_ProviderCapabilities
+{
+   ProviderModuleName = "Python_Sample_Class_Module";
+   ProviderName = "Python_Sample_Class_Provider";
+   ClassName = "Python_Sample_Association_Class";
+   ProviderType = { 2,3 };
+   Namespaces = {"root/cimv2"};
+   SupportedProperties = NULL;
+   SupportedMethods = NULL;
+   CapabilityID = "Python_Sample_Assoc_Class-Prov-3";
+};
+
+
