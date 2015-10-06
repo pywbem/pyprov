@@ -1,0 +1,191 @@
+/*******************************************************************************
+ * Copyright (C) 2004 Novell, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *  - Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *
+ *  - Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ *  - Neither the name of Novell, Inc. nor the names of its
+ *    contributors may be used to endorse or promote products derived from this
+ *    software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS ``AS IS''
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL Novell, Inc. OR THE CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ ******************************************************************************/
+#pragma locale ("en_US")
+
+//////////////////////////////////////////////////////////////////////////////
+[ Abstract ]
+class Py_DataFile : CIM_DataFile
+{
+	sint32 append([IN(true), OUT(false), REQUIRED(true)] string newtext); 
+	sint32 write([IN(true), OUT(false), REQUIRED(true)] string newtext); 
+	sint32 read([IN(false), OUT(true), REQUIRED(true)] string filetext); 
+}; 
+
+//////////////////////////////////////////////////////////////////////////////
+[ Abstract ]
+class Py_UnixDeviceFile : CIM_UnixDeviceFile
+{
+}; 
+
+//////////////////////////////////////////////////////////////////////////////
+[ Abstract ]
+class Py_SymbolicLink : CIM_SymbolicLink
+{
+}; 
+
+//////////////////////////////////////////////////////////////////////////////
+[ Abstract ]
+class Py_UnixDirectory : CIM_UnixDirectory
+{
+}; 
+
+//////////////////////////////////////////////////////////////////////////////
+[ Abstract ]
+class Py_UnixSocketFile : CIM_LogicalFile
+{
+}; 
+
+//////////////////////////////////////////////////////////////////////////////
+[ Abstract ]
+class Py_FIFOPipeFile : CIM_FIFOPipeFile
+{
+}; 
+
+//////////////////////////////////////////////////////////////////////////////
+[ Abstract ]
+class Py_UnixFile : CIM_UnixFile
+{
+	boolean UserReadable; 
+	boolean UserWritable; 
+	boolean UserExecutable; 
+	boolean GroupReadable; 
+	boolean GroupWritable; 
+	boolean GroupExecutable; 
+	boolean WorldReadable; 
+	boolean WorldWritable; 
+	boolean WorldExecutable; 
+}; 
+
+//////////////////////////////////////////////////////////////////////////////
+[ Association, Aggregation, Composition, Abstract,
+	Description("Specifies the hierarchical arrangement of LogicalFiles in a "
+	"Directory.")] 
+class Py_DirectoryContainsFile : CIM_DirectoryContainsFile
+{
+	[Override ("GroupComponent"), Aggregate, Max(1), 
+		Description ("The Directory") ]
+	Py_UnixDirectory REF GroupComponent; 
+
+	[Override ("PartComponent"), 
+		Description ("The LogicalFile 'contained within' the Directory.") ]
+	CIM_LogicalFile REF PartComponent; 
+}; 
+
+//////////////////////////////////////////////////////////////////////////////
+[ Association, Abstract, Description (
+		"CIM_FileIdentity indicates that a UnixFile describes Unix-"
+		"specific aspects of the various subclasses of LogicalFile. "
+		"The association exists since it forces UnixFile to be "
+		"weak to (scoped by) the LogicalFile. This is not true in "
+		"the association's superclass, LogicalIdentity.")]
+class Py_FileIdentity : CIM_FileIdentity
+{
+	[Override ("SystemElement"), Min (1), Max (1),
+		Description ("The Logical File.") ]
+	CIM_LogicalFile ref SystemElement;
+
+	[Override ("SameElement"), Weak, Max (1), 
+		Description ("SameElement represents the additional aspects of the "
+			"Unix/Linux Logical file.") ]
+	Py_UnixFile ref SameElement;
+
+}; 
+
+//////////////////////////////////////////////////////////////////////////////
+class Py_LinuxDataFile : Py_DataFile
+{
+}; 
+
+//////////////////////////////////////////////////////////////////////////////
+class Py_LinuxDeviceFile : Py_UnixDeviceFile
+{
+}; 
+
+//////////////////////////////////////////////////////////////////////////////
+class Py_LinuxSymbolicLink : Py_SymbolicLink
+{
+}; 
+
+//////////////////////////////////////////////////////////////////////////////
+class Py_LinuxDirectory : Py_UnixDirectory
+{
+}; 
+
+//////////////////////////////////////////////////////////////////////////////
+class Py_LinuxFIFOPipeFile : Py_FIFOPipeFile
+{
+}; 
+
+//////////////////////////////////////////////////////////////////////////////
+class Py_LinuxSocketFile : Py_UnixSocketFile
+{
+}; 
+
+//////////////////////////////////////////////////////////////////////////////
+class Py_LinuxFile : Py_UnixFile
+{
+}; 
+
+//////////////////////////////////////////////////////////////////////////////
+[Association, Aggregation, Composition, 
+	Description("Specifies the hierarchical arrangement of LogicalFiles in a "
+	"Directory.")
+]
+class Py_LinuxDirectoryContainsFile : Py_DirectoryContainsFile
+{
+	[Override ("GroupComponent"), Aggregate, Max(1), 
+		Description ("The Directory") ]
+	Py_LinuxDirectory REF GroupComponent; 
+
+	[Override ("PartComponent"), 
+		Description ("The LogicalFile 'contained within' the Directory.") ]
+	CIM_LogicalFile REF PartComponent; 
+}; 
+
+//////////////////////////////////////////////////////////////////////////////
+[Association, Description (
+		"CIM_FileIdentity indicates that a UnixFile describes Unix-"
+		"specific aspects of the various subclasses of LogicalFile. "
+		"The association exists since it forces UnixFile to be "
+		"weak to (scoped by) the LogicalFile. This is not true in "
+		"the association's superclass, LogicalIdentity.")]
+class Py_LinuxFileIdentity : Py_FileIdentity
+{
+	[Override ("SystemElement"), Min (1), Max (1),
+	Description ("The Logical File.") ]
+		CIM_LogicalFile ref SystemElement;
+
+	[Override ("SameElement"), Weak, Max (1), Description (
+			"SameElement represents the additional aspects of the "
+			"Unix/Linux Logical file.") ]
+		Py_LinuxFile ref SameElement;
+
+}; 
+

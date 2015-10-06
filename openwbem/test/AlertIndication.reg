@@ -1,0 +1,12 @@
+
+#pragma namespace("Interop")
+
+instance of OpenWBEM_PyProviderRegistration
+{
+	InstanceID = "MyPolledProviderInstanceID";
+	NamespaceNames = {"root/cimv2"};
+	ClassName = "Py_TestAlert";
+	ProviderTypes = {8,5};	// Polled, Alert Indication
+	ModulePath = "/home/jcarey/proj/las/pyprovifc/test/AlertIndication.py";
+};
+

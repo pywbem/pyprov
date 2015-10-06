@@ -1,0 +1,67 @@
+[Terminal(true), Description("The OpenWBEM_PyProviderRegistration is used to "
+	"register python providers with OpenWBEM python provider interface. "
+	"Python providers are loaded by the python provider interface base on "
+	"instances of the OpenWBEM_PyProviderRegistration in the OpenWBEM "
+	"interop namespace")]
+class OpenWBEM_PyProviderRegistration
+{
+	[Key, Description (
+		"The InstanceID property uniquely identifies a python provider "
+		"within the scope of the python provider interface")]
+	string InstanceID;
+
+	[Required(true), Description(
+		"Fully qualified path to python file on CIMOM's machine")]
+	string ModulePath;
+
+	[Description("Free form text that describes the provider's "
+		"functionality")]
+	string Description;
+
+	[Description (
+		"The namespaces for this provider registration. If this "
+		"property is empty or NULL, all namespaces are implied.")]
+	string NamespaceNames[];
+
+	[Description ("The CIM class name for the provider. Definition: "
+		"- Instance providers: Specifies the class the provider is providing\n"
+		"  instances for\n"
+		"- Method providers: Specifies the class that contains the methods\n"
+		"  the provider implements\n"
+		"- Associator providers: Specifies the association class the\n"
+		"  provider instruments\n"
+		"- LifeCycle Indication providers: Specifies the class the provider\n"
+		"  generates life cycle indications for\n"
+		"- Alert Indication providers: Specifies the sub-class of\n"
+		"  CIM_AlertIndication the provider generates.\n"
+		"- Indication Handler Provider: Ignored.\n"
+		"- Polled Provider: Ignored")]
+	string ClassName;
+
+	[Description (
+		"ProviderTypes specifies the type of provider."
+		"Note: Provider Types 'Secondary Instance' and 'Query' are not "
+		"currently supported by the python provider interface"),
+		ValueMap {"1", "2", "3", "4", "5", "6", "7", "8", "9"},
+		Values {"Instance", "Secondary Instance", "Association",
+			"Lifecycle Indication", "Alert Indication",
+			"Method", "Indication Handler", "Polled", "Query"},
+		ArrayType ("Indexed"),
+		Required(true)]
+	uint16 ProviderTypes[];
+
+	[Description (
+		"If this is a method provider, this property contains the names of "
+		"the methods serviced by the provider. If this property is empty on "
+		"a method provider, it is assumed the provider instruments all "
+		"methods for the class specified by the ClassName property. "
+		"If it is not a method provider, this property is ignored")]
+	string MethodNames[];
+
+	[Description (
+		"List of class names (subclasses of CIM_ListenerDestination) that "
+		"the provider handles. Only applicable for Indication Export "
+		"providers.")]
+	string IndicationExportHandlerClassNames[];
+};
+

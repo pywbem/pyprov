@@ -1,0 +1,37 @@
+// Handler class for export provider
+class Py_IndicationHandler : CIM_ListenerDestination
+{
+};
+
+// Filter Instance
+INSTANCE OF CIM_IndicationFilter as $filter
+{
+	SystemCreationClassName = "CIM_System";
+	SystemName = "127.0.0.1";
+	CreationClassName = "CIM_IndicationFilter";
+	Name = "/PythonTestIndicationHandler";
+	SourceNamespace = "root/cimv2";
+	Query = "select * from cim_instmodification where sourceinstance isa PyIndFoo";
+	QueryLanguage = "wql1";
+};
+
+// Listener Destination Instance
+INSTANCE OF Py_IndicationHandler as $dest
+{
+	SystemCreationClassName = "CIM_System";
+	SystemName = "127.0.0.1";
+	CreationClassName = "Py_IndicationHandler";
+	Name = "/cimPythonTestIndicationProvider";
+};
+
+// Subscription	Instance Tie together the indication filter
+// and the indication handler
+INSTANCE OF CIM_IndicationSubscription
+{
+	Filter=$filter;
+	Handler=$dest;
+	AlertOnStateChange=false;
+};
+
+
+

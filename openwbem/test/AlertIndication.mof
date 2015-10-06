@@ -1,0 +1,5 @@
+[Indication, Description("This is a test alert indication for the python "
+	"provider interface")]
+class Py_TestAlert : CIM_AlertIndication
+{
+};

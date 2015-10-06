@@ -1,0 +1,221 @@
+OpenWBEM Python Provider Registration
+
+In order for a python provider to be recognized by PyProvIFC, it must be
+registered. This is done by creating an instance of the
+OpenWBEM_PyProviderRegistration class in the namespace the OpenWBEM CIMOM
+considers the Interop namespace (typically 'Interop' on SuSE Linux).
+
+The OpenWBEM_PyProviderRegistration class is documented relatively well through
+the 'Description' qualifiers on the class. These can be viewed using any
+capably CIM browser.
+
+Normally what a provider would do is provide a MOF file that contains its
+provider registration instance. The MOF would be imported into the CIMOM
+when the provider is installed on the machine. Usually when any provider
+is installed, some type of MOF import takes place in order to extend the
+schema of the CIMOM, and the provider registration fits well within this
+process.
+
+Here is an example of a provider registration MOF file for an an instance
+provider (assume the file name is My_TestProvider.mof):
+
+// My_TestProvider.mof
+instance of OpenWBEM_PyProviderRegistration
+{
+    InstanceID = "TheInstanceIDForMyTestProvider";
+    Description = "This is a bogus provider used for discussion";
+    ProviderTypes = {1};    // Instance
+    ClassName = "My_TestClass";
+    NamespaceNames = {"root/cimv2", "root/pytest"};
+    ModulePath = "/usr/lib/openwbem/pythonproviders/My_TestClassProvider.py";
+};
+
+In this example the properties have the following meaning:
+
+    - InstanceID: This is a string that uniquely identifies this provider
+      registration from all others. It can be anything as long as it is
+      unique.
+
+    - Description: This property is used to provide a description of what the
+      provider does and any other information you consider useful to the end
+      user.
+
+    - ProviderTypes: This is a list of values that indicate what type of
+      provider the registration is for. In this case, we have specified 1 for
+      instance provider.
+
+    - ClassName: This property specifies the name of the class the provider is
+      instrumenting. In the example we have specified that this is an
+      instance provider that provides instances for the My_TestClass class.
+
+    - NamespaceNames: This is a list of the namespaces that the provider will
+      provide instrumentation for. If this property is not specified, the
+      CIMOM will assume the provider provides instrumentation in any namespace
+      that contains the class definition specified by the 'ClassName'
+      property. So here we have specified that the provider provides instances
+      of My_TestClass in the root/cimv2 and root/pytest namespaces.
+
+    - ModulePath: This property specifies the location of the python file that
+      contains the provider code. This must be the fully qualified path to the
+      python file. There are no restrictions as to where this location is,
+      other than it must be accessible to the CIMOM. Its probably a good idea
+      to designate one directory that will contain all of the python providers
+      for the sake of manageability.
+
+In order for the CIMOM to recognize our provider, me must import
+My_TestProvider.mof. This can be done using the following command:
+
+    > owmofc -n Interop My_TestProvider.mof
+
+Once this is done, you will need to re-start the CIMOM to complete the process.
+After the CIMOM starts, you should see your provider been called when the it
+receives instance related requests for the My_TestClass class.
+
+My_TestProvider is not constrained to just one provider provider type. Lets
+make a minor change to this registration so My_TestProvider can be a method
+provider for select methods of My_TestClass:
+
+// My_TestProvider.mof
+instance of OpenWBEM_PyProviderRegistration
+{
+    InstanceID = "TheInstanceIDForMyTestProvider";
+    Description = "Hey! I'm a method provider too!";
+    ProviderTypes = {1,6};    // Instance, method
+    ClassName = "My_TestClass";
+    string MethodNames = {"Method1", "Method2"};
+    //NamespaceNames = {"root/cimv2", "root/pytest"};
+    ModulePath = "/usr/lib/openwbem/pythonproviders/My_TestClassProvider.py";
+};
+
+Now the provider registration specifies the My_TestClassProvider as a method
+provider for My_TestClass by using the additional provider type of 6. By
+specifying the 'MethodNames' property, we have indicated that 
+My_TestClassProvider only instruments the methods 'Method1' and 'Method2'
+within My_TestClass. If the 'MethodNames' property was not specified, the
+CIMOM would assume that My_TestClassProvider instruments all methods for
+My_TestClass.
+For the sake of discussion, we have also commented out the 'NamespaceNames'
+property. This informs the CIMOM that My_TestClassProvider instruments 
+My_TestClass in any namespace that contains the class definition.
+
+At this point the astute reader may have noticed that only one class name can
+be specified for a provider registration instance. This is true, but should
+not impose any constraints on the provider writer since multiple provider
+registrations instances can be created for the same provider. Consider the
+following example:
+
+// My_TestProvider2.mof
+instance of OpenWBEM_PyProviderRegistration
+{
+    InstanceID = "PyFoo-Instance-LifeCycle-Method";
+    NamespaceNames = {"root/cimv2"};
+    ClassName = "PyFoo";
+    ProviderTypes = {1,4,6};    // Instance, LifeCycle Indication, method
+    ModulePath = "/usr/lib/openwbem/pythonproviders/pyprov_PyTest.py";
+};
+
+instance of OpenWBEM_PyProviderRegistration
+{
+    InstanceID = "PyFooComponent-Instance";
+    NamespaceNames = {"root/cimv2"};
+    ClassName = "PyFooComponent";
+    ProviderTypes = {1};    // Instance
+    ModulePath = "/usr/lib/openwbem/pythonproviders/pyprov_PyTest.py";
+};
+
+instance of OpenWBEM_PyProviderRegistration
+{
+    InstanceID = "PyFooAssociation-Instance-Association";
+    NamespaceNames = {"root/cimv2"};
+    ClassName = "PyFooAssociation";
+    ProviderTypes = {1,3};    // Instance, associator
+    ModulePath = "/usr/lib/openwbem/pythonproviders/pyprov_PyTest.py";
+};
+
+In this example the pyprov_PyTest provider performs the following functions:
+- Instance, LifeCycle, Method provider for the PyFoo class in the root/cimv2
+  namespace.
+- Instance provider for the PyFooComponent class in the root/cimv2 namespace.
+- Instance and Associator provider for the PyFooAssociation class.
+
+Given the above example, one can see that the provider developer has a lot of
+freedom in structuring providers.
+
+
+
+
+
+
+
+      
+
+
+
+
+
+
+
+For a full description of the OpenWBEM_PyProviderRegistration class
+
+
+class OpenWBEM_PyProviderRegistration
+{
+    [Key, Description (
+        "The InstanceID property uniquely identifies a python provider "
+        "within the scope of the python provider interface")]
+    string InstanceID;
+
+    [Required(true), Description(
+        "Fully qualified path to python file on CIMOM's machine")]
+    string ModulePath;
+
+    [Description("Free form text that describes the provider's "
+        "functionality")]
+    string Description;
+
+    [Description (
+        "The namespaces for this provider registration. If this "
+        "property is empty or NULL, all namespaces are implied.")]
+    string NamespaceNames[];
+
+    [Description ("The CIM class name for the provider. "
+        "For instance providers it identifies the class the provider "
+        "is providing instance functionality for. "
+        "For method providers it identifies the class that contains "
+        "the methods the provider services."
+        "For associator providers, it identifies the association class. "
+        "For alert indication providers, it identifies the name of the "
+        "class that is a direct sub-class of CIM_AlertIndication. If "
+        "empty in this case, it is assumed the provider generates "
+        "CIM_AlertIndications. "
+        "This property is ignored for Indication Handler and "
+        "polled providers")]
+    string ClassName;
+
+    [Description (
+        "ProviderTypes identifies the kind of provider. "
+        "Note: Provider Types 'Secondary Instance' and 'Query' are not "
+        "supported by the python provider interface"),
+        ValueMap {"1", "2", "3", "4", "5", "6", "7", "8", "9"},
+        Values {"Instance", "Secondary Instance", "Association",
+            "Lifecycle Indication", "Alert Indication",
+            "Method", "Indication Handler", "Polled", "Query"},
+        ArrayType ("Indexed"),
+        Required(true)]
+    uint16 ProviderTypes[];
+
+    [Description (
+        "If this is a method provider, this property contains the names of "
+        "the methods serviced by the provider. If this property is empty on "
+        "a method provider, it is assumed the provider instruments all "
+        "methods for the class specified by the ClassName property. "
+        "If it is not a method provider, this property is ignored")]
+    string MethodNames[];
+
+    [Description (
+        "List of class names (subclasses of CIM_ListenerDestination) that "
+        "the provider handles. Only applicable for Indication Export "
+        "providers.")]
+    string IndicationExportHandlerClassNames[];
+};
+

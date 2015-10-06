@@ -1,0 +1,10 @@
+
+// Provider registration for PyTut_FooAssociation
+instance of OpenWBEM_PyProviderRegistration
+{
+        InstanceID = "PyTut_FooAssociation_Provider_InstanceID";
+        NamespaceNames = {"root/cimv2"}; 
+        ClassName = "PyTut_FooAssociation"; 
+        ProviderTypes = {1,3};  // Instance, Associator
+        ModulePath = "/home/jcarey/proj/las/pyprovifc/doc/tutorial/PyTut_FooAssociationProvider.py";
+}; 

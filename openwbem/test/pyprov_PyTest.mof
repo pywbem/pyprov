@@ -1,0 +1,36 @@
+[Description("Test class for a python provider")]
+class PyFoo
+{
+	[key, Description("The PyFoo key")]
+	string FooKey;
+
+	[Description("The PyFoo value")]
+	sint32 FooValue;
+
+	[Description("Test method")]
+	string FooMethod([in(true),out(false)]string s, 
+		[in(true),out(true)]sint32 i, [in(false),out(true)]string sa[]); 
+};
+
+[Description("Another test class to associate to PyFoo. PyFooComponents "
+		"will have associations to PyFoo objects if the PyFooComponents "
+		"values matches the PyFoo key")]
+class PyFooComponent
+{
+	[key, Description("The PyFooComponent key")]
+	string TheKey;
+
+	[Description("The value")]
+	string TheValue;
+};
+
+[Association,
+	Description("Relationship between a PyFoo and a PyFooComponent")]
+class PyFooAssociation
+{
+	[key, Description("The PyFoo")]
+	PyFoo REF ThePyFoo;
+
+	[key, Description("The PyFooComponent")]
+	PyFooComponent REF TheComp;
+};

@@ -1,0 +1,10 @@
+[Description("Test class for a python life cycle indication provider")]
+class PyIndFoo
+{
+	[key, Description("The PyIndFoo key")]
+	string TheKey;
+
+	[Description("The PyIndFoo value")]
+	sint32 TheValue;
+};
+

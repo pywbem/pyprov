@@ -1,0 +1,28 @@
+#pragma namespace("Interop")
+
+instance of OpenWBEM_PyProviderRegistration
+{
+	InstanceID = "OpenWBEM:PyProviderReg:0:PyTest";
+	NamespaceNames = {"root/cimv2"};
+	ClassName = "PyFoo";
+	ProviderTypes = {1,6};	// Instance, method
+	ModulePath = "/usr/lib/openwbem/pythonproviders/pyprov_PyTest.py";
+};
+
+instance of OpenWBEM_PyProviderRegistration
+{
+	InstanceID = "OpenWBEM:PyProviderReg:1:PyTest";
+	NamespaceNames = {"root/cimv2"};
+	ClassName = "PyFooComponent";
+	ProviderTypes = {1};	// Instance, method
+	ModulePath = "/usr/lib/openwbem/pythonproviders/pyprov_PyTest.py";
+};
+
+instance of OpenWBEM_PyProviderRegistration
+{
+	InstanceID = "OpenWBEM:PyProviderReg:2:PyTest";
+	NamespaceNames = {"root/cimv2"};
+	ClassName = "PyFooAssociation";
+	ProviderTypes = {1,3};	// Instance, associator
+	ModulePath = "/usr/lib/openwbem/pythonproviders/pyprov_PyTest.py";
+};
